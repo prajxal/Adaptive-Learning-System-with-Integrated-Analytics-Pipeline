@@ -6,6 +6,7 @@ import { getToken } from "../../services/auth";
 import { useProgress } from "../hooks/useProgress";
 import { getSkillProfile, SkillProfile } from "../services/quizApi";
 import BACKEND_URL from "../../services/api";
+import { PlayCircle, FileText, BookOpen } from "lucide-react";
 
 type Course = {
   id: string;
@@ -17,7 +18,6 @@ type Course = {
 
 export default function CourseDetailPage() {
   const { courseId } = useParams();
-  console.log("CourseDetailPage courseId:", courseId);
   const navigate = useNavigate();
   const [course, setCourse] = useState<Course | null>(null);
   const [learningPath, setLearningPath] = useState<any[]>([]);
@@ -79,260 +79,269 @@ export default function CourseDetailPage() {
       .catch(() => setResourcesLoading(false));
   }, [courseId]);
 
+  const getResourceIcon = (type: string) => {
+    if (type === 'video') return <PlayCircle className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />;
+    if (type === 'article') return <FileText className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />;
+    return <BookOpen className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />;
+  };
+
   if (!course) {
-    return <div className="space-y-6">Loading course...</div>;
+    return (
+      <div className="course-detail-root flex items-center justify-center min-h-[50vh]">
+        <style>{`
+                .course-detail-root {
+                    --bg-primary: #0a0a0f;
+                    --text-muted: #64748b;
+                    background-color: var(--bg-primary);
+                }
+            `}</style>
+        <div style={{ color: 'var(--text-muted)' }}>Loading course...</div>
+      </div>
+    );
   }
 
+  const totalRes = (resources.primary ? 1 : 0) + (resources.additional?.length || 0);
+
   return (
-    <div className="space-y-6">
-      <button
-        onClick={() => navigate(ROUTES.ROADMAP(course.roadmap_id))}
-        className="text-muted-foreground hover:text-foreground flex items-center gap-2 mb-2 transition-colors"
-      >
-        ← Back to Roadmap
-      </button>
-      <div className="bg-card border rounded-xl p-8 mb-8 mt-4 shadow-sm">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6">
-          <div className="space-y-4 flex-1">
-            <h1 className="text-3xl font-bold text-foreground">{course.title}</h1>
-            <p className="text-muted-foreground max-w-2xl">{course.description}</p>
+    <div className="course-detail-root">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap');
+        
+        .course-detail-root {
+            --bg-primary: #0a0a0f;
+            --bg-card: #111118;
+            --bg-card-hover: #16161f;
+            --accent-primary: #6366f1;
+            --accent-secondary: #818cf8;
+            --text-primary: #f1f5f9;
+            --text-muted: #64748b;
+            --border: #1e1e2e;
+            
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
+            
+            min-height: 100vh;
+            position: relative;
+        }
 
-            {/* Adaptive Mastery UI */}
-            {skillProfile && (
-              <div className="flex gap-4 mt-4">
-                <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 w-40">
-                  <div className="text-xs text-primary font-semibold uppercase tracking-wider mb-1">Mastery</div>
-                  <div className="text-2xl font-bold text-foreground">
-                    {Math.round(skillProfile.proficiency_level)}%
-                  </div>
-                </div>
-                <div className="bg-muted border rounded-lg p-3 w-40">
-                  <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Confidence</div>
-                  <div className="text-2xl font-bold text-foreground">
-                    {Math.round(skillProfile.confidence * 100)}%
-                  </div>
-                </div>
+        .course-detail-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.06) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .course-detail-content {
+            position: relative;
+            z-index: 1;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+        }
+
+        .title-font {
+            font-family: 'Sora', sans-serif;
+        }
+
+        .back-btn {
+            color: var(--text-muted);
+            transition: color 0.2s ease;
+        }
+        
+        .back-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .dark-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+        }
+
+        .resource-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            transition: all 0.2s ease;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .resource-card:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.25rem 0.625rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .pill-complete {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+        .pill-in-progress {
+            background-color: rgba(99, 102, 241, 0.1);
+            color: var(--accent-primary);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        .pill-not-started {
+            background-color: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+      `}</style>
+
+      <div className="course-detail-bg"></div>
+
+      <div className="course-detail-content space-y-10">
+        <button
+          onClick={() => navigate(ROUTES.ROADMAP(course.roadmap_id))}
+          className="back-btn inline-flex items-center gap-2 font-medium text-sm mb-2"
+        >
+          <span>←</span> Back
+        </button>
+
+        {/* Page Header */}
+        <div>
+          <h1 className="title-font text-4xl md:text-5xl font-bold tracking-tight mb-3" style={{ color: 'var(--text-primary)' }}>
+            {course.title}
+          </h1>
+          <p className="text-lg" style={{ color: 'var(--text-muted)' }}>
+            {totalRes} resources in this course
+          </p>
+        </div>
+
+        {/* Skill Status Banner */}
+        {(() => {
+          const progress = getCourseProgress(course.id, totalRes);
+          const resourcesFinished = totalRes > 0 && progress.percentage === 100;
+          const isUnlocked = skillStatus === "unlocked" || skillStatus === "completed" || resourcesFinished;
+
+          if (skillStatus === "completed") {
+            return (
+              <div className="dark-card p-6 flex flex-col sm:flex-row justify-between items-center gap-4" style={{ borderLeft: '3px solid #22c55e' }}>
+                <div className="font-semibold text-lg" style={{ color: '#22c55e' }}>✓ Skill Mastered</div>
+                <button
+                  onClick={() => navigate(`/course/${courseId}/quiz`)}
+                  className="px-6 py-2.5 rounded-lg text-sm font-bold border transition-colors"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-muted)', backgroundColor: 'transparent' }}
+                  onMouseOver={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--text-muted)' }}
+                  onMouseOut={(e) => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)' }}
+                >
+                  Retake Quiz
+                </button>
               </div>
-            )}
+            );
+          }
 
-            <div className="pt-2">
-              {(() => {
-                const totalRes = (resources.primary ? 1 : 0) + (resources.additional?.length || 0);
-                const progress = getCourseProgress(course.id, totalRes);
-                const resourcesFinished = totalRes > 0 && progress.percentage === 100;
+          if (!isUnlocked && skillStatus === "locked") {
+            return (
+              <div className="dark-card p-6 flex items-center" style={{ borderLeft: '3px solid var(--border)' }}>
+                <div className="font-medium" style={{ color: 'var(--text-muted)' }}>🔒 Complete prerequisites to unlock this topic</div>
+              </div>
+            );
+          }
 
-                const isUnlocked = skillStatus === "unlocked" || skillStatus === "completed" || resourcesFinished;
+          return (
+            <div className="dark-card p-6 flex flex-col sm:flex-row justify-between items-center gap-4" style={{ borderLeft: '3px solid var(--accent-primary)' }}>
+              <div className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>Ready to test your knowledge?</div>
+              <button
+                onClick={() => navigate(`/course/${courseId}/quiz`)}
+                className="px-8 py-2.5 rounded-lg text-sm font-bold transition-colors shadow-sm"
+                style={{ backgroundColor: 'var(--accent-primary)', color: 'white' }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#4f46e5'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--accent-primary)'}
+              >
+                Take Quiz
+              </button>
+            </div>
+          );
+        })()}
 
-                if (!isUnlocked && skillStatus === "locked") {
-                  return (
-                    <button disabled className="bg-gray-100 text-gray-400 font-medium py-2 px-6 rounded-md cursor-not-allowed flex items-center gap-2">
-                      <span>🔒</span> Locked — Complete prerequisites
-                    </button>
-                  );
-                }
-
-                if (skillStatus === "completed") {
-                  return (
-                    <button
-                      onClick={() => navigate(`/course/${courseId}/quiz`)}
-                      className="bg-green-100 text-green-700 hover:bg-green-200 font-semibold py-2 px-6 rounded-md border border-green-200 transition-colors flex items-center gap-2"
-                    >
-                      <span>✓</span> Skill Mastered (Retake Quiz)
-                    </button>
-                  );
-                }
-
-                return (
-                  <button
-                    onClick={() => navigate(`/course/${courseId}/quiz`)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md shadow-sm transition-colors flex items-center gap-2"
-                  >
-                    <span>🧠</span> Take Quiz
-                  </button>
-                );
-              })()}
+        {/* Skill Metrics Row */}
+        {skillProfile && (
+          <div className="flex gap-4">
+            <div className="dark-card p-4 sm:p-5 flex-1 max-w-[200px]">
+              <div className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--accent-primary)' }}>Mastery</div>
+              <div className="title-font text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                {Math.min(100, Math.round(skillProfile.proficiency_level * (skillProfile.proficiency_level <= 1 ? 100 : 1)))}%
+              </div>
+            </div>
+            <div className="dark-card p-4 sm:p-5 flex-1 max-w-[200px]">
+              <div className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Confidence</div>
+              <div className="title-font text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                {Math.round(skillProfile.confidence * 100) || 0}%
+              </div>
             </div>
           </div>
+        )}
 
-          {!resourcesLoading && (
-            <div className="w-full md:w-64 shrink-0 bg-gray-50 border rounded-lg p-4">
-              {(() => {
-                const totalRes = (resources.primary ? 1 : 0) + (resources.additional?.length || 0);
-                const progress = getCourseProgress(course.id, totalRes);
-                const percentage = Math.min(progress.percentage, 100);
+        {/* Resources Section */}
+        <div>
+          <h2 className="title-font text-2xl font-semibold mb-6 mt-10">Learning Resources</h2>
+          {resourcesLoading ? (
+            <p style={{ color: 'var(--text-muted)' }}>Loading resources...</p>
+          ) : (
+            <div className="space-y-4">
+              {totalRes === 0 ? (
+                <div className="py-12 flex flex-col items-center justify-center text-center">
+                  <BookOpen className="w-10 h-10 mb-4 opacity-50" style={{ color: 'var(--text-muted)' }} />
+                  <p style={{ color: 'var(--text-muted)' }}>No resources available for this course yet</p>
+                </div>
+              ) : (
+                (() => {
+                  const allResources = [];
+                  if (resources.primary) allResources.push(resources.primary);
+                  if (resources.additional) allResources.push(...resources.additional);
 
-                return (
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm font-semibold text-gray-700">
-                      <span>Course Progress</span>
-                      <span className={percentage === 100 ? 'text-green-600' : 'text-blue-600'}>{percentage}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                  return allResources.map((res: any) => {
+                    const status = getResourceProgress(courseId as string, res.id);
+
+                    let typeLabel = res.resource_type || 'article';
+
+                    return (
                       <div
-                        className={`h-full rounded-full transition-all duration-500 ${percentage === 100 ? 'bg-green-500' : 'bg-blue-600'}`}
-                        style={{ width: `${percentage}%` }}
-                      ></div>
-                    </div>
-                    <div className="text-xs text-center text-gray-500 font-medium pt-1">
-                      {progress.completedCount} of {totalRes} resources completed
-                    </div>
-                  </div>
-                )
-              })()}
+                        key={res.id}
+                        className="resource-card group"
+                        onClick={() => navigate(ROUTES.RESOURCE(courseId as string, res.id))}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="shrink-0">
+                            {getResourceIcon(typeLabel)}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-bold line-clamp-1" style={{ color: 'var(--text-primary)' }}>{res.title}</span>
+                            <span className="text-[10px] uppercase font-bold tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>{typeLabel}</span>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 ml-4 hidden sm:block">
+                          {status === 'completed' && <span className="status-pill pill-complete">✓ Complete</span>}
+                          {status === 'in_progress' && <span className="status-pill pill-in-progress">▶ In Progress</span>}
+                          {status === 'not_started' && <span className="status-pill pill-not-started">○ Not Started</span>}
+                        </div>
+                      </div>
+                    );
+                  });
+                })()
+              )}
             </div>
           )}
-        </div>
-      </div>
-
-      <div>
-        <h2 className="text-xl font-semibold mt-8 mb-4">Learning Roadmap</h2>
-        {pathLoading ? (
-          <div>Loading learning path...</div>
-        ) : (
-          <div className="space-y-4">
-            {learningPath.map((item: any) => {
-              const status = item.status || "locked";
-              let statusClasses = "border-gray-500/50 bg-gray-50/5 text-muted-foreground"; // locked
-
-              if (status === "completed") {
-                statusClasses = "border-green-500/50 bg-green-500/10";
-              } else if (status === "ready") {
-                statusClasses = "border-blue-500/50 bg-blue-500/10";
-              }
-
-              return (
-                <div
-                  key={item.id}
-                  className={`border rounded p-4 flex justify-between items-center ${statusClasses}`}
-                >
-                  <div>
-                    <h3 className="font-medium">{item.title}</h3>
-                    <p className="text-sm opacity-80">
-                      Difficulty: {item.difficulty}
-                    </p>
-                  </div>
-                  <div className="text-xs uppercase font-medium border px-2 py-1 rounded">
-                    {status}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      <div>
-        <h2 className="text-xl font-semibold mt-8 mb-4">Course Content</h2>
-        {resourcesLoading ? (
-          <p className="text-muted-foreground">Loading resources...</p>
-        ) : (
-          <div className="space-y-6">
-            {!resources.primary && resources.additional.length === 0 ? (
-              <div className="bg-muted/30 p-6 rounded-lg text-center text-muted-foreground border">
-                No curated resources available yet.
-              </div>
-            ) : (
-              <>
-                {resources.primary && resources.primary.resource_type === "video" && (
-                  <div className="bg-card rounded-xl shadow-md border p-6 mb-8 mt-8 flex flex-col items-center text-center">
-                    <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4 text-3xl">
-                      🎯
-                    </div>
-                    <h2 className="text-xl font-semibold mb-2">
-                      Recommended Video
-                    </h2>
-                    <p className="text-muted-foreground mb-6 max-w-md">
-                      {resources.primary.title}
-                    </p>
-                    <button
-                      onClick={() => navigate(ROUTES.RESOURCE(courseId as string, resources.primary.id))}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition-colors w-full sm:w-auto"
-                    >
-                      Start Learning
-                    </button>
-                  </div>
-                )}
-
-                {(() => {
-                  const allAdditional = [...resources.additional];
-                  if (resources.primary && resources.primary.resource_type !== "video") {
-                    allAdditional.unshift(resources.primary);
-                  }
-
-                  if (allAdditional.length === 0) return null;
-
-                  return (
-                    <div className="space-y-8">
-                      {[
-                        { type: 'video', label: 'More Videos', icon: '🎥' },
-                        { type: 'documentation', label: 'Documentation', icon: '📖' },
-                        { type: 'article', label: 'Articles', icon: '📰' },
-                        { type: 'practice', label: 'Practice / Labs', icon: '🧪' }
-                      ].map(({ type, label, icon }) => {
-                        const items = allAdditional.filter((r: any) =>
-                          type === 'article' ? (r.resource_type === 'article' || !r.resource_type) : r.resource_type === type
-                        );
-
-                        if (items.length === 0) return null;
-
-                        return (
-                          <div key={type}>
-                            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                              <span>{icon}</span> {label}
-                            </h3>
-                            <div className="grid grid-cols-1 gap-3">
-                              {items.map((res: any) => {
-                                const status = getResourceProgress(courseId as string, res.id);
-                                return (
-                                  <button
-                                    key={res.id}
-                                    onClick={() => navigate(ROUTES.RESOURCE(courseId as string, res.id))}
-                                    className="w-full text-left flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition bg-card"
-                                  >
-                                    <div className="flex items-center gap-4 text-left">
-                                      <div className="shrink-0 text-gray-400 mt-1">
-                                        {status === 'completed' && <span className="text-green-500 text-xl leading-none">✓</span>}
-                                        {status === 'in_progress' && <span className="text-blue-500 text-sm leading-none">●</span>}
-                                        {status === 'not_started' && <span className="text-gray-300 text-sm leading-none">○</span>}
-                                      </div>
-                                      <div className="flex flex-col">
-                                        <span className="font-medium text-foreground line-clamp-2">{res.title}</span>
-                                        {res.platform && <span className="text-sm text-muted-foreground capitalize mt-1">{res.platform}</span>}
-                                      </div>
-                                    </div>
-                                    <span className="text-sm text-muted-foreground ml-4 shrink-0">→</span>
-                                  </button>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
-
-                <div className="text-center text-xs text-muted-foreground mt-8 pt-4 border-t">
-                  Resources curated from roadmap.sh
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-[6px] border border-border p-4 bg-card">
-          <p className="text-sm text-muted-foreground">Roadmap</p>
-          <p className="font-medium">{course.roadmap_id}</p>
-        </div>
-        <div className="rounded-[6px] border border-border p-4 bg-card">
-          <p className="text-sm text-muted-foreground">Difficulty</p>
-          <p className="font-medium">{course.difficulty_level}</p>
-        </div>
-        <div className="rounded-[6px] border border-border p-4 bg-card">
-          <p className="text-sm text-muted-foreground">Course ID</p>
-          <p className="font-medium">{course.id}</p>
         </div>
       </div>
     </div>

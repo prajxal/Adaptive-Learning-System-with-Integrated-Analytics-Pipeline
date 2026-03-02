@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useProgress } from '../hooks/useProgress';
 import { getToken } from '../../services/auth';
 import BACKEND_URL from "../../services/api";
@@ -41,121 +41,260 @@ export default function MyProgressPage() {
         fetchData();
     }, []);
 
+    const getAccentColor = (title: string) => {
+        const t = title.toLowerCase();
+        if (t.includes('ai') || t.includes('machine learning')) return '#6366f1'; // indigo
+        if (t.includes('backend') || t.includes('back-end')) return '#3b82f6'; // blue
+        if (t.includes('frontend') || t.includes('front-end')) return '#ec4899'; // pink
+        if (t.includes('devops') || t.includes('cloud')) return '#10b981'; // emerald
+        if (t.includes('data')) return '#f59e0b'; // amber
+        if (t.includes('mobile')) return '#06b6d4'; // cyan
+        return 'var(--accent-primary)';
+    };
+
     if (loading) {
         return (
-            <div className="space-y-6">
-                <h1 className="text-2xl font-bold">My Progress</h1>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="h-48 bg-muted animate-pulse rounded-xl"></div>
-                    <div className="h-48 bg-muted animate-pulse rounded-xl"></div>
-                </div>
+            <div className="progress-root flex items-center justify-center min-h-[50vh]">
+                <style>{`
+                    .progress-root {
+                        --bg-primary: #0a0a0f;
+                        --text-muted: #64748b;
+                        background-color: var(--bg-primary);
+                    }
+                `}</style>
+                <div style={{ color: 'var(--text-muted)' }}>Loading progress...</div>
             </div>
         );
     }
 
     return (
-        <div className="space-y-10">
-            <div>
-                <h1 className="text-3xl font-bold mb-2">My Progress</h1>
-                <p className="text-muted-foreground">Track your learning journey and skill development.</p>
-            </div>
+        <div className="progress-root">
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap');
+                
+                .progress-root {
+                    --bg-primary: #0a0a0f;
+                    --bg-card: #111118;
+                    --bg-card-hover: #16161f;
+                    --accent-primary: #6366f1;
+                    --accent-secondary: #818cf8;
+                    --text-primary: #f1f5f9;
+                    --text-muted: #64748b;
+                    --border: #1e1e2e;
+                    
+                    background-color: var(--bg-primary);
+                    color: var(--text-primary);
+                    font-family: 'DM Sans', sans-serif;
+                    
+                    min-height: 100vh;
+                    position: relative;
+                }
 
-            <div>
-                <h2 className="text-xl font-semibold mb-4">Roadmaps Overview</h2>
-                {roadmaps.length === 0 ? (
-                    <div className="bg-card border rounded-xl p-8 text-center text-muted-foreground">
-                        No roadmaps available yet.
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {roadmaps.map(roadmap => {
-                            // Extract courses from roadmap data if possible, fallback to dummy for visual
-                            const coursesData = roadmap.topics?.map((t: any) => ({
-                                id: `course_${t.id}`,
-                                total_resources: 5 // mock estimate since we only fetch full courses inside RoadmapPage
-                            })) || [];
+                .progress-bg {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.06) 0%, transparent 60%);
+                    pointer-events: none;
+                    z-index: 0;
+                }
 
-                            const progress = getRoadmapProgress(roadmap.id, coursesData);
-                            // Since the mock isn't exact without fetching all courses, let's just make sure the UI works.
-                            // In a real scenario, we might need a backend aggregate or local storage sum.
+                .progress-content {
+                    position: relative;
+                    z-index: 1;
+                    max-width: 1000px;
+                    margin: 0 auto;
+                    padding: 3rem 1.5rem;
+                }
 
-                            const calculatedPercentage = Math.min(progress.percentage || 0, 100);
+                .title-font {
+                    font-family: 'Sora', sans-serif;
+                }
 
-                            return (
-                                <div key={roadmap.id} className="bg-card shadow-sm border rounded-xl overflow-hidden hover:shadow-md transition-shadow flex flex-col">
-                                    <div className="p-6 flex-1">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <h3 className="font-semibold text-lg">{roadmap.title || roadmap.id}</h3>
-                                            <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full">{calculatedPercentage}%</span>
-                                        </div>
+                .roadmap-grid {
+                    display: grid;
+                    gap: 16px;
+                    align-items: stretch;
+                }
 
-                                        <div className="space-y-2 mb-6">
-                                            <div className="flex justify-between text-sm text-muted-foreground">
-                                                <span>Completion</span>
-                                                <span>{calculatedPercentage}%</span>
-                                            </div>
-                                            <div className="w-full bg-muted rounded-full h-2">
-                                                <div className="bg-blue-600 h-2 rounded-full transition-all" style={{ width: `${calculatedPercentage}%` }}></div>
-                                            </div>
-                                        </div>
+                @media (min-width: 1024px) {
+                    .roadmap-grid {
+                        grid-template-columns: repeat(2, 1fr);
+                    }
+                }
+                @media (max-width: 1023px) {
+                    .roadmap-grid {
+                        grid-template-columns: repeat(1, 1fr);
+                    }
+                }
 
-                                        <div className="flex text-sm text-muted-foreground gap-4">
-                                            <div>
-                                                <span className="font-medium text-foreground">{progress.completedResources || 0}</span> Resources
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="px-6 py-4 bg-muted/20 border-t flex justify-between items-center">
-                                        <span className="text-sm font-medium text-muted-foreground">Adaptive Score: {Math.round(skills.find(s => s.roadmap_id === roadmap.id)?.trust_score || 0)}</span>
-                                        <button
-                                            onClick={() => navigate(`/roadmap/${roadmap.id}`)}
-                                            className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center gap-1"
-                                        >
-                                            Continue Learning <span className="text-lg leading-none">→</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
-            </div>
+                .roadmap-card {
+                    background-color: var(--bg-card);
+                    border: 1px solid var(--border);
+                    transition: all 0.2s ease;
+                    display: flex;
+                    flex-direction: column;
+                    text-decoration: none;
+                }
 
-            <div>
-                <h2 className="text-xl font-semibold mb-4">Skill Proficiency Profiles</h2>
-                <div className="bg-card border rounded-xl p-6 shadow-sm">
-                    {skills.length === 0 ? (
-                        <p className="text-muted-foreground text-center py-8">Start learning to build your skill profile.</p>
+                .roadmap-card:hover {
+                    background-color: var(--bg-card-hover);
+                    border-color: var(--accent-primary);
+                    box-shadow: 0 0 24px rgba(99,102,241,0.15);
+                }
+
+                .dark-card {
+                    background-color: var(--bg-card);
+                    border: 1px solid var(--border);
+                    border-radius: 0.75rem;
+                }
+            `}</style>
+
+            <div className="progress-bg"></div>
+
+            <div className="progress-content space-y-12">
+                <div>
+                    <h1 className="title-font text-4xl md:text-5xl font-bold mb-3 tracking-tight">My Progress</h1>
+                    <p className="text-lg" style={{ color: 'var(--text-muted)' }}>Track your learning journey and skill development.</p>
+                </div>
+
+                <div>
+                    <h2 className="title-font text-2xl font-semibold mb-6">Roadmaps Overview</h2>
+                    {roadmaps.length === 0 ? (
+                        <div className="dark-card p-10 text-center" style={{ color: 'var(--text-muted)' }}>
+                            No roadmaps available yet.
+                        </div>
                     ) : (
-                        <div className="space-y-6">
-                            {skills.map((skill, index) => {
-                                const maxScore = 1500; // Arbitrary max for visualization
-                                const percentage = Math.min(Math.round(((skill.trust_score || 0) / maxScore) * 100), 100);
+                        <div className="roadmap-grid">
+                            {roadmaps.map(roadmap => {
+                                // Extract courses from roadmap data if possible, fallback to dummy for visual
+                                const coursesData = roadmap.topics?.map((t: any) => ({
+                                    id: `course_${t.id}`,
+                                    total_resources: 5 // mock estimate
+                                })) || [];
+
+                                const progress = getRoadmapProgress(roadmap.id, coursesData);
+                                const calculatedPercentage = Math.min(progress.percentage || 0, 100);
+                                const score = Math.round(skills.find(s => s.roadmap_id === roadmap.id)?.trust_score || 800);
 
                                 return (
-                                    <div key={index} className="space-y-2">
-                                        <div className="flex justify-between items-end">
-                                            <div>
-                                                <h4 className="font-medium capitalize">{skill.roadmap_id.replace('-', ' ')}</h4>
-                                                <p className="text-xs text-muted-foreground">Proficiency: {skill.proficiency_level ? (skill.proficiency_level * 100).toFixed(0) + '%' : '0%'}</p>
+                                    <div
+                                        key={roadmap.id}
+                                        className="roadmap-card rounded-xl p-6 group cursor-pointer relative"
+                                        onClick={() => navigate(`/roadmap/${roadmap.id}`)}
+                                    >
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex items-center gap-2.5">
+                                                <div
+                                                    className="w-2.5 h-2.5 rounded-full"
+                                                    style={{ backgroundColor: getAccentColor(roadmap.id) }}
+                                                />
+                                                <h3 className="title-font text-xl font-bold capitalize" style={{ color: 'var(--text-primary)' }}>
+                                                    {roadmap.id.replace(/-/g, ' ')}
+                                                </h3>
                                             </div>
-                                            <div className="text-right">
-                                                <span className="font-bold text-lg">{Math.round(skill.trust_score || 0)}</span>
-                                                <span className="text-xs text-muted-foreground ml-1">elo</span>
+
+                                            <div
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                                style={{ color: 'var(--text-muted)' }}
+                                            >
+                                                <span className="text-xl leading-none">→</span>
                                             </div>
                                         </div>
-                                        <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
-                                            <div
-                                                className={`h-3 rounded-full transition-all ${percentage > 60 ? 'bg-green-500' : percentage > 30 ? 'bg-blue-500' : 'bg-orange-400'
-                                                    }`}
-                                                style={{ width: `${percentage}%` }}
-                                            ></div>
+
+                                        <div className="flex justify-between items-center mb-8">
+                                            <span className="text-sm font-semibold" style={{ color: 'var(--text-muted)' }}>
+                                                {progress.completedResources || 0} Resources
+                                            </span>
+                                            <span
+                                                className="px-2 py-0.5 rounded text-[11px] font-bold"
+                                                style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-muted)' }}
+                                            >
+                                                {calculatedPercentage}%
+                                            </span>
+                                        </div>
+
+                                        <div className="mt-auto flex flex-col gap-3">
+                                            <div className="flex items-center justify-between">
+                                                {score !== 800 ? (
+                                                    <div
+                                                        className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border"
+                                                        style={{
+                                                            backgroundColor: 'rgba(99,102,241,0.1)',
+                                                            color: 'var(--accent-primary)',
+                                                            borderColor: 'rgba(99,102,241,0.2)'
+                                                        }}
+                                                    >
+                                                        Score: {score}
+                                                    </div>
+                                                ) : (
+                                                    <div
+                                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border"
+                                                        style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-muted)', borderColor: 'var(--border)' }}
+                                                    >
+                                                        <span style={{ fontSize: '8px' }}>●</span> Not Started
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="w-full h-[3px] rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
+                                                <div
+                                                    className="h-full rounded-full"
+                                                    style={{
+                                                        backgroundColor: 'var(--accent-primary)',
+                                                        width: `${calculatedPercentage}%`,
+                                                        transition: 'width 0.5s ease-in-out'
+                                                    }}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 );
                             })}
                         </div>
                     )}
+                </div>
+
+                <div>
+                    <h2 className="title-font text-2xl font-semibold mb-6">Skill Proficiency Profiles</h2>
+                    <div className="dark-card p-6">
+                        {skills.length === 0 ? (
+                            <p className="text-center py-8" style={{ color: 'var(--text-muted)' }}>Start learning to build your skill profile.</p>
+                        ) : (
+                            <div className="space-y-6">
+                                {skills.map((skill, index) => {
+                                    const maxScore = 1500; // Arbitrary max for visualization
+                                    const percentage = Math.min(Math.round(((skill.trust_score || 0) / maxScore) * 100), 100);
+
+                                    return (
+                                        <div key={index} className="space-y-2">
+                                            <div className="flex justify-between items-end">
+                                                <div>
+                                                    <h4 className="title-font font-semibold capitalize text-lg" style={{ color: 'var(--text-primary)' }}>{skill.roadmap_id.replace('-', ' ')}</h4>
+                                                    <p className="text-xs font-medium mt-1" style={{ color: 'var(--text-muted)' }}>Proficiency: {skill.proficiency_level ? (skill.proficiency_level * 100).toFixed(0) + '%' : '0%'}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="font-bold text-xl" style={{ color: 'var(--text-primary)' }}>{Math.round(skill.trust_score || 0)}</span>
+                                                    <span className="text-xs ml-1 font-semibold" style={{ color: 'var(--text-muted)' }}>elo</span>
+                                                </div>
+                                            </div>
+                                            <div className="w-full rounded-full h-[4px] overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
+                                                <div
+                                                    className="h-[4px] rounded-full transition-all"
+                                                    style={{
+                                                        backgroundColor: percentage > 60 ? '#10b981' : percentage > 30 ? '#3b82f6' : '#f59e0b',
+                                                        width: `${percentage}%`
+                                                    }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

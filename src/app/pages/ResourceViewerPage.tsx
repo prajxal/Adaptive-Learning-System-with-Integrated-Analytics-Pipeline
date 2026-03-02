@@ -115,7 +115,7 @@ export default function ResourceViewerPage() {
 
         return (
             <div className="mb-6" key={type}>
-                <h4 className="text-sm font-semibold text-muted-foreground mb-3 px-2 flex items-center gap-2 uppercase tracking-wider">
+                <h4 className="font-semibold mb-3 px-2 flex items-center gap-2 uppercase text-[11px] tracking-[0.08em] text-[#64748b]">
                     {icon} {title}
                 </h4>
                 <div className="space-y-1">
@@ -127,20 +127,20 @@ export default function ResourceViewerPage() {
                             <button
                                 key={res.id}
                                 onClick={() => navigate(`/course/${courseId}/resource/${res.id}`)}
-                                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors border flex items-start gap-2 ${isActive
-                                    ? 'bg-blue-600/10 text-blue-600 font-medium border-blue-600/20'
-                                    : 'text-foreground hover:bg-muted/50 border-transparent hover:border-border'
+                                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors border-l-[3px] flex items-start gap-2 ${isActive
+                                    ? 'bg-[#16161f] border-[#6366f1] text-[#f1f5f9]'
+                                    : 'text-[#64748b] bg-transparent border-transparent hover:bg-[#16161f] hover:text-[#f1f5f9]'
                                     }`}
                             >
                                 <div className="mt-0.5 shrink-0 text-gray-500">
-                                    {status === 'completed' && <span className="text-green-500 text-base leading-none">✓</span>}
-                                    {status === 'in_progress' && <span className="text-blue-500 text-[10px] leading-none">●</span>}
-                                    {status === 'not_started' && <span className="text-gray-300 text-[10px] leading-none">○</span>}
+                                    {status === 'completed' && <span className="text-[#22c55e] text-base leading-none">✓</span>}
+                                    {status === 'in_progress' && <span className="text-[#6366f1] text-[10px] leading-none">●</span>}
+                                    {status === 'not_started' && <span className="text-gray-600 text-[10px] leading-none">○</span>}
                                 </div>
                                 <div className="flex-1">
                                     <div className="line-clamp-2">{res.title}</div>
                                     {res.platform && (
-                                        <div className={`text-xs mt-1 ${isActive ? 'text-blue-500/80' : 'text-muted-foreground'}`}>
+                                        <div className="text-[11px] mt-1 text-[#64748b]">
                                             {res.platform.toUpperCase()}
                                         </div>
                                     )}
@@ -154,17 +154,17 @@ export default function ResourceViewerPage() {
     };
 
     return (
-        <div className="flex h-[calc(100vh-8rem)] -mt-4 -mx-4 overflow-hidden border rounded-xl bg-card">
+        <div className="flex h-[calc(100vh-8rem)] -mt-4 -mx-4 overflow-hidden border border-[#1e1e2e] rounded-xl bg-[#0a0a0f]">
             {/* Sidebar */}
-            <div className="w-1/4 min-w-[280px] max-w-[350px] border-r bg-muted/20 overflow-y-auto">
-                <div className="p-4 border-b bg-card sticky top-0 z-10 hidden sm:flex items-center gap-2">
+            <div className="w-1/4 min-w-[280px] max-w-[350px] bg-[#111118] border-r border-[#1e1e2e] overflow-y-auto">
+                <div className="p-4 border-b border-[#1e1e2e] bg-[#111118] sticky top-0 z-10 hidden sm:flex items-center gap-2">
                     <button
                         onClick={() => navigate(`/course/${courseId}`)}
-                        className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted"
+                        className="text-[#f1f5f9] hover:bg-[#16161f] p-1 rounded"
                     >
                         ← Back
                     </button>
-                    <span className="font-semibold text-sm truncate">Course Resources</span>
+                    <span className="font-semibold text-sm truncate text-[#f1f5f9]">Course Resources</span>
                 </div>
 
                 <div className="p-4">
@@ -176,21 +176,21 @@ export default function ResourceViewerPage() {
             </div>
 
             {/* Main Viewer */}
-            <div className="flex-1 flex flex-col overflow-hidden bg-background">
-                <div className="p-4 border-b bg-card">
+            <div className="flex-1 flex flex-col overflow-hidden bg-[#0a0a0f]">
+                <div className="p-4 border-b bg-[#111118] border-[#1e1e2e]">
                     <div className="flex items-start justify-between mb-1">
-                        <h2 className="text-xl font-semibold pr-4">{activeResource.title}</h2>
+                        <h2 className="text-xl font-bold pr-4 text-[#f1f5f9]">{activeResource.title}</h2>
                         <div className="flex items-center gap-2 shrink-0">
                             {activeResource.resource_type === "video" ? (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-medium bg-[#16161f] text-[#64748b] border border-[#1e1e2e]">
                                     🟢 Embedded Video
                                 </span>
                             ) : iframeError ? (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-medium bg-[#16161f] text-[#64748b] border border-[#1e1e2e]">
                                     🔗 Opens externally
                                 </span>
                             ) : (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-medium bg-[#16161f] text-[#64748b] border border-[#1e1e2e]">
                                     🟢 Embedded Documentation
                                 </span>
                             )}
@@ -198,18 +198,18 @@ export default function ResourceViewerPage() {
                             {getResourceProgress(courseId as string, activeResource.id) !== 'completed' ? (
                                 <button
                                     onClick={() => markResourceComplete(courseId as string, activeResource.id)}
-                                    className="ml-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium py-1 px-3 rounded transition-colors"
+                                    className="ml-2 bg-[#6366f1] hover:bg-indigo-600 text-[#f1f5f9] text-xs font-medium py-1 px-3 rounded transition-colors"
                                 >
                                     Mark Complete ✓
                                 </button>
                             ) : (
-                                <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-[11px] font-medium bg-[#22c55e] text-[#f1f5f9]">
                                     ✓ Completed
                                 </span>
                             )}
                         </div>
                     </div>
-                    <div className="text-sm text-muted-foreground flex gap-3 items-center">
+                    <div className="text-sm text-[#64748b] flex gap-3 items-center">
                         <span className="capitalize">{activeResource.platform}</span>
                         {activeResource.duration_seconds > 0 && (
                             <span>• {Math.floor(activeResource.duration_seconds / 60)} mins</span>
@@ -218,19 +218,19 @@ export default function ResourceViewerPage() {
                             href={activeResource.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="ml-auto text-blue-600 hover:underline flex items-center gap-1"
+                            className="ml-auto text-[#64748b] hover:text-[#f1f5f9] hover:underline flex items-center gap-1 transition-colors"
                         >
                             Open external <span className="text-xs">↗</span>
                         </a>
                     </div>
                 </div>
 
-                <div className="flex-1 p-6 overflow-y-auto w-full h-full flex flex-col relative bg-muted/5">
+                <div className="flex-1 p-6 overflow-y-auto w-full h-full flex flex-col relative bg-[#0a0a0f]">
                     {activeResource.resource_type === "video" ? (
-                        <div key={activeResource.id} className="relative aspect-video w-full rounded-xl shadow-lg border bg-black mt-4 max-w-5xl mx-auto overflow-hidden">
+                        <div key={activeResource.id} className="relative aspect-video w-full rounded-xl shadow-lg border border-[#1e1e2e] bg-[#111118] mt-4 max-w-5xl mx-auto overflow-hidden">
                             {iframeLoading && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-muted/20 animate-pulse">
-                                    <div className="w-8 h-8 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></div>
+                                <div className="absolute inset-0 flex items-center justify-center bg-[#111118] animate-pulse">
+                                    <div className="w-8 h-8 rounded-full border-4 border-[#6366f1] border-t-transparent animate-spin"></div>
                                 </div>
                             )}
                             <iframe
@@ -248,23 +248,23 @@ export default function ResourceViewerPage() {
                             />
                         </div>
                     ) : (
-                        <div key={activeResource.id} className="relative w-full flex-1 rounded-xl shadow-lg border bg-white flex flex-col overflow-hidden">
+                        <div key={activeResource.id} className="relative w-full flex-1 rounded-xl shadow-lg border border-[#1e1e2e] bg-[#111118] flex flex-col overflow-hidden">
                             {iframeError ? (
-                                <div className="flex flex-col items-center justify-center flex-1 bg-white p-12 text-center h-full">
-                                    <div className="w-16 h-16 bg-muted/30 rounded-full flex items-center justify-center mb-6 text-2xl shadow-sm border">
+                                <div className="flex flex-col items-center justify-center flex-1 bg-[#111118] p-12 text-center h-full">
+                                    <div className="w-16 h-16 bg-[#16161f] rounded-full flex items-center justify-center mb-6 text-2xl shadow-sm border border-[#1e1e2e] text-[#6366f1]">
                                         🔗
                                     </div>
-                                    <h3 className="text-xl font-semibold mb-3 text-foreground">
+                                    <h3 className="text-xl font-semibold mb-3 text-[#f1f5f9]">
                                         External Resource
                                     </h3>
-                                    <p className="text-muted-foreground mb-8 max-w-md">
+                                    <p className="text-[#64748b] mb-8 max-w-md">
                                         ⚠️ This resource cannot be displayed inside LearnPathAI due to external site restrictions.
                                     </p>
                                     <a
                                         href={activeResource.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg transition-all shadow-sm hover:shadow"
+                                        className="inline-flex items-center justify-center gap-2 bg-[#6366f1] hover:bg-indigo-600 text-[#f1f5f9] font-medium py-3 px-8 rounded-lg transition-all shadow-sm hover:shadow"
                                     >
                                         Open in new tab <span className="text-lg leading-none">↗</span>
                                     </a>
@@ -272,9 +272,9 @@ export default function ResourceViewerPage() {
                             ) : (
                                 <>
                                     {iframeLoading && (
-                                        <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
-                                            <div className="flex flex-col items-center gap-4 text-muted-foreground">
-                                                <div className="w-8 h-8 rounded-full border-4 border-blue-600 border-t-transparent animate-spin"></div>
+                                        <div className="absolute inset-0 flex items-center justify-center bg-[#111118] z-10">
+                                            <div className="flex flex-col items-center gap-4 text-[#64748b]">
+                                                <div className="w-8 h-8 rounded-full border-4 border-[#6366f1] border-t-transparent animate-spin"></div>
                                                 <p className="text-sm font-medium animate-pulse">Loading document...</p>
                                             </div>
                                         </div>

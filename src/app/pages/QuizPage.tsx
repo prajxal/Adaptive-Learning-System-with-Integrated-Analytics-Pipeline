@@ -18,14 +18,17 @@ export default function QuizPage() {
     const [result, setResult] = useState<{ score: number; passed: boolean } | null>(null);
     const [newProfile, setNewProfile] = useState<SkillProfile | null>(null);
 
+    // To track submitted answers for result explanations
+    const [submittedAnswers, setSubmittedAnswers] = useState<Record<string, string>>({});
+
     useEffect(() => {
         if (!courseId) return;
 
-        // Reset everything when courseId changes
         setQuiz(null);
         setResult(null);
         setNewProfile(null);
         setAnswers({});
+        setSubmittedAnswers({});
         setCurrentQuestionIndex(0);
         setLoading(true);
         setError(null);
@@ -64,8 +67,8 @@ export default function QuizPage() {
             return;
         }
 
-        // Finished last question, submit
         setSubmitting(true);
+        setSubmittedAnswers({ ...answers });
 
         try {
             const submissionResult = await submitQuizAttempt(courseId!, answers);
@@ -75,7 +78,6 @@ export default function QuizPage() {
                     passed: submissionResult.passed,
                 });
 
-                // Refetch profile to show new mastery
                 const updatedProfile = await getSkillProfile(courseId!);
                 setNewProfile(updatedProfile);
             } else {
@@ -90,25 +92,40 @@ export default function QuizPage() {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-                <div className="animate-spin text-4xl">⚙️</div>
-                <p className="text-muted-foreground animate-pulse">Generating your adaptive quiz questions...</p>
+            <div className="quiz-page-root flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+                <style>{`
+                    .quiz-page-root {
+                        --bg-primary: #0a0a0f;
+                        --text-primary: #f1f5f9;
+                        --text-muted: #64748b;
+                        --accent-primary: #6366f1;
+                        background-color: var(--bg-primary);
+                    }
+                `}</style>
+                <div className="w-10 h-10 border-4 rounded-full border-t-transparent animate-spin" style={{ borderColor: 'var(--accent-primary)', borderTopColor: 'transparent' }}></div>
+                <p style={{ color: 'var(--text-muted)' }}>Generating your quiz...</p>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="max-w-2xl mx-auto mt-12 bg-red-50 border border-red-200 rounded-xl p-8 text-center">
-                <div className="text-4xl mb-4">⚠️</div>
-                <h2 className="text-xl font-semibold text-red-800 mb-2">Quiz Load Error</h2>
-                <p className="text-red-600 mb-6">{error}</p>
-                <button
-                    onClick={() => navigate(-1)}
-                    className="bg-white px-4 py-2 border rounded shadow-sm font-medium hover:bg-gray-50"
-                >
-                    Go Back
-                </button>
+            <div className="quiz-page-root flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+                <style>{`
+                    .quiz-page-root { --bg-primary: #0a0a0f; background-color: var(--bg-primary); }
+                `}</style>
+                <div className="max-w-md mx-auto p-8 rounded-xl border border-red-900/50 bg-red-900/10 text-center">
+                    <div className="text-4xl mb-4 text-red-500">⚠️</div>
+                    <h2 className="text-xl font-semibold text-red-400 mb-2">Quiz Load Error</h2>
+                    <p className="text-red-300/80 mb-6">{error}</p>
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="px-6 py-2 rounded font-medium transition-colors"
+                        style={{ backgroundColor: 'var(--accent-primary)', color: 'white' }}
+                    >
+                        Go Back
+                    </button>
+                </div>
             </div>
         );
     }
@@ -117,42 +134,129 @@ export default function QuizPage() {
 
     // --- RESULT SCREEN ---
     if (result && newProfile) {
+        let scoreColor = '#ef4444'; // red
+        if (result.score >= 75) scoreColor = '#22c55e'; // green
+        else if (result.score >= 50) scoreColor = '#eab308'; // yellow
+
         return (
-            <div className="max-w-2xl mx-auto mt-12">
-                <div className="bg-card border rounded-2xl p-10 text-center shadow-sm space-y-6">
-                    <div className="text-6xl mb-4">
-                        {result.passed ? "🎉" : "💪"}
-                    </div>
-                    <h1 className="text-3xl font-bold">
-                        {result.passed ? "Quiz Passed!" : "Keep Studying!"}
-                    </h1>
+            <div className="quiz-page-root">
+                <style>{`
+                    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap');
+                    .quiz-page-root {
+                        --bg-primary: #0a0a0f;
+                        --bg-card: #111118;
+                        --accent-primary: #6366f1;
+                        --text-primary: #f1f5f9;
+                        --text-muted: #64748b;
+                        --border: #1e1e2e;
+                        
+                        background-color: var(--bg-primary);
+                        color: var(--text-primary);
+                        font-family: 'DM Sans', sans-serif;
+                        min-height: 100vh;
+                        padding-bottom: 4rem;
+                    }
+                    .title-font { font-family: 'Sora', sans-serif; }
+                    .dark-card {
+                        background-color: var(--bg-card);
+                        border: 1px solid var(--border);
+                        border-radius: 0.75rem;
+                    }
+                `}</style>
 
-                    <div className="bg-muted p-6 rounded-xl inline-block mt-4 mb-6">
-                        <div className="text-sm font-semibold uppercase text-muted-foreground tracking-wider mb-2">Your Score</div>
-                        <div className={`text-5xl font-extrabold ${result.passed ? "text-green-600" : "text-blue-600"}`}>
-                            {Math.round(result.score)}%
+                <div className="max-w-3xl mx-auto pt-12 px-4">
+                    <div className="dark-card p-10 text-center mb-8">
+                        <div className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: 'var(--text-muted)' }}>Quiz Results</div>
+                        <div className="title-font font-bold text-7xl md:text-8xl mb-6 flex justify-center items-baseline gap-2" style={{ color: scoreColor }}>
+                            {Math.round(result.score)}<span className="text-4xl opacity-50">%</span>
                         </div>
-                        <div className="mt-2 text-sm text-muted-foreground">Passing score: {quiz.passing_score}%</div>
+
+                        <div className="inline-flex items-center gap-6 px-8 py-4 rounded-xl border mb-10" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                            <div className="text-left">
+                                <div className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--accent-primary)' }}>Mastery Updated</div>
+                                <div className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
+                                    {Math.min(100, Math.round(newProfile.proficiency_level * (newProfile.proficiency_level <= 1 ? 100 : 1)))}%
+                                </div>
+                            </div>
+                            <div className="w-px h-10 bg-[var(--border)]"></div>
+                            <div className="text-left">
+                                <div className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Confidence</div>
+                                <div className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
+                                    {Math.round(newProfile.confidence * 100)}%
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <button
+                                onClick={() => {
+                                    setResult(null);
+                                    setNewProfile(null);
+                                    setAnswers({});
+                                    setSubmittedAnswers({});
+                                    setCurrentQuestionIndex(0);
+                                }}
+                                className="px-8 py-3 rounded-lg font-bold border transition-colors"
+                                style={{ borderColor: 'var(--border)', color: 'var(--text-primary)', backgroundColor: 'transparent' }}
+                                onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--accent-primary)' }}
+                                onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+                            >
+                                Retake Quiz
+                            </button>
+                            <button
+                                onClick={() => navigate(-1)}
+                                className="px-8 py-3 rounded-lg font-bold transition-colors shadow-sm"
+                                style={{ backgroundColor: 'var(--accent-primary)', color: 'white' }}
+                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#4f46e5'}
+                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--accent-primary)'}
+                            >
+                                Back to Course
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 text-left border-t pt-6 max-w-sm mx-auto">
-                        <div className="bg-primary/5 p-4 rounded-xl">
-                            <div className="text-xs uppercase text-primary font-bold mb-1">New Mastery</div>
-                            <div className="text-2xl font-bold">{Math.round(newProfile.proficiency_level)}%</div>
-                        </div>
-                        <div className="bg-muted p-4 rounded-xl">
-                            <div className="text-xs uppercase text-muted-foreground font-bold mb-1">Confidence</div>
-                            <div className="text-2xl font-bold">{Math.round(newProfile.confidence * 100)}%</div>
-                        </div>
-                    </div>
+                    <div className="space-y-4">
+                        <h3 className="title-font text-xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>Question Review</h3>
+                        {quiz.questions.map((q, idx) => {
+                            const qId = q.id || `q${idx}`;
+                            const userAns = submittedAnswers[qId];
+                            const isCorrect = userAns === q.correct_answer;
 
-                    <div className="pt-8">
-                        <button
-                            onClick={() => navigate(-1)}
-                            className="bg-foreground text-background font-medium py-3 px-8 rounded-lg hover:opacity-90 transition-opacity w-full sm:w-auto"
-                        >
-                            Continue Learning
-                        </button>
+                            return (
+                                <div key={idx} className="dark-card p-6">
+                                    <div className="flex gap-4 mb-4">
+                                        <div className="shrink-0 mt-1">
+                                            {isCorrect ? (
+                                                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20 text-green-500 text-sm">✓</span>
+                                            ) : (
+                                                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-red-500/20 text-red-500 text-sm">✕</span>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <div className="font-semibold text-lg mb-2" style={{ color: 'var(--text-primary)' }}>{q.question}</div>
+                                            <div className="space-y-2 text-sm mt-4">
+                                                <div className="p-3 rounded border" style={{ backgroundColor: isCorrect ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', borderColor: isCorrect ? '#22c55e' : '#ef4444' }}>
+                                                    <span className="font-bold mr-2 text-xs uppercase opacity-70">Your Answer:</span>
+                                                    {userAns || "Skipped"}
+                                                </div>
+                                                {!isCorrect && (
+                                                    <div className="p-3 rounded border" style={{ backgroundColor: 'rgba(34,197,94,0.1)', borderColor: '#22c55e' }}>
+                                                        <span className="font-bold mr-2 text-xs uppercase opacity-70">Correct Answer:</span>
+                                                        {q.correct_answer}
+                                                    </div>
+                                                )}
+                                                {q.explanation && (
+                                                    <div className="mt-4 p-4 rounded bg-black/50 border border-[var(--border)] text-[var(--text-muted)]">
+                                                        <span className="font-bold text-[var(--text-primary)] block mb-1 text-xs uppercase">Explanation</span>
+                                                        {q.explanation}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             </div>
@@ -166,68 +270,153 @@ export default function QuizPage() {
     const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1;
 
     return (
-        <div className="max-w-3xl mx-auto pb-12">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8 opacity-70">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="text-sm hover:underline"
-                >
-                    Cancel Quiz
-                </button>
-                <div className="text-sm font-medium">Question {currentQuestionIndex + 1} of {quiz.questions.length}</div>
-            </div>
+        <div className="quiz-page-root">
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap');
+                
+                .quiz-page-root {
+                    --bg-primary: #0a0a0f;
+                    --bg-card: #111118;
+                    --bg-card-hover: #16161f;
+                    --accent-primary: #6366f1;
+                    --text-primary: #f1f5f9;
+                    --text-muted: #64748b;
+                    --border: #1e1e2e;
+                    
+                    background-color: var(--bg-primary);
+                    color: var(--text-primary);
+                    font-family: 'DM Sans', sans-serif;
+                    
+                    min-height: 100vh;
+                    position: relative;
+                }
 
-            {/* Progress Bar */}
-            <div className="w-full bg-muted rounded-full h-1.5 mb-10 overflow-hidden">
-                <div
-                    className="bg-primary h-1.5 rounded-full transition-all duration-300"
-                    style={{ width: `${((currentQuestionIndex) / quiz.questions.length) * 100}%` }}
-                />
-            </div>
+                .quiz-bg {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.05) 0%, transparent 60%);
+                    pointer-events: none;
+                    z-index: 0;
+                }
 
-            <div className="bg-card border rounded-2xl p-8 md:p-10 shadow-sm">
-                <h2 className="text-2xl md:text-3xl font-bold mb-8 leading-tight">
-                    {currentQuestion.question}
-                </h2>
+                .title-font {
+                    font-family: 'Sora', sans-serif;
+                }
 
-                <div className="space-y-3">
-                    {currentQuestion.options.map((option, idx) => {
-                        const isSelected = selectedOption === option;
-                        return (
-                            <button
-                                key={idx}
-                                onClick={() => handleOptionSelect(option)}
-                                className={`w-full text-left p-5 rounded-xl border-2 transition-all ${isSelected
-                                        ? "border-primary bg-primary/5 font-semibold shadow-sm"
-                                        : "border-border hover:border-gray-400 hover:bg-muted/50"
-                                    }`}
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? "border-primary bg-primary text-primary-foreground" : "border-gray-300"
-                                        }`}>
-                                        {isSelected && <span className="text-xs">✓</span>}
-                                    </div>
-                                    <span className={isSelected ? "text-foreground" : "text-muted-foreground"}>
-                                        {option}
-                                    </span>
-                                </div>
-                            </button>
-                        )
-                    })}
+                .question-card {
+                    background-color: var(--bg-card);
+                    border: 1px solid var(--border);
+                    border-radius: 0.75rem;
+                    padding: 2.5rem;
+                    position: relative;
+                    z-index: 1;
+                }
+
+                .option-row {
+                    width: 100%;
+                    text-align: left;
+                    background-color: #16161f;
+                    border: 1px solid var(--border);
+                    border-radius: 0.5rem;
+                    padding: 1.25rem 1.5rem;
+                    color: var(--text-primary);
+                    transition: all 0.15s ease;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                }
+
+                .option-row:hover {
+                    border-color: var(--accent-primary);
+                    background-color: #1c1c28;
+                }
+
+                .option-row.selected {
+                    border-color: var(--accent-primary);
+                    background-color: rgba(99,102,241,0.15);
+                    border-left: 3px solid var(--accent-primary);
+                }
+
+                .action-btn {
+                    background-color: var(--accent-primary);
+                    color: white;
+                    font-weight: 700;
+                    padding: 0.75rem 2rem;
+                    border-radius: 0.5rem;
+                    transition: background-color 0.15s ease;
+                }
+                .action-btn:hover:not(:disabled) {
+                    background-color: #4f46e5;
+                }
+                .action-btn:disabled {
+                    background-color: var(--bg-card-hover);
+                    color: var(--text-muted);
+                    cursor: not-allowed;
+                    border: 1px solid var(--border);
+                }
+            `}</style>
+
+            <div className="quiz-bg"></div>
+
+            <div className="max-w-3xl mx-auto pt-16 px-4 relative z-10 pb-20">
+                <div className="flex items-end justify-between mb-2">
+                    <h1 className="title-font text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                        {quiz.title || courseId?.replace(/-/g, ' ')}
+                    </h1>
+                    <div className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+                        Question {currentQuestionIndex + 1} of {quiz.questions.length}
+                    </div>
                 </div>
 
-                <div className="mt-10 flex justify-end">
-                    <button
-                        disabled={!selectedOption || submitting}
-                        onClick={handleNext}
-                        className={`font-medium py-3 px-8 rounded-lg transition-all ${!selectedOption || submitting
-                                ? "bg-muted text-muted-foreground cursor-not-allowed"
-                                : "bg-primary text-primary-foreground shadow-md hover:opacity-90"
-                            }`}
-                    >
-                        {submitting ? "Submitting..." : isLastQuestion ? "Submit Quiz" : "Next Question"}
-                    </button>
+                <div className="w-full h-[2px] rounded-full overflow-hidden mb-10" style={{ backgroundColor: 'var(--border)' }}>
+                    <div
+                        className="h-full transition-all duration-300 ease-out"
+                        style={{ backgroundColor: 'var(--accent-primary)', width: `${((currentQuestionIndex + 1) / quiz.questions.length) * 100}%` }}
+                    />
+                </div>
+
+                <div className="question-card">
+                    <h2 className="title-font text-2xl md:text-3xl font-bold mb-10 leading-snug" style={{ color: 'var(--text-primary)' }}>
+                        {currentQuestion.question}
+                    </h2>
+
+                    <div className="space-y-3">
+                        {currentQuestion.options.map((option, idx) => {
+                            const isSelected = selectedOption === option;
+                            return (
+                                <button
+                                    key={idx}
+                                    onClick={() => handleOptionSelect(option)}
+                                    className={`option-row ${isSelected ? 'selected' : ''}`}
+                                >
+                                    <span className="font-medium text-lg">{option}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div className="mt-12 flex justify-between items-center border-t border-[var(--border)] pt-6">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="text-sm font-medium transition-colors"
+                            style={{ color: 'var(--text-muted)' }}
+                            onMouseOver={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                            onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                        >
+                            Cancel Quiz
+                        </button>
+
+                        <button
+                            disabled={!selectedOption || submitting}
+                            onClick={handleNext}
+                            className="action-btn"
+                        >
+                            {submitting ? "Submitting..." : isLastQuestion ? "Submit Quiz" : "Next"}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -8,14 +8,14 @@ interface AppNavbarProps {
 
 export function AppNavbar({ onMenuClick, showMenuButton = false }: AppNavbarProps) {
   return (
-    <nav className="border-b border-border bg-card sticky top-0 z-40 backdrop-blur-sm bg-card/95">
+    <nav className="border-b border-[#1e1e2e] bg-[#0a0a0f] sticky top-0 z-40 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
             {showMenuButton && (
               <button
                 onClick={onMenuClick}
-                className="lg:hidden text-foreground hover:text-accent transition-colors"
+                className="lg:hidden text-[#f1f5f9] hover:text-[#6366f1] transition-colors"
               >
                 <Menu className="w-6 h-6" />
               </button>
@@ -25,13 +25,13 @@ export function AppNavbar({ onMenuClick, showMenuButton = false }: AppNavbarProp
                 <GraduationCap className="w-5 h-5 text-white" />
               </div>
               <div>
-                <span className="font-semibold text-foreground">LearnPath</span>
-                <span className="text-accent font-semibold">AI</span>
+                <span className="font-semibold text-[#f1f5f9]">LearnPath</span>
+                <span className="text-[#6366f1] font-semibold">AI</span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground hidden sm:block">
+            <span className="text-sm text-[#f1f5f9] hidden sm:block">
               Engineering Learning Platform
             </span>
           </div>

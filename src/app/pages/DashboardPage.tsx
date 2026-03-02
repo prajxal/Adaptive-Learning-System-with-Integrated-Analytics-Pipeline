@@ -5,6 +5,7 @@ import { uploadResume } from "../../services/resumeApi";
 import { getUserSkills } from "../../services/userApi";
 import { getToken } from "../../services/auth";
 import { useProgress } from "../hooks/useProgress";
+import { Brain, Check } from "lucide-react";
 
 export default function DashboardPage() {
   const token = getToken();
@@ -45,7 +46,8 @@ export default function DashboardPage() {
       })
       .catch((e: any) => {
         console.error("Skill load error:", e);
-        setError(e.message || "Failed to load skills");
+        setSkills([]);
+        setError(null);
       })
       .finally(() => {
         setLoading(false);
@@ -71,153 +73,365 @@ export default function DashboardPage() {
     setResumeUploading(false);
   }
 
+  const getAccentColor = (title: string) => {
+    const t = title.toLowerCase();
+    if (t.includes('ai') || t.includes('machine learning')) return '#6366f1'; // indigo
+    if (t.includes('backend') || t.includes('back-end')) return '#3b82f6'; // blue
+    if (t.includes('frontend') || t.includes('front-end')) return '#ec4899'; // pink
+    if (t.includes('devops') || t.includes('cloud')) return '#10b981'; // emerald
+    if (t.includes('data')) return '#f59e0b'; // amber
+    if (t.includes('mobile')) return '#06b6d4'; // cyan
+    return 'var(--accent-primary)';
+  };
+
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
+    <div className="dashboard-root">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap');
+        
+        .dashboard-root {
+          --bg-primary: #0a0a0f;
+          --bg-card: #111118;
+          --bg-card-hover: #16161f;
+          --accent-primary: #6366f1;
+          --accent-secondary: #818cf8;
+          --text-primary: #f1f5f9;
+          --text-muted: #64748b;
+          --border: #1e1e2e;
+          
+          background-color: var(--bg-primary);
+          color: var(--text-primary);
+          font-family: 'DM Sans', sans-serif;
+          
+          min-height: 100vh;
+          position: relative;
+        }
 
-      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
-        <h2 className="text-xl font-semibold mb-4">Account Setup</h2>
+        .dashboard-bg {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.06) 0%, transparent 60%);
+          pointer-events: none;
+          z-index: 0;
+        }
 
-        {/* GitHub Connect */}
-        <div className="mb-4">
-          {githubConnected ? (
-            <div className="text-green-600 font-medium">
-              ✓ Connected to GitHub as {githubUsername}
+        .dashboard-content {
+          position: relative;
+          z-index: 1;
+          max-width: 1000px;
+          margin: 0 auto;
+          padding: 3rem 1.5rem;
+        }
+
+        .title-font {
+          font-family: 'Sora', sans-serif;
+        }
+
+        .dark-card {
+          background-color: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 0.75rem;
+        }
+        
+        /* Specific components styled per prompt */
+        .upload-zone {
+          border: 1px dashed var(--border);
+          transition: border-color 0.2s ease;
+        }
+        .upload-zone:hover {
+          border-color: var(--accent-primary);
+          cursor: pointer;
+        }
+        .upload-btn {
+          background-color: #16161f;
+          border: 1px solid var(--border);
+          color: var(--text-primary);
+          transition: border-color 0.2s ease;
+        }
+        .upload-btn:hover {
+          border-color: var(--accent-primary);
+        }
+
+        .roadmap-card {
+          background-color: var(--bg-card);
+          border: 1px solid var(--border);
+          transition: all 0.2s ease;
+          display: flex;
+          flex-direction: column;
+          text-decoration: none;
+        }
+        .roadmap-card:hover {
+          background-color: var(--bg-card-hover);
+          border-color: var(--accent-primary);
+          box-shadow: 0 0 24px rgba(99,102,241,0.15);
+        }
+      `}</style>
+
+      <div className="dashboard-bg"></div>
+
+      <div className="dashboard-content">
+        <div className="mb-10">
+          <h1 className="title-font text-4xl md:text-5xl font-bold tracking-tight mb-2">
+            Dashboard
+          </h1>
+          <p className="text-lg" style={{ color: 'var(--text-muted)' }}>
+            Your learning command center.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 mt-10">
+          {/* Account Setup Card */}
+          <div className="dark-card p-6 flex flex-col">
+            <h2 className="title-font text-xl font-semibold mb-6">Account Setup</h2>
+
+            <div className="mb-6">
+              {githubConnected ? (
+                <div
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
+                  style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.2)' }}
+                >
+                  <Check className="w-4 h-4" />
+                  Connected to GitHub as {githubUsername}
+                </div>
+              ) : (
+                <button
+                  onClick={() => redirectToGithubConnect()}
+                  className="upload-btn px-4 py-2 text-sm rounded-md font-medium"
+                >
+                  Connect GitHub
+                </button>
+              )}
+            </div>
+
+            <div className="mt-auto">
+              <label className="block mb-2 font-medium text-sm" style={{ color: 'var(--text-muted)' }}>Upload Resume (PDF)</label>
+              <div className="upload-zone rounded-lg relative overflow-hidden flex items-center p-1">
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleResumeUpload}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <div className="flex w-full items-center">
+                  <div className="upload-btn px-4 py-2 rounded-md text-sm font-medium z-0 pointer-events-none">
+                    Choose file
+                  </div>
+                  <div className="flex-1 flex items-center px-4 text-sm z-0" style={{ color: 'var(--text-muted)' }}>
+                    {resumeUploading ? "Processing..." : "No file chosen"}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Your Skill Profile Card */}
+          <div className="dark-card p-6 flex flex-col h-full">
+            <h2 className="title-font text-xl font-semibold mb-6">Your Skill Profile</h2>
+
+            {loading ? (
+              <div className="flex-1 flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>Loading skills...</div>
+            ) : error ? (
+              <div className="flex-1 flex items-center justify-center text-red-400">{error}</div>
+            ) : skills.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center py-6 text-center">
+                <div
+                  className="w-12 h-12 rounded-xl mb-4 flex items-center justify-center"
+                  style={{ backgroundColor: 'rgba(99,102,241,0.1)', color: 'var(--accent-primary)' }}
+                >
+                  <Brain className="w-6 h-6" />
+                </div>
+                <h3 className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Complete your first quiz to unlock your skill profile</h3>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Your adaptive scores will appear here as you learn</p>
+              </div>
+            ) : (
+              <div className="space-y-4 flex-1">
+                {skills.map(skill => (
+                  <div key={skill.roadmap_id + "_profile"} className="mb-4 last:mb-0">
+                    <div className="flex justify-between items-end mb-2">
+                      <span className="capitalize font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
+                        {skill.roadmap_id.replace(/-/g, ' ')}
+                      </span>
+                      <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                        Confidence: {skill.proficiency_level ? (skill.proficiency_level * 100).toFixed(0) : 0}%
+                      </span>
+                    </div>
+                    <div className="w-full h-[4px] rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          backgroundColor: 'var(--accent-primary)',
+                          width: `${skill.proficiency_level ? skill.proficiency_level * 100 : 0}%`,
+                          transition: 'width 0.5s ease-in-out'
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Continue Learning Feature */}
+        <div className="mb-10">
+          <div
+            className="rounded-xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center relative overflow-hidden"
+            style={{ backgroundImage: 'linear-gradient(135deg, #4f46e5, #6366f1)' }}
+          >
+            {lastAccessed && lastAccessed.courseId && lastAccessed.resourceId ? (
+              <>
+                <div className="z-10 relative mb-4 sm:mb-0">
+                  <p
+                    className="text-[11px] font-bold tracking-[0.08em] uppercase mb-2"
+                    style={{ color: 'rgba(255,255,255,0.6)' }}
+                  >
+                    ACTIVE COURSE MODULE
+                  </p>
+                  <h3 className="title-font text-2xl font-bold text-white tracking-tight">
+                    {lastAccessed.courseTitle}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => navigate(`/course/${lastAccessed.courseId}/resource/${lastAccessed.resourceId}`)}
+                  className="z-10 relative bg-white text-[#6366f1] hover:bg-[#6366f1] hover:text-white border border-transparent hover:border-white font-bold py-2.5 px-6 rounded-lg transition-all shadow-sm whitespace-nowrap"
+                >
+                  Resume ↗
+                </button>
+              </>
+            ) : (
+              <div className="z-10 relative w-full flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                <div className="mb-4 sm:mb-0">
+                  <p
+                    className="text-[11px] font-bold tracking-[0.08em] uppercase mb-2"
+                    style={{ color: 'rgba(255,255,255,0.6)' }}
+                  >
+                    CONTINUE LEARNING
+                  </p>
+                  <h3 className="title-font text-2xl font-bold text-white tracking-tight">
+                    Start a roadmap to begin learning
+                  </h3>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mb-8 mt-12">
+          <h2 className="title-font text-2xl font-semibold mb-6">Learning Tracks Progress</h2>
+
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2].map(i => (
+                <div key={i} className="dark-card h-[160px] animate-pulse" />
+              ))}
+            </div>
+          ) : error ? (
+            <div className="p-6 text-center text-red-400 border border-red-900 rounded-xl" style={{ backgroundColor: 'rgba(239,68,68,0.05)' }}>
+              {error}
+            </div>
+          ) : skills.length === 0 ? (
+            <div className="dark-card p-10 flex flex-col items-center justify-center text-center">
+              <p className="mb-4" style={{ color: 'var(--text-muted)' }}>No tracks started yet.</p>
+              <button
+                onClick={() => navigate('/roadmaps')}
+                className="px-5 py-2.5 rounded-md font-medium transition-colors text-sm"
+                style={{
+                  backgroundColor: 'transparent',
+                  border: '1px solid var(--accent-primary)',
+                  color: 'var(--accent-primary)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(99,102,241,0.1)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                Browse Roadmaps
+              </button>
             </div>
           ) : (
-            <button
-              onClick={() => redirectToGithubConnect()}
-              className="px-4 py-2 bg-black text-white rounded hover:bg-gray-800 transition"
-            >
-              Connect GitHub
-            </button>
-          )}
-        </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {skills.map((skill) => {
+                const score = Math.round(skill.trust_score || 0);
 
-        {/* Resume Upload */}
-        <div>
-          <label className="block mb-2 font-medium">Upload Resume (PDF)</label>
-          <input
-            type="file"
-            accept=".pdf"
-            onChange={handleResumeUpload}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
-          />
-          {resumeUploading && <p className="text-sm text-gray-500 mb-0 mt-2">Processing resume...</p>}
-        </div>
-      </div>
-
-      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-8 shadow-sm">
-        <h2 className="text-xl font-semibold mb-4">Your Skill Profile</h2>
-        {skills.length === 0 && !loading && !error ? (
-          <p className="text-gray-500">No skills detected yet.</p>
-        ) : (
-          <div className="space-y-3">
-            {skills.map(skill => (
-              <div key={skill.roadmap_id + "_profile"} className="flex justify-between items-center border-b pb-2 text-gray-700">
-                <span className="capitalize font-medium text-lg text-blue-900">{skill.roadmap_id}</span>
-                <div className="flex flex-col items-end">
-                  <span className="text-sm font-semibold text-gray-900">Adaptive Score: {Math.round(skill.trust_score || 0)}</span>
-                  <span className="text-xs text-gray-500">Confidence: {skill.proficiency_level ? (skill.proficiency_level * 100).toFixed(0) : 0}%</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Continue Learning Feature */}
-      {lastAccessed && lastAccessed.courseId && lastAccessed.resourceId && (
-        <div className="mb-8 mt-4">
-          <h2 className="text-2xl font-bold mb-4">Continue Learning</h2>
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl p-6 shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center">
-            <div>
-              <p className="text-blue-100 text-sm mb-1 uppercase tracking-wider font-semibold">
-                {lastAccessed.courseTitle || "Active Course Module"}
-              </p>
-              <h3 className="text-xl font-bold">{lastAccessed.resourceTitle || "Resume where you left off"}</h3>
-            </div>
-            <button
-              onClick={() => navigate(`/course/${lastAccessed.courseId}/resource/${lastAccessed.resourceId}`)}
-              className="mt-4 sm:mt-0 bg-white text-blue-700 hover:bg-gray-100 font-semibold py-2 px-6 rounded-lg transition-colors shadow-sm"
-            >
-              Resume ↗
-            </button>
-          </div>
-        </div>
-      )}
-
-      <h1 className="text-3xl font-bold mb-8 text-center mt-12">Learning Tracks Progress</h1>
-
-      {/* Non-blocking loading and error states */}
-      {loading && (
-        <div className="grid gap-6">
-          {[1, 2].map(i => (
-            <div key={i} className="bg-card border rounded-xl p-6 h-48 animate-pulse shadow-sm" />
-          ))}
-        </div>
-      )}
-
-      {error && <div className="p-8 text-center text-red-500 bg-red-50 rounded-xl border border-red-100">{error}</div>}
-
-      {!loading && !error && (
-        <div className="grid gap-6">
-          {skills.map((skill) => (
-            <div
-              key={skill.roadmap_id}
-              className="bg-card border rounded-xl p-6 hover:shadow-md transition-all relative overflow-hidden group"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <h2 className="text-xl font-semibold capitalize">
-                  {skill.roadmap_id}
-                </h2>
-                <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-                  {skill.progress_percent ? skill.progress_percent.toFixed(0) : 0}%
-                </span>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-1 text-gray-600">
-                    <span>Progress</span>
-                    <span>
-                      {skill.completed_courses || 0} / {skill.total_courses || 0} courses
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div
-                      className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-in-out"
-                      style={{ width: `${skill.progress_percent || 0}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center pt-2">
-                  <div className="text-sm font-medium text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
-                    Adaptive Score: {Math.round(skill.trust_score || 0)}
-                  </div>
-
+                return (
                   <Link
+                    key={skill.roadmap_id}
                     to={`/roadmap/${skill.roadmap_id}`}
-                    className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="roadmap-card rounded-xl p-6 group cursor-pointer relative"
                   >
-                    Continue
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ))}
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className="w-2.5 h-2.5 rounded-full"
+                          style={{ backgroundColor: getAccentColor(skill.roadmap_id) }}
+                        />
+                        <h3 className="title-font text-xl font-bold capitalize" style={{ color: 'var(--text-primary)' }}>
+                          {skill.roadmap_id.replace(/-/g, ' ')}
+                        </h3>
+                      </div>
 
-          {skills.length === 0 && (
-            <div className="text-center text-gray-500 py-12 bg-gray-50 rounded-lg border border-dashed">
-              You haven't started any learning paths yet.
-              <br />
-              <Link to="/roadmaps" className="text-blue-600 hover:underline mt-2 inline-block">
-                Browse Roadmaps
-              </Link>
+                      <div
+                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        <span className="text-xl leading-none">→</span>
+                      </div>
+                    </div>
+
+                    <div className="text-sm mb-8" style={{ color: 'var(--text-muted)' }}>
+                      {skill.total_courses || 0} topics
+                    </div>
+
+                    <div className="mt-auto flex flex-col gap-3">
+                      <div className="flex items-center justify-between">
+                        {score !== 800 ? (
+                          <div
+                            className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border"
+                            style={{
+                              backgroundColor: 'rgba(99,102,241,0.1)',
+                              color: 'var(--accent-primary)',
+                              borderColor: 'rgba(99,102,241,0.2)'
+                            }}
+                          >
+                            Score: {score}
+                          </div>
+                        ) : (
+                          <div
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border"
+                            style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-muted)', borderColor: 'var(--border)' }}
+                          >
+                            <span style={{ fontSize: '8px' }}>●</span> Not Started
+                          </div>
+                        )}
+
+                        <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                          {skill.completed_courses || 0} / {skill.total_courses || 0}
+                        </span>
+                      </div>
+
+                      <div className="w-full h-[3px] rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            backgroundColor: 'var(--accent-primary)',
+                            width: `${skill.progress_percent || 0}%`,
+                            transition: 'width 0.5s ease-in-out'
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

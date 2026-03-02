@@ -1,3 +1,7 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+
+body, #root {
+  background-color: #0a0a0f !important;
+}

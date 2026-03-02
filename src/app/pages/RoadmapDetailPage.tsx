@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
 import { useProgress } from "../hooks/useProgress";
 
@@ -14,6 +14,7 @@ import BACKEND_URL from "../../services/api";
 export default function RoadmapDetailPage() {
     const { roadmapId } = useParams();
     const userId = localStorage.getItem("user_id") || "1";
+    const navigate = useNavigate();
 
     const { getRoadmapProgress, getCourseProgress } = useProgress();
 
@@ -63,14 +64,15 @@ export default function RoadmapDetailPage() {
 
     if (coursesLoading) {
         return (
-            <div className="space-y-6">
-                <div className="h-8 w-1/4 bg-gray-200 animate-pulse rounded mb-8"></div>
-                <div className="h-32 bg-gray-100 animate-pulse rounded-xl mb-8"></div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {[1, 2, 3, 4].map(i => (
-                        <div key={i} className="h-32 bg-gray-100 animate-pulse rounded-xl"></div>
-                    ))}
-                </div>
+            <div className="roadmap-detail-root flex items-center justify-center min-h-[50vh]">
+                <style>{`
+                    .roadmap-detail-root {
+                        --bg-primary: #0a0a0f;
+                        --text-muted: #64748b;
+                        background-color: var(--bg-primary);
+                    }
+                `}</style>
+                <div style={{ color: 'var(--text-muted)' }}>Loading roadmap tracks...</div>
             </div>
         );
     }
@@ -79,104 +81,185 @@ export default function RoadmapDetailPage() {
     const progress = getRoadmapProgress(roadmapId || "", courseMetaForProgress);
 
     return (
-        <div className="space-y-6">
-            <Link to={ROUTES.DASHBOARD} className="text-muted-foreground hover:text-foreground flex items-center gap-2 mb-2 transition-colors">
-                ← Back to Dashboard
-            </Link>
+        <div className="roadmap-detail-root">
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap');
+                
+                .roadmap-detail-root {
+                    --bg-primary: #0a0a0f;
+                    --bg-card: #111118;
+                    --bg-card-hover: #16161f;
+                    --accent-primary: #6366f1;
+                    --accent-secondary: #818cf8;
+                    --text-primary: #f1f5f9;
+                    --text-muted: #64748b;
+                    --border: #1e1e2e;
+                    
+                    background-color: var(--bg-primary);
+                    color: var(--text-primary);
+                    font-family: 'DM Sans', sans-serif;
+                    
+                    min-height: 100vh;
+                    position: relative;
+                }
 
-            <h1 className="text-3xl font-bold capitalize mb-8">
-                {roadmapId?.replace(/-/g, ' ')} Roadmap
-            </h1>
+                .roadmap-detail-bg {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.06) 0%, transparent 60%);
+                    pointer-events: none;
+                    z-index: 0;
+                }
 
-            {/* Progress Section */}
-            <div className="bg-card border rounded-xl p-6 mb-8 shadow-sm">
-                <div className="space-y-3">
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Roadmap Progress</span>
-                        <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{progress.percentage}%</span>
-                    </div>
+                .roadmap-detail-content {
+                    position: relative;
+                    z-index: 1;
+                    max-width: 1000px;
+                    margin: 0 auto;
+                    padding: 3rem 1.5rem;
+                }
 
-                    <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-                        <div
-                            className="bg-blue-600 h-full rounded-full transition-all duration-700 ease-out"
-                            style={{ width: `${progress.percentage}%` }}
-                        />
-                    </div>
+                .title-font {
+                    font-family: 'Sora', sans-serif;
+                }
 
-                    <div className="flex justify-between text-sm text-gray-500 font-medium pt-2">
-                        <span>{progress.completedResources} of {progress.totalResources} resources completed</span>
-                        <span>{progress.coursesCompleted} of {progress.totalCourses} courses mastered</span>
-                    </div>
+                .course-card {
+                    background-color: var(--bg-card);
+                    border: 1px solid var(--border);
+                    transition: all 0.2s ease;
+                    display: flex;
+                    flex-direction: column;
+                    text-decoration: none;
+                    border-radius: 0.75rem;
+                    padding: 1.5rem;
+                }
+
+                .course-card.interactive:hover {
+                    box-shadow: 0 0 24px rgba(99,102,241,0.15);
+                    border-color: var(--accent-primary);
+                }
+
+                .course-card.locked {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+
+                .back-btn {
+                    color: var(--text-muted);
+                    transition: color 0.2s ease;
+                }
+                
+                .back-btn:hover {
+                    color: var(--text-primary);
+                }
+
+                .status-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.375rem;
+                    padding: 0.25rem 0.625rem;
+                    border-radius: 9999px;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                }
+                .status-completed {
+                    background-color: #22c55e;
+                    color: white;
+                }
+                .status-unlocked {
+                    background-color: #6366f1;
+                    color: white;
+                }
+                .status-locked {
+                    background-color: #1e1e2e;
+                    color: var(--text-muted);
+                }
+            `}</style>
+
+            <div className="roadmap-detail-bg"></div>
+
+            <div className="roadmap-detail-content space-y-10">
+                <Link to={ROUTES.DASHBOARD} className="back-btn inline-flex items-center gap-2 font-medium text-sm mb-2">
+                    <span>←</span> Back
+                </Link>
+
+                <div>
+                    <h1 className="title-font text-4xl md:text-5xl font-bold capitalize mb-3 tracking-tight">
+                        {roadmapId?.replace(/-/g, ' ')}
+                    </h1>
+                    <p className="text-lg" style={{ color: 'var(--text-muted)' }}>
+                        {courses.length} topics in this track
+                    </p>
                 </div>
-            </div>
 
-            <h2 className="text-xl font-semibold mb-6">Available Courses</h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {courses.length === 0 && (
-                    <div className="col-span-1 border-dashed border-2 rounded-xl p-8 text-center text-gray-500">
-                        No courses found for this roadmap.
-                    </div>
-                )}
-                {courses.map((course) => {
-                    const status = skillStatuses[course.id] || "locked";
-                    // Fallback visual approximations if progress data is needed for % component
-                    const cProg = getCourseProgress(course.id, 5);
-
-                    const isCompleted = status === "completed";
-                    const isUnlocked = status === "unlocked";
-                    const isLocked = status === "locked";
-
-                    return (
-                        <div
-                            key={course.id}
-                            className={`block bg-card border rounded-xl p-5 transition-all group relative ${isLocked ? "opacity-60 cursor-not-allowed bg-muted/30" : "hover:border-blue-300 hover:shadow-md cursor-pointer"}`}
-                            onClick={(e) => {
-                                if (isLocked) {
-                                    e.preventDefault();
-                                } else {
-                                    // Use React Router equivalent if needed or wrapping Link
-                                }
-                            }}
-                        >
-                            <Link
-                                to={isLocked ? "#" : ROUTES.COURSE(course.id)}
-                                className={isLocked ? "pointer-events-none" : ""}
-                            >
-                                <div className="flex justify-between items-start mb-2">
-                                    <div className={`font-bold text-lg line-clamp-2 pr-8 transition-colors ${isLocked ? "text-gray-500" : "text-gray-900 group-hover:text-blue-600"}`}>
-                                        {course.title}
-                                    </div>
-                                    <div className="shrink-0 pt-1">
-                                        {isCompleted ? (
-                                            <span className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-sm font-bold" title="Completed">✓</span>
-                                        ) : isUnlocked ? (
-                                            <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold" title="Unlocked">●</span>
-                                        ) : (
-                                            <span className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm" title="Locked">🔒</span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-4 mt-6">
-                                    <div className="text-xs font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded">
-                                        Difficulty {course.difficulty_level}
-                                    </div>
-                                    {!isLocked && (
-                                        <div className="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded">
-                                            {cProg.percentage}% Complete
-                                        </div>
-                                    )}
-                                    {isLocked && (
-                                        <div className="text-xs font-medium text-gray-500 uppercase">
-                                            Locked
-                                        </div>
-                                    )}
-                                </div>
-                            </Link>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {courses.length === 0 ? (
+                        <div className="col-span-1 md:col-span-2 py-12 text-center" style={{ color: 'var(--text-muted)' }}>
+                            No topics found for this roadmap
                         </div>
-                    );
-                })}
+                    ) : (
+                        courses.map((course) => {
+                            const status = skillStatuses[course.id] || "locked";
+                            const cProg = getCourseProgress(course.id, 5);
+
+                            const isCompleted = status === "completed";
+                            const isUnlocked = status === "unlocked";
+                            const isLocked = status === "locked";
+
+                            return (
+                                <div
+                                    key={course.id}
+                                    className={`course-card ${isLocked ? 'locked' : 'interactive cursor-pointer'}`}
+                                    onClick={(e) => {
+                                        if (isLocked) {
+                                            e.preventDefault();
+                                            return;
+                                        }
+                                        navigate(ROUTES.COURSE(course.id));
+                                    }}
+                                >
+                                    <div className="flex justify-between items-start mb-6">
+                                        <h3 className="title-font text-xl font-bold leading-tight pr-4" style={{ color: 'var(--text-primary)' }}>
+                                            {course.title}
+                                        </h3>
+                                        <div className="shrink-0">
+                                            {isCompleted ? (
+                                                <div className="status-badge status-completed">✓ Mastered</div>
+                                            ) : isUnlocked ? (
+                                                <div className="status-badge status-unlocked"><span style={{ fontSize: '8px' }}>●</span> Unlocked</div>
+                                            ) : (
+                                                <div className="status-badge status-locked">🔒 Locked</div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="mb-8" style={{ color: 'var(--text-muted)' }}>
+                                        <span className="text-sm font-medium">Difficulty Level {course.difficulty_level}</span>
+                                    </div>
+
+                                    <div className="mt-auto flex flex-col gap-3">
+                                        <div className="flex items-center justify-between text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                                            <span>Progress</span>
+                                            <span>{!isLocked ? `${cProg.percentage}%` : '0%'}</span>
+                                        </div>
+                                        <div className="w-full h-[3px] rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
+                                            <div
+                                                className="h-full rounded-full transition-all duration-500"
+                                                style={{
+                                                    backgroundColor: 'var(--accent-primary)',
+                                                    width: !isLocked ? `${cProg.percentage}%` : '0%'
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
             </div>
         </div>
     );

@@ -38,7 +38,7 @@ function AppLayout() {
   else if (location.pathname.startsWith('/progress')) currentPage = 'progress';
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden bg-[#0a0a0f]">
       <AppSidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
