@@ -98,35 +98,49 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({ curren
             setError(null);
 
             try {
-                const token = localStorage.getItem("access_token");
-                const headers: HeadersInit = {
-                    "Content-Type": "application/json",
-                };
-
-                if (token) {
-                    headers["Authorization"] = `Bearer ${token}`;
-                }
+                const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+                console.log("DEBUG: token =", token);
+                console.log("DEBUG: BACKEND_URL =", BACKEND_URL);
 
                 const res = await fetch(
-                    `${BACKEND_URL}/recommend?current_roadmap_id=${currentRoadmapId}`,
-                    { headers }
+                    `${BACKEND_URL}/recommend/recommend?current_roadmap_id=${currentRoadmapId}`,
+                    {
+                        headers: {
+                            "Content-Type": "application/json",
+                            ...(token ? { Authorization: `Bearer ${token}` } : {})
+                        }
+                    }
                 );
 
-                if (res.status === 401) {
-                    throw new Error("unauthorized");
-                }
+                console.log("DEBUG: status =", res.status);
+
+                const text = await res.text();
+                console.log("DEBUG: raw response =", text);
 
                 if (!res.ok) {
-                    throw new Error("Failed to fetch recommendations");
+                    if (res.status === 401) {
+                        throw new Error("unauthorized");
+                    } else if (res.status === 404) {
+                        throw new Error("unavailable");
+                    } else if (res.status >= 500) {
+                        throw new Error("offline");
+                    } else {
+                        throw new Error(`Request failed: ${res.status}`);
+                    }
                 }
 
-                const json = await res.json();
-                setData(json);
+                const data = JSON.parse(text);
+                console.log("DEBUG: parsed data =", data);
+                setData(data);
             } catch (err: any) {
                 if (err.message === "unauthorized") {
-                    setError("Please log in to view personalized recommendations.");
-                } else {
+                    setError("Session expired. Please log in again.");
+                } else if (err.message === "unavailable") {
+                    setError("Recommendation service unavailable.");
+                } else if (err.message === "offline") {
                     setError("Our systems are currently offline. Stand by.");
+                } else {
+                    setError(`Error: ${err.message}`);
                 }
             } finally {
                 setLoading(false);
