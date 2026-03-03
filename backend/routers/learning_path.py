@@ -10,8 +10,68 @@ from models.user import User
 from models.user_skill import UserSkill
 from core.security import get_current_user
 from services.skill_synthesizer import get_skill_profile
+from models.event import Event
 
 router = APIRouter()
+
+def get_completed_course_ids(user_id: str, db: Session) -> set[str]:
+    completed_events = db.query(Event.course_id).filter(
+        Event.user_id == user_id,
+        Event.event_type == "course_completed"
+    ).all()
+
+    return {
+        event.course_id
+        for event in completed_events
+        if event.course_id is not None
+    }
+
+def get_next_ready_nodes(
+    user_id: str,
+    roadmap_id: str,
+    db: Session,
+    limit: int = 5
+):
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if user.global_elo_rating is None:
+        user.global_elo_rating = 1000.0
+
+    elo = user.global_elo_rating
+
+    completed_ids = get_completed_course_ids(user_id, db)
+
+    courses = db.query(Course).filter(
+        Course.roadmap_id == roadmap_id
+    ).all()
+
+    ready_nodes = []
+
+    for course in courses:
+
+        if course.id in completed_ids:
+            continue
+
+        difficulty = course.difficulty_level or 1000.0
+
+        # Expanded safe readiness band
+        if not (elo - 150 <= difficulty <= elo + 150):
+            continue
+
+        prereqs = db.query(CoursePrerequisite.prerequisite_id).filter(
+            CoursePrerequisite.course_id == course.id
+        ).all()
+
+        prereq_ids = {p.prerequisite_id for p in prereqs}
+
+        if prereq_ids.issubset(completed_ids):
+            ready_nodes.append(course)
+
+    ready_nodes.sort(
+        key=lambda c: abs((c.difficulty_level or 1000.0) - elo)
+    )
+
+    return ready_nodes[:limit]
 
 
 def collect_prerequisites(course_id: str, db: Session):

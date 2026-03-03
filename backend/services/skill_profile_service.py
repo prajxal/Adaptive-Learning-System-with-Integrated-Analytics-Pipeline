@@ -3,8 +3,14 @@ from sqlalchemy.exc import IntegrityError
 from models.skill_profile import SkillProfile
 from models.skill_weight import SkillWeight
 import logging
+from models.user import User
+from models.course import Course
 
 logger = logging.getLogger(__name__)
+
+ELO_K_FACTOR = 32
+ELO_MIN = 800
+ELO_MAX = 2000
 
 def get_or_create_skill_profile(user_id: str, skill_id: str, roadmap_id: str, db: Session) -> SkillProfile:
     """
@@ -130,4 +136,34 @@ def update_skill_profile_from_quiz(user_id: str, skill_id: str, quiz_score: floa
     profile.proficiency_level = final_proficiency
     profile.confidence = final_confidence
     
+    # --- Proper Elo rating update ---
+    # Fetch user and course to perform the Elo calculation
+    user = db.query(User).filter(User.id == user_id).first()
+    course = db.query(Course).filter(Course.id == skill_id).first()
+    
+    if user and course:
+        if user.global_elo_rating is None:
+            user.global_elo_rating = 1000.0
+            
+        user_elo = user.global_elo_rating
+        course_elo = course.difficulty_level
+        
+        # Expected probability of success (logistic Elo formula)
+        expected_score = 1 / (1 + 10 ** ((course_elo - user_elo) / 400))
+        
+        # Actual score mapping
+        if quiz_score >= 80:
+            actual_score = 1.0
+        elif quiz_score >= 50:
+            actual_score = 0.5
+        else:
+            actual_score = 0.0
+            
+        # Elo delta
+        delta = ELO_K_FACTOR * (actual_score - expected_score)
+        
+        # Apply and clamp safely
+        new_elo = user_elo + delta
+        user.global_elo_rating = max(ELO_MIN, min(ELO_MAX, new_elo))
+
     db.commit()

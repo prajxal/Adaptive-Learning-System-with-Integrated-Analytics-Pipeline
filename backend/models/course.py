@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DateTime
+from sqlalchemy import Column, String, Integer, DateTime, Float
 from datetime import datetime
 from db.database import Base
 
@@ -10,5 +10,5 @@ class Course(Base):
     node_id = Column(String, nullable=False)
     title = Column(String, nullable=False)
     description = Column(String, nullable=True)
-    difficulty_level = Column(Integer, nullable=True)
+    difficulty_level = Column(Float, nullable=False, default=1000.0)
     created_at = Column(DateTime, default=datetime.utcnow)

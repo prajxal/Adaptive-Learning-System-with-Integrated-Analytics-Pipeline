@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
 import { useProgress } from "../hooks/useProgress";
+import { RecommendationPanel } from "../components/RecommendationPanel";
 
 interface Course {
     id: string;
@@ -181,83 +182,93 @@ export default function RoadmapDetailPage() {
 
             <div className="roadmap-detail-bg"></div>
 
-            <div className="roadmap-detail-content space-y-10">
-                <Link to={ROUTES.DASHBOARD} className="back-btn inline-flex items-center gap-2 font-medium text-sm mb-2">
-                    <span>←</span> Back
-                </Link>
+            <div className="flex h-full min-h-0 w-full overflow-hidden relative z-10 px-4 sm:px-6 lg:px-8 py-8 max-w-[1400px] mx-auto">
+                {/* Left — Roadmap Graph */}
+                <div className="flex-1 overflow-auto pr-0 lg:pr-8 space-y-10">
+                    <Link to={ROUTES.DASHBOARD} className="back-btn inline-flex items-center gap-2 font-medium text-sm mb-2">
+                        <span>←</span> Back
+                    </Link>
 
-                <div>
-                    <h1 className="title-font text-4xl md:text-5xl font-bold capitalize mb-3 tracking-tight">
-                        {roadmapId?.replace(/-/g, ' ')}
-                    </h1>
-                    <p className="text-lg" style={{ color: 'var(--text-muted)' }}>
-                        {courses.length} topics in this track
-                    </p>
+                    <div>
+                        <h1 className="title-font text-4xl md:text-5xl font-bold capitalize mb-3 tracking-tight">
+                            {roadmapId?.replace(/-/g, ' ')}
+                        </h1>
+                        <p className="text-lg" style={{ color: 'var(--text-muted)' }}>
+                            {courses.length} topics in this track
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {courses.length === 0 ? (
+                            <div className="col-span-1 md:col-span-2 py-12 text-center" style={{ color: 'var(--text-muted)' }}>
+                                No topics found for this roadmap
+                            </div>
+                        ) : (
+                            courses.map((course) => {
+                                const status = skillStatuses[course.id] || "locked";
+                                const cProg = getCourseProgress(course.id, 5);
+
+                                const isCompleted = status === "completed";
+                                const isUnlocked = status === "unlocked";
+                                const isLocked = status === "locked";
+
+                                return (
+                                    <div
+                                        key={course.id}
+                                        className={`course-card ${isLocked ? 'locked' : 'interactive cursor-pointer'}`}
+                                        onClick={(e) => {
+                                            if (isLocked) {
+                                                e.preventDefault();
+                                                return;
+                                            }
+                                            navigate(ROUTES.COURSE(course.id));
+                                        }}
+                                    >
+                                        <div className="flex justify-between items-start mb-6">
+                                            <h3 className="title-font text-xl font-bold leading-tight pr-4" style={{ color: 'var(--text-primary)' }}>
+                                                {course.title}
+                                            </h3>
+                                            <div className="shrink-0">
+                                                {isCompleted ? (
+                                                    <div className="status-badge status-completed">✓ Mastered</div>
+                                                ) : isUnlocked ? (
+                                                    <div className="status-badge status-unlocked"><span style={{ fontSize: '8px' }}>●</span> Unlocked</div>
+                                                ) : (
+                                                    <div className="status-badge status-locked">🔒 Locked</div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="mb-8" style={{ color: 'var(--text-muted)' }}>
+                                            <span className="text-sm font-medium">Difficulty Level {course.difficulty_level}</span>
+                                        </div>
+
+                                        <div className="mt-auto flex flex-col gap-3">
+                                            <div className="flex items-center justify-between text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                                                <span>Progress</span>
+                                                <span>{!isLocked ? `${cProg.percentage}%` : '0%'}</span>
+                                            </div>
+                                            <div className="w-full h-[3px] rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
+                                                <div
+                                                    className="h-full rounded-full transition-all duration-500"
+                                                    style={{
+                                                        backgroundColor: 'var(--accent-primary)',
+                                                        width: !isLocked ? `${cProg.percentage}%` : '0%'
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {courses.length === 0 ? (
-                        <div className="col-span-1 md:col-span-2 py-12 text-center" style={{ color: 'var(--text-muted)' }}>
-                            No topics found for this roadmap
-                        </div>
-                    ) : (
-                        courses.map((course) => {
-                            const status = skillStatuses[course.id] || "locked";
-                            const cProg = getCourseProgress(course.id, 5);
-
-                            const isCompleted = status === "completed";
-                            const isUnlocked = status === "unlocked";
-                            const isLocked = status === "locked";
-
-                            return (
-                                <div
-                                    key={course.id}
-                                    className={`course-card ${isLocked ? 'locked' : 'interactive cursor-pointer'}`}
-                                    onClick={(e) => {
-                                        if (isLocked) {
-                                            e.preventDefault();
-                                            return;
-                                        }
-                                        navigate(ROUTES.COURSE(course.id));
-                                    }}
-                                >
-                                    <div className="flex justify-between items-start mb-6">
-                                        <h3 className="title-font text-xl font-bold leading-tight pr-4" style={{ color: 'var(--text-primary)' }}>
-                                            {course.title}
-                                        </h3>
-                                        <div className="shrink-0">
-                                            {isCompleted ? (
-                                                <div className="status-badge status-completed">✓ Mastered</div>
-                                            ) : isUnlocked ? (
-                                                <div className="status-badge status-unlocked"><span style={{ fontSize: '8px' }}>●</span> Unlocked</div>
-                                            ) : (
-                                                <div className="status-badge status-locked">🔒 Locked</div>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="mb-8" style={{ color: 'var(--text-muted)' }}>
-                                        <span className="text-sm font-medium">Difficulty Level {course.difficulty_level}</span>
-                                    </div>
-
-                                    <div className="mt-auto flex flex-col gap-3">
-                                        <div className="flex items-center justify-between text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
-                                            <span>Progress</span>
-                                            <span>{!isLocked ? `${cProg.percentage}%` : '0%'}</span>
-                                        </div>
-                                        <div className="w-full h-[3px] rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
-                                            <div
-                                                className="h-full rounded-full transition-all duration-500"
-                                                style={{
-                                                    backgroundColor: 'var(--accent-primary)',
-                                                    width: !isLocked ? `${cProg.percentage}%` : '0%'
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })
+                {/* Right — Recommendation Sidebar */}
+                <div className="hidden lg:block w-80 shrink-0 h-full overflow-y-auto border-l border-white/10 pl-8">
+                    {roadmapId && (
+                        <RecommendationPanel currentRoadmapId={roadmapId} />
                     )}
                 </div>
             </div>

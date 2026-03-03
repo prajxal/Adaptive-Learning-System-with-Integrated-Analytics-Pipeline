@@ -25,7 +25,14 @@ def override_get_db():
     finally:
         db.close()
 
+from core.security import get_current_user
+
+def override_get_current_user():
+    user = User(id="test_user_id", email="test@example.com", password_hash="pw")
+    return user
+
 app.dependency_overrides[get_db] = override_get_db
+app.dependency_overrides[get_current_user] = override_get_current_user
 
 client = TestClient(app)
 
@@ -37,11 +44,13 @@ def test_learning_path_logic():
     db = TestingSessionLocal()
 
     # 1. Create User
-    user = User(email="learner@example.com", password_hash="pw")
+    import uuid
+    user_id = str(uuid.uuid4())
+    user = User(id=user_id, email="learner@example.com", password_hash="pw")
     db.add(user)
     db.commit()
     db.refresh(user)
-    user_id = str(user.id)
+    print(f"Created user: {user_id}")
     print(f"Created user: {user_id}")
 
     # 2. Create UserSkills
