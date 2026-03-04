@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getToken } from "../../services/auth";
 import { useProgress } from "../hooks/useProgress";
 import BACKEND_URL from "../../services/api";
+import { usePostHog } from "@posthog/react";
 
 type Resource = {
     id: string;
@@ -34,6 +35,7 @@ function convertToEmbedUrl(url: string) {
 export default function ResourceViewerPage() {
     const { courseId, resourceId } = useParams();
     const navigate = useNavigate();
+    const posthog = usePostHog();
 
     const [resources, setResources] = useState<{ primary: Resource | null, additional: Resource[] }>({ primary: null, additional: [] });
     const [activeResource, setActiveResource] = useState<Resource | null>(null);
@@ -70,6 +72,13 @@ export default function ResourceViewerPage() {
 
         if (courseId && resourceId && activeResource) {
             markResourceInProgress(courseId, resourceId, undefined, "Active Course Module", activeResource.title);
+            posthog?.capture('resource_opened', {
+                course_id: courseId,
+                resource_id: resourceId,
+                resource_title: activeResource.title,
+                resource_type: activeResource.resource_type,
+                platform: activeResource.platform,
+            });
         }
     }, [resourceId, activeResource]);
 
@@ -197,7 +206,16 @@ export default function ResourceViewerPage() {
 
                             {getResourceProgress(courseId as string, activeResource.id) !== 'completed' ? (
                                 <button
-                                    onClick={() => markResourceComplete(courseId as string, activeResource.id)}
+                                    onClick={() => {
+                                        markResourceComplete(courseId as string, activeResource.id);
+                                        posthog?.capture('resource_completed', {
+                                            course_id: courseId,
+                                            resource_id: activeResource.id,
+                                            resource_title: activeResource.title,
+                                            resource_type: activeResource.resource_type,
+                                            platform: activeResource.platform,
+                                        });
+                                    }}
                                     className="ml-2 bg-[#6366f1] hover:bg-indigo-600 text-[#f1f5f9] text-xs font-medium py-1 px-3 rounded transition-colors"
                                 >
                                     Mark Complete ✓

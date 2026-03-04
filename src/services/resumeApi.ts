@@ -16,3 +16,16 @@ export async function uploadResume(file: File) {
 
     return res.json();
 }
+
+export async function checkResumeStatus() {
+    const res = await fetch(`${BACKEND_URL}/resume/status`, {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+    });
+
+    if (!res.ok) throw new Error("Failed to fetch resume status");
+
+    return res.json();
+}

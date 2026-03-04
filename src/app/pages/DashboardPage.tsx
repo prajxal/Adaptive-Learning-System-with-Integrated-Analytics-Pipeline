@@ -1,15 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { getGithubStatus, redirectToGithubConnect } from "../../services/githubApi";
-import { uploadResume } from "../../services/resumeApi";
+import { uploadResume, checkResumeStatus } from "../../services/resumeApi";
 import { getUserSkills } from "../../services/userApi";
 import { getToken } from "../../services/auth";
 import { useProgress } from "../hooks/useProgress";
 import { Brain, Check } from "lucide-react";
+import { usePostHog } from "@posthog/react";
 
 export default function DashboardPage() {
   const token = getToken();
   const navigate = useNavigate();
+  const location = useLocation();
+  const posthog = usePostHog();
+  const [githubSuccess, setGithubSuccess] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -26,9 +30,26 @@ export default function DashboardPage() {
   const [githubConnected, setGithubConnected] = useState(false);
   const [githubUsername, setGithubUsername] = useState("");
   const [resumeUploading, setResumeUploading] = useState(false);
+  const pollingIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { getLastAccessed } = useProgress();
   const lastAccessed = getLastAccessed();
+
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("github") === "connected") {
+      setGithubSuccess(true);
+      // Clean up URL without refreshing
+      window.history.replaceState({}, document.title, location.pathname);
+      setTimeout(() => setGithubSuccess(false), 5000);
+    }
+  }, [location]);
 
   useEffect(() => {
     if (!token) return;
@@ -55,6 +76,30 @@ export default function DashboardPage() {
 
   }, [token]);
 
+  const startPolling = () => {
+    pollingIntervalRef.current = setInterval(async () => {
+      try {
+        const res = await checkResumeStatus();
+        if (res.status === "completed" || res.status === "failed") {
+          if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+          setResumeUploading(false);
+
+          if (res.status === "completed") {
+            const updatedSkills = await getUserSkills();
+            setSkills(updatedSkills.skills || []);
+          } else {
+            posthog?.capture('resume_processing_failed');
+            alert("Resume processing failed.");
+          }
+        }
+      } catch (err: any) {
+        console.error("Polling error", err);
+        if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+        setResumeUploading(false);
+      }
+    }, 3000);
+  };
+
   async function handleResumeUpload(e: React.ChangeEvent<HTMLInputElement>) {
     if (!e.target.files?.length || !token) return;
 
@@ -63,14 +108,14 @@ export default function DashboardPage() {
 
     try {
       await uploadResume(file);
-      const updatedSkills = await getUserSkills();
-      setSkills(updatedSkills.skills || []);
+      posthog?.capture('resume_uploaded', { file_name: file.name, file_size: file.size });
+      startPolling();
     } catch (err: any) {
       console.error(err);
+      posthog?.captureException(err);
       alert("Resume upload failed");
+      setResumeUploading(false);
     }
-
-    setResumeUploading(false);
   }
 
   const getAccentColor = (title: string) => {
@@ -185,7 +230,14 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 mt-10">
           {/* Account Setup Card */}
           <div className="dark-card p-6 flex flex-col">
-            <h2 className="title-font text-xl font-semibold mb-6">Account Setup</h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="title-font text-xl font-semibold">Account Setup</h2>
+              {githubSuccess && (
+                <span className="text-sm font-medium text-green-400 bg-green-400/10 px-3 py-1 rounded-full">
+                  GitHub Linked Successfully!
+                </span>
+              )}
+            </div>
 
             <div className="mb-6">
               {githubConnected ? (
@@ -198,7 +250,7 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <button
-                  onClick={() => redirectToGithubConnect()}
+                  onClick={() => { posthog?.capture('github_connect_clicked'); redirectToGithubConnect(); }}
                   className="upload-btn px-4 py-2 text-sm rounded-md font-medium"
                 >
                   Connect GitHub
@@ -295,7 +347,10 @@ export default function DashboardPage() {
                   </h3>
                 </div>
                 <button
-                  onClick={() => navigate(`/course/${lastAccessed.courseId}/resource/${lastAccessed.resourceId}`)}
+                  onClick={() => {
+                    posthog?.capture('continue_learning_clicked', { course_title: lastAccessed.courseTitle, course_id: lastAccessed.courseId });
+                    navigate(`/course/${lastAccessed.courseId}/resource/${lastAccessed.resourceId}`);
+                  }}
                   className="z-10 relative bg-white text-[#6366f1] hover:bg-[#6366f1] hover:text-white border border-transparent hover:border-white font-bold py-2.5 px-6 rounded-lg transition-all shadow-sm whitespace-nowrap"
                 >
                   Resume ↗

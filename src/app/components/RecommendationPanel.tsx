@@ -4,6 +4,7 @@ import BACKEND_URL from '../../services/api';
 import './RecommendationPanel.css';
 import { Play, TrendingUp, Compass, Award, AlertCircle } from 'lucide-react';
 import { LemonButton } from './LemonButton';
+import { usePostHog } from '@posthog/react';
 
 // Types
 interface RoadmapNode {
@@ -82,6 +83,7 @@ const DifficultyPips: React.FC<{ difficulty: number }> = ({ difficulty }) => {
 
 export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({ currentRoadmapId }) => {
     const navigate = useNavigate();
+    const posthog = usePostHog();
     const [data, setData] = useState<RecommendationResponse | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -155,7 +157,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({ curren
     // Render State: Loading
     if (loading) {
         return (
-            <div className="recommendation-panel rounded-xl p-6 text-white min-h-[400px] flex flex-col space-y-6">
+            <div className="recommendation-panel rounded-xl p-4 space-y-6 text-white min-h-[400px] flex flex-col">
                 <div className="flex items-center space-x-4">
                     <div className="w-16 h-16 rounded-full bg-gray-800 animate-pulse" />
                     <div className="space-y-2">
@@ -175,7 +177,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({ curren
     // Render State: Error
     if (error) {
         return (
-            <div className="recommendation-panel rounded-xl p-6 text-white flex flex-col items-center justify-center min-h-[400px] border border-red-500/30">
+            <div className="recommendation-panel rounded-xl p-4 space-y-6 text-white flex flex-col items-center justify-center min-h-[400px] border border-red-500/30">
                 <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
                 <p className="text-gray-400 text-center font-mono">{error}</p>
             </div>
@@ -187,28 +189,30 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({ curren
 
     // Render State: Populated
     return (
-        <div className="recommendation-panel rounded-xl p-6 text-white flex flex-col space-y-8 shadow-2xl relative z-0">
+        <div className="recommendation-panel rounded-xl p-4 space-y-6 text-white flex flex-col shadow-2xl relative z-0">
 
             {/* ZONE 1: User Elo Badge */}
-            <div className="flex items-center space-x-6 pb-6 border-b border-gray-800 relative z-10">
-                <div className="elo-badge bg-black/50 border border-[#00FFB2]/50 p-4 rounded-full shadow-lg flex items-center justify-center">
-                    <Award className="w-8 h-8 text-[#00FFB2]" />
-                </div>
-                <div>
-                    <div className="text-gray-400 text-sm font-medium tracking-widest uppercase mb-1">
-                        Skill Rating
+            <div className="relative z-10 space-y-3 pb-6 border-b border-gray-800">
+                <div className="flex items-center gap-4">
+                    <div className="elo-badge bg-black/50 border border-[#00FFB2]/50 p-4 rounded-full shadow-lg flex items-center justify-center">
+                        <Award className="w-8 h-8 text-[#00FFB2]" />
                     </div>
-                    <div className="elo-font text-4xl text-[#00FFB2] tracking-tight">
-                        <AnimatedNumber value={data.user_elo} />
+                    <div className="flex flex-col">
+                        <span className="text-xs tracking-widest text-white/40 uppercase">Skill Rating</span>
+                        <div className="elo-font text-4xl text-[#00FFB2] tracking-tight">
+                            <AnimatedNumber value={data.user_elo} />
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* ZONE 2: Continue Learning */}
-            <div className="relative z-10 flex flex-col flex-grow">
-                <div className="flex items-center mb-4 text-gray-300">
-                    <TrendingUp className="w-5 h-5 mr-2 text-indigo-400" />
-                    <h3 className="font-semibold text-lg tracking-wide">Continue Learning</h3>
+            <div className="relative z-10 flex flex-col flex-grow space-y-3">
+                <div className="flex items-center gap-2 pb-2 border-b border-white/10 text-gray-300">
+                    <TrendingUp className="w-5 h-5 text-indigo-400" />
+                    <h3 className="text-sm font-semibold tracking-wide uppercase text-white/70">
+                        Continue Learning
+                    </h3>
                 </div>
 
                 {data.next_in_current_roadmap.length === 0 ? (
@@ -222,24 +226,34 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({ curren
                         {data.next_in_current_roadmap.map((node) => (
                             <div
                                 key={node.id}
-                                className="hover-glow bg-gray-900/60 border border-gray-800 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between group cursor-default gap-4"
+                                className="hover-glow bg-gray-900/60 border border-gray-800 rounded-lg p-4 flex items-center justify-between gap-3 w-full group cursor-default"
                             >
-                                <div>
-                                    <h4 className="font-medium text-gray-100 group-hover:text-white transition-colors">
+                                <div className="flex-1 min-w-0">
+                                    <p className={"text-sm font-medium line-clamp-2 break-words text-gray-100 group-hover:text-white transition-colors"}>
                                         {node.title}
-                                    </h4>
+                                    </p>
                                     <div className="mt-1 flex items-center">
                                         <span className="text-xs text-gray-500 mr-2 uppercase tracking-wide">Difficulty</span>
                                         <DifficultyPips difficulty={node.difficulty} />
                                     </div>
                                 </div>
 
-                                <LemonButton
-                                    onClick={() => navigate(`/course/${node.id}`)}
-                                    className="bg-[#00FFB2]/10 hover:bg-[#00FFB2]/20 text-[#00FFB2] border border-[#00FFB2]/30 text-xs px-4 py-2 w-full sm:w-auto flex-shrink-0"
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        posthog?.capture('recommendation_course_clicked', {
+                                            course_id: node.id,
+                                            course_title: node.title,
+                                            roadmap_id: node.roadmap_id,
+                                            difficulty: node.difficulty,
+                                            current_roadmap_id: currentRoadmapId,
+                                        });
+                                        navigate(`/course/${node.id}`);
+                                    }}
+                                    className="shrink-0 px-3 py-1.5 text-xs rounded-md bg-[#00FFB2]/10 hover:bg-[#00FFB2]/20 text-[#00FFB2] border border-[#00FFB2]/30 flex items-center gap-1.5 transition-all hover:shadow-[0_0_12px_rgba(0,255,178,0.4)]"
                                 >
-                                    <Play className="w-3 h-3 mr-1.5" /> Start
-                                </LemonButton>
+                                    <Play className="w-3 h-3" /> Start
+                                </button>
                             </div>
                         ))}
                     </div>
@@ -248,22 +262,28 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({ curren
 
             {/* ZONE 3: Explore New Roadmaps */}
             {data.suggested_new_roadmaps.length > 0 && (
-                <div className="relative z-10 pt-4 border-t border-gray-800">
-                    <div className="flex items-center mb-4 text-gray-300">
-                        <Compass className="w-5 h-5 mr-2 text-amber-400" />
-                        <h3 className="font-semibold text-lg tracking-wide">Explore New Paths</h3>
+                <div className="relative z-10 pt-4 border-t border-gray-800 space-y-3">
+                    <div className="flex items-center gap-2 pb-2 border-b border-white/10 text-gray-300">
+                        <Compass className="w-5 h-5 text-amber-400" />
+                        <h3 className="text-sm font-semibold tracking-wide uppercase text-white/70">
+                            Explore New Paths
+                        </h3>
                     </div>
 
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-2">
                         {data.suggested_new_roadmaps.map(roadmapId => (
                             <button
                                 key={roadmapId}
-                                className="hover-glow bg-gray-900/80 border border-gray-800 rounded-full px-4 py-2 flex items-center cursor-pointer transition-colors hover:border-amber-400/50 group"
-                                onClick={() => navigate(`/roadmaps/${roadmapId}`)}
+                                className="px-3 py-1.5 text-xs rounded-full border border-white/20 hover:border-[#00FFB2] whitespace-nowrap bg-gray-900/80 text-gray-300 capitalize transition-colors hover:text-[#00FFB2]"
+                                onClick={() => {
+                                    posthog?.capture('recommended_roadmap_explored', {
+                                        suggested_roadmap_id: roadmapId,
+                                        current_roadmap_id: currentRoadmapId,
+                                    });
+                                    navigate(`/roadmaps/${roadmapId}`);
+                                }}
                             >
-                                <span className="text-sm text-gray-300 capitalize group-hover:text-amber-400 transition-colors">
-                                    {roadmapId.replace(/-/g, ' ')}
-                                </span>
+                                {roadmapId.replace(/-/g, ' ')}
                             </button>
                         ))}
                     </div>

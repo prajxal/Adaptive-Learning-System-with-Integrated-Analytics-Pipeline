@@ -1,65 +1,120 @@
+import httpx
 from sqlalchemy.orm import Session
-from datetime import datetime
+from models.user import User
 from models.skill_weight import SkillWeight
-from services.github_service import fetch_user_repositories, fetch_repository_languages
+from db.database import SessionLocal
+from services.skill_synthesizer import synthesize_skill_profile
 
-async def extract_and_store_github_skills(user, db: Session):
+SKILL_LANGUAGE_MAP = {
+    "Python": "python-developer",
+    "JavaScript": "javascript",
+    "TypeScript": "typescript",
+    "Go": "golang",
+    "Rust": "rust",
+    "Java": "java",
+    "C++": "cpp",
+    "CSS": "css",
+    "HTML": "html-css"
+}
 
-    access_token = user.github_access_token
+def synthesize_all_skills_for_user(user_id: str, db: Session):
+    skills = db.query(SkillWeight.skill_name).filter(SkillWeight.user_id == user_id).distinct().all()
+    for (skill_name,) in skills:
+        try:
+            synthesize_skill_profile(user_id, skill_name, db)
+        except Exception as e:
+            print(f"[GithubSkillExtractor] Error synthesizing skill {skill_name}: {e}")
 
-    if not access_token:
-        return
+async def extract_github_skills(user_id: str, access_token: str):
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user or user.github_status != "connected":
+            return
 
-    repos = await fetch_user_repositories(access_token)
-    if not isinstance(repos, list):
-        return
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        
+        language_bytes = {}
+        language_commits = {}
 
-    language_counts = {}
+        async with httpx.AsyncClient() as client:
+            repos_url = "https://api.github.com/user/repos"
+            repos = []
+            page = 1
+            while True:
+                resp = await client.get(f"{repos_url}?per_page=100&page={page}", headers=headers)
+                if resp.status_code != 200:
+                    break
+                
+                data = resp.json()
+                if not data:
+                    break
+                
+                for r in data:
+                    if r.get("fork") or r.get("archived"):
+                        continue
+                    repos.append(r)
+                
+                page += 1
 
-    for repo in repos:
-        # Use full_name (e.g. owner/repo) for the API call
-        repo_name = repo.get("full_name") or repo["name"]
+            for repo in repos:
+                repo_full_name = repo["full_name"]
+                
+                lang_resp = await client.get(f"https://api.github.com/repos/{repo_full_name}/languages", headers=headers)
+                if lang_resp.status_code == 200:
+                    for lang, bytes_count in lang_resp.json().items():
+                        language_bytes[lang] = language_bytes.get(lang, 0) + bytes_count
+                
+                commits_resp = await client.get(f"https://api.github.com/repos/{repo_full_name}/commits?author={user.github_username}", headers=headers)
+                if commits_resp.status_code == 200:
+                    commits = commits_resp.json()
+                    commit_count = len(commits) if isinstance(commits, list) else 0
+                    
+                    primary_lang = repo.get("language")
+                    if primary_lang:
+                        language_commits[primary_lang] = language_commits.get(primary_lang, 0) + commit_count
 
-        languages = await fetch_repository_languages(access_token, repo_name)
-        if not isinstance(languages, dict):
-            continue
+            total_bytes = sum(language_bytes.values()) or 1
+            total_commits = sum(language_commits.values()) or 1
 
-        for lang, bytes_used in languages.items():
-            language_counts[lang] = language_counts.get(lang, 0) + bytes_used
+            for lang, roadmap_skill in SKILL_LANGUAGE_MAP.items():
+                b_count = language_bytes.get(lang, 0)
+                c_count = language_commits.get(lang, 0)
 
-    if not language_counts:
-        return
+                byte_weight = b_count / total_bytes
+                commit_weight = c_count / total_commits
 
-    total_bytes = sum(language_counts.values())
+                combined_weight = (byte_weight * 0.6) + (commit_weight * 0.4)
 
-    for skill, bytes_used in language_counts.items():
+                if combined_weight > 0:
+                    confidence = min(1.0, combined_weight * 2)
 
-        weight = bytes_used / total_bytes
+                    sw = db.query(SkillWeight).filter_by(
+                        user_id=user_id,
+                        skill_name=roadmap_skill,
+                        source="github"
+                    ).first()
 
-        confidence = min(1.0, weight * 2.0)
+                    if sw:
+                        sw.weight = combined_weight
+                        sw.confidence = confidence
+                    else:
+                        db.add(SkillWeight(
+                            user_id=user_id,
+                            skill_name=roadmap_skill,
+                            weight=combined_weight,
+                            confidence=confidence,
+                            source="github"
+                        ))
 
-        existing = db.query(SkillWeight).filter(
-            SkillWeight.user_id == user.id,
-            SkillWeight.skill_name == skill.lower()
-        ).first()
+            db.commit()
 
-        if existing:
-            existing.weight = weight
-            existing.confidence = confidence
-            existing.last_updated = datetime.utcnow()
-        else:
-            new_skill = SkillWeight(
-                user_id=user.id,
-                skill_name=skill.lower(),
-                weight=weight,
-                confidence=confidence,
-                source="github"
-            )
-            db.add(new_skill)
+            synthesize_all_skills_for_user(user_id, db)
 
-    db.commit()
-
-    # Automatically synthesize the skills for the user's fetched roadmaps
-    from services.skill_synthesizer import synthesize_skill_profile
-    for skill in language_counts.keys():
-        synthesize_skill_profile(user.id, skill.lower(), db)
+    except Exception as e:
+        print(f"Error in extract_github_skills: {e}")
+    finally:
+        db.close()

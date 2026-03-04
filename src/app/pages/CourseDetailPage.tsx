@@ -7,6 +7,7 @@ import { useProgress } from "../hooks/useProgress";
 import { getSkillProfile, SkillProfile } from "../services/quizApi";
 import BACKEND_URL from "../../services/api";
 import { PlayCircle, FileText, BookOpen } from "lucide-react";
+import { usePostHog } from "@posthog/react";
 
 type Course = {
   id: string;
@@ -19,6 +20,7 @@ type Course = {
 export default function CourseDetailPage() {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const posthog = usePostHog();
   const [course, setCourse] = useState<Course | null>(null);
   const [learningPath, setLearningPath] = useState<any[]>([]);
   const [pathLoading, setPathLoading] = useState(true);
@@ -237,7 +239,7 @@ export default function CourseDetailPage() {
               <div className="dark-card p-6 flex flex-col sm:flex-row justify-between items-center gap-4" style={{ borderLeft: '3px solid #22c55e' }}>
                 <div className="font-semibold text-lg" style={{ color: '#22c55e' }}>✓ Skill Mastered</div>
                 <button
-                  onClick={() => navigate(`/course/${courseId}/quiz`)}
+                  onClick={() => { posthog?.capture('quiz_started', { course_id: courseId, course_title: course?.title, retake: true }); navigate(`/course/${courseId}/quiz`); }}
                   className="px-6 py-2.5 rounded-lg text-sm font-bold border transition-colors"
                   style={{ borderColor: 'var(--border)', color: 'var(--text-muted)', backgroundColor: 'transparent' }}
                   onMouseOver={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--text-muted)' }}
@@ -261,7 +263,7 @@ export default function CourseDetailPage() {
             <div className="dark-card p-6 flex flex-col sm:flex-row justify-between items-center gap-4" style={{ borderLeft: '3px solid var(--accent-primary)' }}>
               <div className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>Ready to test your knowledge?</div>
               <button
-                onClick={() => navigate(`/course/${courseId}/quiz`)}
+                onClick={() => { posthog?.capture('quiz_started', { course_id: courseId, course_title: course?.title, retake: false }); navigate(`/course/${courseId}/quiz`); }}
                 className="px-8 py-2.5 rounded-lg text-sm font-bold transition-colors shadow-sm"
                 style={{ backgroundColor: 'var(--accent-primary)', color: 'white' }}
                 onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#4f46e5'}

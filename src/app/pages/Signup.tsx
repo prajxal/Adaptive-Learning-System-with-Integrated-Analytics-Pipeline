@@ -2,6 +2,7 @@ import React, { FormEvent, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { signup, getToken } from "../../services/auth";
 import { AuthLayout } from "../components/auth/AuthLayout";
+import { usePostHog } from "@posthog/react";
 
 export function Signup() {
   const [email, setEmail] = useState("");
@@ -9,6 +10,7 @@ export function Signup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const posthog = usePostHog();
 
   useEffect(() => {
     const token = getToken() || localStorage.getItem("access_token");
@@ -24,10 +26,13 @@ export function Signup() {
     setLoading(true);
 
     try {
-      await signup(email, password);
+      const data = await signup(email, password);
+      posthog?.identify(data.user_id, { email });
+      posthog?.capture('user_signed_up', { email });
       navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "Registration failed. Please try again.");
+      posthog?.captureException(err);
     } finally {
       setLoading(false);
     }

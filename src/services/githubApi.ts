@@ -1,7 +1,7 @@
 import BACKEND_URL from "./api";
 
 export async function getGithubStatus() {
-    const res = await fetch(`${BACKEND_URL}/auth/github/status`, {
+    const res = await fetch(`${BACKEND_URL}/github/status`, {
         headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
@@ -13,7 +13,7 @@ export async function getGithubStatus() {
 }
 
 export async function redirectToGithubConnect() {
-    const res = await fetch(`${BACKEND_URL}/auth/github/login`, {
+    const res = await fetch(`${BACKEND_URL}/github/connect`, {
         headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },

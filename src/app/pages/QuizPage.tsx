@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
 import { getQuiz, submitQuizAttempt, getSkillProfile, Quiz, SkillProfile } from "../services/quizApi";
+import { usePostHog } from "@posthog/react";
 
 export default function QuizPage() {
     const { courseId } = useParams();
     const navigate = useNavigate();
+    const posthog = usePostHog();
 
     const [quiz, setQuiz] = useState<Quiz | null>(null);
     const [loading, setLoading] = useState(true);
@@ -77,6 +79,12 @@ export default function QuizPage() {
                     score: submissionResult.score,
                     passed: submissionResult.passed,
                 });
+                posthog?.capture('quiz_submitted', {
+                    course_id: courseId,
+                    score: submissionResult.score,
+                    passed: submissionResult.passed,
+                    total_questions: quiz?.questions.length,
+                });
 
                 const updatedProfile = await getSkillProfile(courseId!);
                 setNewProfile(updatedProfile);
@@ -85,6 +93,7 @@ export default function QuizPage() {
             }
         } catch (err: any) {
             setError(err.message || "Error submitting quiz");
+            posthog?.captureException(err);
         } finally {
             setSubmitting(false);
         }
@@ -190,6 +199,7 @@ export default function QuizPage() {
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <button
                                 onClick={() => {
+                                    posthog?.capture('quiz_retaken', { course_id: courseId, previous_score: result?.score });
                                     setResult(null);
                                     setNewProfile(null);
                                     setAnswers({});

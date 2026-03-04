@@ -54,7 +54,8 @@ app.include_router(
 )
 app.include_router(roadmaps.router, prefix="/roadmaps", tags=["roadmaps"])
 app.include_router(progress.router, prefix="/progress", tags=["progress"])
-app.include_router(github_auth.router)
+from routers.github_auth import router as github_router
+app.include_router(github_router)
 app.include_router(resume.router, prefix="/resume", tags=["resume"])
 app.include_router(resources.router, prefix="/courses", tags=["resources"])
 app.include_router(skill_graph.router, prefix="/skill-graph", tags=["skill-graph"])

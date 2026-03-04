@@ -2,6 +2,7 @@ import React, { FormEvent, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login, getToken } from "../../services/auth";
 import { AuthLayout } from "../components/auth/AuthLayout";
+import { usePostHog } from "@posthog/react";
 
 export function Login() {
   const [email, setEmail] = useState("");
@@ -9,6 +10,7 @@ export function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const posthog = usePostHog();
 
   useEffect(() => {
     const token = getToken() || localStorage.getItem("access_token");
@@ -24,10 +26,14 @@ export function Login() {
     setLoading(true);
 
     try {
-      await login(email, password);
+      const data = await login(email, password);
+      posthog?.identify(data.user_id, { email });
+      posthog?.capture('user_logged_in', { email });
       navigate("/dashboard");
     } catch (err: any) {
       setError(err.message || "Invalid credentials. Please try again.");
+      posthog?.capture('login_failed', { email, error: err.message });
+      posthog?.captureException(err);
     } finally {
       setLoading(false);
     }
