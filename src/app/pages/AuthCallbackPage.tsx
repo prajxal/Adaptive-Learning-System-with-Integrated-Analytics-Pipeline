@@ -8,15 +8,41 @@ export default function AuthCallbackPage() {
     const posthog = usePostHog();
 
     useEffect(() => {
-        const token = searchParams.get('token');
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+
+        // Supabase returns token as URL fragment after Google OAuth
+        const hash = new URLSearchParams(window.location.hash.substring(1));
+        const supabaseAccessToken = hash.get('access_token');
+
         if (token) {
+            // Our backend already issued a JWT, store and redirect
             localStorage.setItem('access_token', token);
             posthog?.capture('google_login');
             navigate('/dashboard');
+        } else if (supabaseAccessToken) {
+            // Exchange Supabase token for our own JWT
+            fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/google/exchange`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ access_token: supabaseAccessToken })
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.token) {
+                        localStorage.setItem('access_token', data.token);
+                        posthog?.capture('google_login');
+                        navigate('/dashboard');
+                    } else {
+                        navigate('/login?error=google_failed');
+                    }
+                })
+                .catch(() => navigate('/login?error=google_failed'));
         } else {
-            navigate('/signin');
+            // No token found, redirect to login
+            navigate('/login?error=google_failed');
         }
-    }, [navigate, searchParams, posthog]);
+    }, [navigate, posthog]);
 
     return (
         <div className="bg-[#0A0A0F] h-screen flex flex-col items-center justify-center text-[#00FFB2] font-mono">

@@ -151,3 +151,59 @@ async def google_callback(code: str, db: Session = Depends(get_db)):
     access_token = create_access_token(user_id=user.id)
     frontend_url = os.getenv("FRONTEND_URL")
     return RedirectResponse(url=f"{frontend_url}/auth/callback?token={access_token}")
+
+@router.post("/google/exchange")
+async def google_exchange(
+    payload: dict,
+    db: Session = Depends(get_db)
+):
+    access_token = payload.get("access_token")
+    if not access_token:
+        raise HTTPException(status_code=400, detail="No access token provided")
+    
+    # Get user info from Supabase
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{os.getenv('SUPABASE_URL')}/auth/v1/user",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "apikey": os.getenv("SUPABASE_ANON_KEY")
+            }
+        )
+    
+    if response.status_code != 200:
+        raise HTTPException(status_code=400, detail="Invalid Supabase token")
+    
+    supabase_user = response.json()
+    email = supabase_user.get("email")
+    google_id = supabase_user.get("id")
+    avatar_url = supabase_user.get("user_metadata", {}).get("avatar_url", "")
+
+    if not email:
+        raise HTTPException(status_code=400, detail="No email from Google")
+
+    # Find or create user
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        user = User(
+            id=str(uuid.uuid4()),
+            email=email,
+            password_hash="google-oauth-" + str(uuid.uuid4()),
+            google_id=google_id,
+            google_connected=True,
+            avatar_url=avatar_url,
+            created_at=datetime.utcnow()
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    else:
+        user.google_connected = True
+        user.google_id = google_id
+        if avatar_url:
+            user.avatar_url = avatar_url
+        db.commit()
+
+    # Issue our JWT
+    our_token = create_access_token(user_id=user.id)
+    return {"token": our_token}
