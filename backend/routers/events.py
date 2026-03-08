@@ -51,7 +51,6 @@ def create_event(payload: EventPayload, current_user: User = Depends(get_current
         if user_skill:
             user_skill.trust_score = min(user_skill.trust_score + 50, 2000)
             user_skill.proficiency_level = min(user_skill.proficiency_level + 0.05, 1.0)
-        else:
             new_skill = UserSkill(
                 user_id=str(current_user.id),
                 skill_name=roadmap_id,
@@ -59,6 +58,17 @@ def create_event(payload: EventPayload, current_user: User = Depends(get_current
                 proficiency_level=0.1,
             )
             db.add(new_skill)
+
+    elif payload.event_type == "quiz_failed" and roadmap_id:
+        user_skill = (
+            db.query(UserSkill)
+            .filter(
+                UserSkill.user_id == str(current_user.id), UserSkill.skill_name == roadmap_id
+            )
+            .first()
+        )
+        if user_skill:
+            user_skill.trust_score = max(user_skill.trust_score - 25, 0)
 
     db.commit()
     return {"status": "event received"}

@@ -128,7 +128,7 @@ def update_skill_profile_from_quiz(user_id: str, skill_id: str, quiz_score: floa
         (new_quiz_confidence + cold_weight)
     )
     
-    final_confidence = max(new_quiz_confidence, cold_weight)
+    final_confidence = min(1.0, max(new_quiz_confidence, cold_weight))
     
     profile.quiz_proficiency = new_quiz_proficiency
     profile.quiz_confidence = new_quiz_confidence

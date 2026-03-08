@@ -4,6 +4,10 @@ from models.user import User
 from models.skill_weight import SkillWeight
 from db.database import SessionLocal
 from services.skill_synthesizer import synthesize_skill_profile
+import logging
+from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 SKILL_LANGUAGE_MAP = {
     "Python": "python-developer",
@@ -23,7 +27,7 @@ def synthesize_all_skills_for_user(user_id: str, db: Session):
         try:
             synthesize_skill_profile(user_id, skill_name, db)
         except Exception as e:
-            print(f"[GithubSkillExtractor] Error synthesizing skill {skill_name}: {e}")
+            logger.error(f"Error synthesizing skill {skill_name}: {e}", exc_info=True)
 
 async def extract_github_skills(user_id: str, access_token: str):
     db = SessionLocal()
@@ -113,8 +117,19 @@ async def extract_github_skills(user_id: str, access_token: str):
             db.commit()
 
             synthesize_all_skills_for_user(user_id, db)
+            
+            user.github_sync_status = "completed"
+            user.last_github_sync = datetime.utcnow()
+            db.commit()
 
     except Exception as e:
-        print(f"Error in extract_github_skills: {e}")
+        logger.error(f"Error in extract_github_skills: {e}", exc_info=True)
+        try:
+            db.rollback()
+            if 'user' in locals() and user:
+                user.github_sync_status = "failed"
+                db.commit()
+        except:
+            pass
     finally:
         db.close()

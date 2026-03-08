@@ -191,7 +191,7 @@ export default function QuizPage() {
                             <div className="text-left">
                                 <div className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Confidence</div>
                                 <div className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
-                                    {Math.round(newProfile.confidence * 100)}%
+                                    {Math.min(100, Math.round(newProfile.confidence * 100))}%
                                 </div>
                             </div>
                         </div>
@@ -230,7 +230,7 @@ export default function QuizPage() {
                         {quiz.questions.map((q, idx) => {
                             const qId = q.id || `q${idx}`;
                             const userAns = submittedAnswers[qId];
-                            const isCorrect = userAns === q.correct_answer;
+                            const isCorrect = userAns?.trim().toLowerCase() === q.correct_answer?.trim().toLowerCase();
 
                             return (
                                 <div key={idx} className="dark-card p-6">

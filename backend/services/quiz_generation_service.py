@@ -15,7 +15,7 @@ from core.config import DATABASE_URL # We don't have GEMINI_API_KEY in config ye
 logger = logging.getLogger(__name__)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent"
 
 class QuizQuestion(BaseModel):
     question: str
@@ -100,7 +100,6 @@ async def get_or_generate_quiz(skill_id: str, db: Session) -> SkillQuiz:
     roadmap_title = roadmap_id.replace('-', ' ').title() # simple fallback for roadmap title
     
     # Step 3: Trigger Generation
-    from config import GEMINI_API_KEY
     if not GEMINI_API_KEY:
         raise HTTPException(
             status_code=404,
@@ -156,35 +155,35 @@ Required JSON format:
                     "contents": [{"parts": [{"text": prompt}]}],
                     "generationConfig": {"temperature": 0.4}
                 },
+                headers={"Content-Type": "application/json"},
                 timeout=30.0
             )
             response.raise_for_status()
-            gemini_data = response.json()
             
-            # Use specific extraction path as instructed
-            response_text = gemini_data["candidates"][0]["content"]["parts"][0]["text"]
+            try:
+                response_data = response.json()
+                content = response_data["candidates"][0]["content"]["parts"][0]["text"]
+                
+                # First try our robust extractor, fallback to standard json.loads
+                quiz_data = extract_json_from_text(content)
+                if not quiz_data:
+                    quiz_data = json.loads(content)
+                    
+                questions = quiz_data["questions"]
+            except (KeyError, IndexError, json.JSONDecodeError) as e:
+                logger.error(f"Gemini response parsing failed: {e}, raw: {response.text}")
+                raise HTTPException(status_code=502, detail="Quiz generation failed. Please try again.")
             
-    except (httpx.RequestError, httpx.HTTPStatusError, KeyError, IndexError) as e:
+    except (httpx.RequestError, httpx.HTTPStatusError) as e:
         logger.error(f"Gemini API request failed: {e}")
         raise HTTPException(status_code=503, detail="Quiz generation temporarily unavailable")
         
-    # Step 4: Extract and Validate JSON
-    quiz_json = extract_json_from_text(response_text)
-    if not quiz_json:
-        logger.error("Failed to extract JSON from Gemini response")
-        raise HTTPException(status_code=503, detail="Quiz generation temporarily unavailable")
-        
+    # Validate JSON schema and exact length
     try:
-        questions = validate_quiz_json(quiz_json)
+        questions = validate_quiz_json({"questions": questions})
     except ValueError as e:
         logger.error(f"Quiz validation failed: {e}")
-        raise HTTPException(status_code=503, detail="Quiz generation temporarily unavailable")
-        
-    if not questions or len(questions) != 4:
-        raise HTTPException(
-            status_code=503,
-            detail="Quiz generation failed"
-        )
+        raise HTTPException(status_code=502, detail="Quiz generation failed. Please try again.")
         
     # Step 5: Safely persist with race-condition handling
     new_quiz = SkillQuiz(

@@ -12,6 +12,7 @@ import DashboardPage from './pages/DashboardPage';
 import ResourceViewerPage from './pages/ResourceViewerPage';
 import MyProgressPage from './pages/MyProgressPage';
 import QuizPage from './pages/QuizPage';
+import AuthCallbackPage from './pages/AuthCallbackPage';
 
 function ProtectedRoute() {
   const token = localStorage.getItem('access_token');
@@ -65,6 +66,7 @@ export default function App() {
         <Route path="/signin" element={<Login />} />
         <Route path="/login" element={<Navigate to="/signin" replace />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>

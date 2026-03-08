@@ -6,8 +6,13 @@ from core.security import get_current_user
 from db.database import get_db, SessionLocal
 from services.resume_parser import ingest_resume
 from models.user import User
+from core.rate_limit import RateLimiter
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
+rate_limiter = RateLimiter(calls=5, period=60)
 
 UPLOAD_DIR = "uploads/resumes"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -19,12 +24,12 @@ def process_resume_background(user_id: str, file_bytes: bytes, filename: str):
         if not user:
             return
 
-        print(f"\n[ResumeAPI] Background task started for User: {user_id}")
+        logger.info(f"Background task started for User: {user_id}")
         file_path = f"{UPLOAD_DIR}/{user_id}_{filename}"
 
         with open(file_path, "wb") as buffer:
             buffer.write(file_bytes)
-            print(f"[ResumeAPI] File successfully saved to disk: {file_path}")
+            logger.info(f"File successfully saved to disk: {file_path}")
 
         # EXISTING pdfplumber extraction logic
         # EXISTING SkillWeight insertion logic
@@ -34,7 +39,7 @@ def process_resume_background(user_id: str, file_bytes: bytes, filename: str):
         db.commit()
 
     except Exception as e:
-        print(f"[ResumeAPI] Resume processing failed for User: {user_id}. Error: {e}")
+        logger.error(f"Resume processing failed for User: {user_id}", exc_info=True)
         db.rollback()
         user = db.query(User).filter(User.id == user_id).first()
         if user:
@@ -45,15 +50,18 @@ def process_resume_background(user_id: str, file_bytes: bytes, filename: str):
         db.close()
 
 
-@router.post("/upload", status_code=202)
+@router.post("/upload", status_code=202, dependencies=[Depends(rate_limiter)])
 async def upload_resume(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    print(f"\n[ResumeAPI] Received Resume upload request from User: {current_user.id}")
+    logger.info(f"Received Resume upload request from User: {current_user.id}")
     
+    if current_user.resume_status == "processing":
+        raise HTTPException(status_code=409, detail="Resume already being processed")
+
     if not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are accepted")
 

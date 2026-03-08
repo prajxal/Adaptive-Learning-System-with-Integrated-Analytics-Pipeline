@@ -8,8 +8,48 @@ from models.course import Course
 from models.event import Event
 from models.user import User
 from core.security import get_current_user
+from services.github_skill_extractor import synthesize_all_skills_for_user
 
 router = APIRouter()
+
+@router.get("/me/profile")
+def get_user_profile(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user_id = str(current_user.id)
+    
+    # Get total completed courses
+    completed_courses = db.query(func.count(distinct(Event.course_id))) \
+        .filter(
+            Event.user_id == user_id,
+            Event.event_type == "course_completed"
+        ).scalar() or 0
+
+    # Get top 3 skills
+    profiles = db.query(SkillProfile).filter(SkillProfile.user_id == user_id).all()
+    skill_list = []
+    
+    if profiles:
+        roadmap_ids = list(set(p.roadmap_id for p in profiles))
+        for roadmap_id in roadmap_ids:
+            roadmap_profiles = [p for p in profiles if p.roadmap_id == roadmap_id]
+            avg_confidence = sum(p.confidence for p in roadmap_profiles) / len(roadmap_profiles)
+            skill_list.append({
+                "roadmap_id": roadmap_id,
+                "confidence": avg_confidence
+            })
+            
+        skill_list.sort(key=lambda x: x["confidence"], reverse=True)
+        top_skills = [s["roadmap_id"] for s in skill_list[:3]]
+    else:
+        top_skills = []
+
+    return {
+        "global_elo_rating": current_user.global_elo_rating,
+        "resume_status": current_user.resume_status,
+        "github_sync_status": current_user.github_sync_status,
+        "last_github_sync": current_user.last_github_sync,
+        "completed_courses": completed_courses,
+        "top_skills": top_skills
+    }
 
 @router.get("/me/skills")
 def get_user_skills(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -66,3 +106,9 @@ def get_user_skills(current_user: User = Depends(get_current_user), db: Session 
         "user_id": user_id,
         "skills": skill_list
     }
+
+@router.post("/me/skills/rebuild")
+def rebuild_skills(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user_id = str(current_user.id)
+    synthesize_all_skills_for_user(user_id, db)
+    return {"status": "success", "message": "Skills recalculated successfully"}

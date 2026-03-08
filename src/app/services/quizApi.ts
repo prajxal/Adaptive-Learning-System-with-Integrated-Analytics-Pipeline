@@ -15,11 +15,13 @@ export interface QuizQuestion {
     question: string;
     options: string[];
     explanation?: string;
+    correct_answer?: string;
 }
 
 export interface Quiz {
     id: string;
     skill_id: string;
+    title?: string;
     questions: QuizQuestion[];
     passing_score: number;
 }

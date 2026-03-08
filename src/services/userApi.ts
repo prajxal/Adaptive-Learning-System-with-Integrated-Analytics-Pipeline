@@ -1,4 +1,16 @@
-const BACKEND_URL = "https://ai-learning-backend-2stp.onrender.com";
+import BACKEND_URL from "./api";
+
+export async function getUserProfile() {
+    const response = await fetch(`${BACKEND_URL}/users/me/profile`, {
+        headers: {
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            "Content-Type": "application/json"
+        }
+    });
+
+    if (!response.ok) throw new Error("Failed to fetch user profile");
+    return response.json();
+}
 
 export async function getUserSkills() {
     console.log("Token:", localStorage.getItem("access_token"));

@@ -37,9 +37,11 @@ def evaluate_quiz_attempt(user_id: str, skill_id: str, answers: dict, db: Sessio
         passed = True
     else:
         correct_count = 0
-        for q in questions:
-            q_id = str(q.get("id"))
-            if str(answers.get(q_id)) == str(q.get("correct_answer")):
+        for idx, q in enumerate(questions):
+            q_id = str(q.get("id", f"q{idx}"))
+            user_ans = str(answers.get(q_id, "")).strip().lower()
+            correct_ans = str(q.get("correct_answer", "")).strip().lower()
+            if user_ans == correct_ans:
                 correct_count += 1
                 
         score = (correct_count / total_questions) * 100.0

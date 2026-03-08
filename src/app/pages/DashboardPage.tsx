@@ -58,6 +58,9 @@ export default function DashboardPage() {
       .then(data => {
         setGithubConnected(data.connected);
         setGithubUsername(data.username || "");
+        if (data.sync_status === "syncing") {
+          startGithubPolling();
+        }
       })
       .catch(console.error);
 
@@ -97,7 +100,41 @@ export default function DashboardPage() {
         if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
         setResumeUploading(false);
       }
-    }, 3000);
+    }, 5000);
+  };
+
+  const githubPollingRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (githubPollingRef.current) clearInterval(githubPollingRef.current);
+    };
+  }, []);
+
+  const startGithubPolling = () => {
+    if (githubPollingRef.current) return;
+    githubPollingRef.current = setInterval(async () => {
+      try {
+        const res = await getGithubStatus();
+        if (res.sync_status === "completed" || res.sync_status === "failed") {
+          if (githubPollingRef.current) {
+            clearInterval(githubPollingRef.current);
+            githubPollingRef.current = null;
+          }
+          if (res.sync_status === "completed") {
+            const updatedSkills = await getUserSkills();
+            setSkills(updatedSkills.skills || []);
+            setGithubSuccess(true);
+            setTimeout(() => setGithubSuccess(false), 5000);
+          } else {
+            posthog?.capture('github_sync_failed');
+            alert("GitHub processing failed.");
+          }
+        }
+      } catch (err) {
+        console.error("GitHub Polling error", err);
+      }
+    }, 5000);
   };
 
   async function handleResumeUpload(e: React.ChangeEvent<HTMLInputElement>) {

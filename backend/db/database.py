@@ -1,37 +1,31 @@
 import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
+# Load .env file explicitly
+load_dotenv()
 
-engine_kwargs = {
-    "pool_pre_ping": True,
-}
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-if DATABASE_URL.startswith("sqlite"):
-    print("Using SQLite database")
-    engine_kwargs["connect_args"] = {"check_same_thread": False}
-else:
-    print("Using PostgreSQL database")
-    engine_kwargs["pool_size"] = 3
-    engine_kwargs["max_overflow"] = 5
-    engine_kwargs["connect_args"] = {"sslmode": "require"}
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set. Check your backend/.env file.")
 
-engine = create_engine(DATABASE_URL, **engine_kwargs)
-
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
+engine = create_engine(
+    DATABASE_URL,
+    pool_size=10,
+    max_overflow=20,
+    pool_pre_ping=True,
+    connect_args={"sslmode": "require"}
 )
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
 def get_db():
-    print("DB session opened")
     db = SessionLocal()
     try:
         yield db
     finally:
-        print("DB session closed")
         db.close()

@@ -10,15 +10,17 @@ from core.security import get_current_user
 from db.database import get_db
 from models.user import User
 from services.github_skill_extractor import extract_github_skills
+from core.rate_limit import RateLimiter
 
 load_dotenv()
 
 router = APIRouter(prefix="/github", tags=["github-auth"])
+rate_limiter = RateLimiter(calls=5, period=60)
 
 # In-memory state store (production should use Redis)
 oauth_state_store = {}
 
-@router.get("/connect")
+@router.get("/connect", dependencies=[Depends(rate_limiter)])
 def github_connect(current_user: User = Depends(get_current_user)):
     CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
     REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")
@@ -94,6 +96,7 @@ async def github_callback(
     user.github_username = github_username
     user.github_access_token = access_token
     user.github_status = "connected"
+    user.github_sync_status = "syncing"
 
     db.commit()
 
@@ -110,5 +113,6 @@ async def github_callback(
 def github_status(current_user: User = Depends(get_current_user)):
     return {
         "connected": current_user.github_status == "connected",
-        "username": current_user.github_username
+        "username": current_user.github_username,
+        "sync_status": current_user.github_sync_status
     }

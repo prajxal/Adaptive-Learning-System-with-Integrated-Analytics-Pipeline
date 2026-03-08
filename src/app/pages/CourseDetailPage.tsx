@@ -61,8 +61,8 @@ export default function CourseDetailPage() {
     })
       .then((res) => res.json())
       .then((data) => {
-        // Find this specific course's status
-        const currentSkill = data.find((item: any) => item.skill_id === courseId);
+        const skillArray = Array.isArray(data) ? data : data.skills || [];
+        const currentSkill = skillArray.find((item: any) => item.skill_id === courseId);
         if (currentSkill) {
           setSkillStatus(currentSkill.status);
         }
@@ -251,23 +251,30 @@ export default function CourseDetailPage() {
             );
           }
 
-          if (!isUnlocked && skillStatus === "locked") {
-            return (
-              <div className="dark-card p-6 flex items-center" style={{ borderLeft: '3px solid var(--border)' }}>
-                <div className="font-medium" style={{ color: 'var(--text-muted)' }}>🔒 Complete prerequisites to unlock this topic</div>
-              </div>
-            );
-          }
+          const isLocked = !isUnlocked && skillStatus === "locked";
 
           return (
-            <div className="dark-card p-6 flex flex-col sm:flex-row justify-between items-center gap-4" style={{ borderLeft: '3px solid var(--accent-primary)' }}>
-              <div className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>Ready to test your knowledge?</div>
+            <div className="dark-card p-6 flex flex-col sm:flex-row justify-between items-center gap-4" style={{ borderLeft: `3px solid ${isLocked ? 'var(--border)' : 'var(--accent-primary)'}` }}>
+              <div className="font-semibold text-lg" style={{ color: isLocked ? 'var(--text-muted)' : 'var(--text-primary)' }}>
+                {isLocked ? '🔒 Complete prerequisites to unlock this topic' : 'Ready to test your knowledge?'}
+              </div>
               <button
-                onClick={() => { posthog?.capture('quiz_started', { course_id: courseId, course_title: course?.title, retake: false }); navigate(`/course/${courseId}/quiz`); }}
-                className="px-8 py-2.5 rounded-lg text-sm font-bold transition-colors shadow-sm"
-                style={{ backgroundColor: 'var(--accent-primary)', color: 'white' }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#4f46e5'}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--accent-primary)'}
+                onClick={() => {
+                  if (!isLocked) {
+                    posthog?.capture('quiz_started', { course_id: courseId, course_title: course?.title, retake: false });
+                    navigate(`/course/${courseId}/quiz`);
+                  }
+                }}
+                disabled={isLocked}
+                title={isLocked ? "Complete prerequisites first" : ""}
+                className={`px-8 py-2.5 rounded-lg text-sm font-bold transition-colors shadow-sm ${isLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+                style={{
+                  backgroundColor: isLocked ? 'var(--bg-card-hover)' : 'var(--accent-primary)',
+                  color: isLocked ? 'var(--text-muted)' : 'white',
+                  border: isLocked ? '1px solid var(--border)' : 'none'
+                }}
+                onMouseOver={(e) => { if (!isLocked) e.currentTarget.style.backgroundColor = '#4f46e5'; }}
+                onMouseOut={(e) => { if (!isLocked) e.currentTarget.style.backgroundColor = 'var(--accent-primary)'; }}
               >
                 Take Quiz
               </button>
@@ -287,7 +294,7 @@ export default function CourseDetailPage() {
             <div className="dark-card p-4 sm:p-5 flex-1 max-w-[200px]">
               <div className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Confidence</div>
               <div className="title-font text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
-                {Math.round(skillProfile.confidence * 100) || 0}%
+                {Math.min(100, Math.round(skillProfile.confidence * 100)) || 0}%
               </div>
             </div>
           </div>

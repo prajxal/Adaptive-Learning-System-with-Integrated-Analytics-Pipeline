@@ -150,6 +150,21 @@ def get_roadmap_skill_status(user_id: str, roadmap_id: str, db: Session) -> dict
             "status": status
         })
         
+    # FIX: Add entry point guarantee
+    unlocked_count = sum(1 for s in skills_status if s["status"] == "unlocked")
+
+    if unlocked_count == 0:
+        # Find lowest difficulty course and force unlock it
+        entry_course = db.query(Course.id).filter(
+            Course.roadmap_id == roadmap_id
+        ).order_by(Course.difficulty_level.asc()).first()
+        
+        if entry_course:
+            for s in skills_status:
+                if s["skill_id"] == entry_course[0]:
+                    s["status"] = "unlocked"
+                    break
+
     return {
         "roadmap_id": roadmap_id,
         "skills": skills_status

@@ -27,8 +27,6 @@ async def read_quiz_for_skill(skill_id: str, db: Session = Depends(get_db)):
             
     for q in questions:
         sq = dict(q)
-        if "correct_answer" in sq:
-            del sq["correct_answer"]
         sanitized_questions.append(sq)
         
     return {
