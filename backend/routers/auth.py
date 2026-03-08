@@ -84,7 +84,8 @@ def get_me(current_user: User = Depends(get_current_user)):
 @router.get("/google")
 def google_auth():
     supabase_url = os.getenv("SUPABASE_URL")
-    redirect_url = os.getenv("FRONTEND_URL") + "/auth/callback"
+    backend_url = os.getenv("BACKEND_URL", "http://localhost:8000")
+    redirect_url = f"{backend_url}/auth/callback"
     auth_url = f"{supabase_url}/auth/v1/authorize?provider=google&redirect_to={redirect_url}"
     return RedirectResponse(auth_url)
 
