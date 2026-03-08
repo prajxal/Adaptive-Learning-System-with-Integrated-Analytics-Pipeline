@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 import os
 import httpx
+import urllib.parse
 from fastapi.responses import RedirectResponse
 
 from core.security import create_access_token, get_current_user, hash_password, verify_password
@@ -84,9 +85,10 @@ def get_me(current_user: User = Depends(get_current_user)):
 @router.get("/google")
 def google_auth():
     supabase_url = os.getenv("SUPABASE_URL")
-    backend_url = os.getenv("BACKEND_URL", "http://localhost:8000")
-    redirect_url = f"{backend_url}/auth/callback"
-    auth_url = f"{supabase_url}/auth/v1/authorize?provider=google&redirect_to={redirect_url}"
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    redirect_url = f"{frontend_url}/auth/callback"
+    encoded_redirect = urllib.parse.quote(redirect_url)
+    auth_url = f"{supabase_url}/auth/v1/authorize?provider=google&redirect_to={encoded_redirect}"
     return RedirectResponse(auth_url)
 
 @router.get("/callback")
