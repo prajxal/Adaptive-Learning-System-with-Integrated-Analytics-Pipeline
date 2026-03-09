@@ -2,6 +2,7 @@ import React, { FormEvent, useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login, getToken } from "../../services/auth";
 import { AuthLayout } from "../components/auth/AuthLayout";
+import { supabase } from "../../lib/supabase";
 import { usePostHog } from "@posthog/react";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
@@ -51,9 +52,18 @@ export function Login() {
     }
   };
 
-  const handleGoogleAuth = () => {
+  const handleGoogleAuth = async () => {
     setIsGoogleLoading(true);
-    window.location.href = `${BACKEND_URL}/auth/google`;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: "https://adaptive-learning-system-with-integ.vercel.app/auth/callback"
+      }
+    });
+    if (error) {
+      console.error("Error with Google login:", error.message);
+      setIsGoogleLoading(false);
+    }
   };
 
   return (
