@@ -8,9 +8,14 @@ export default function AuthCallbackPage() {
     const posthog = usePostHog();
 
     useEffect(() => {
+        console.log("OAuth callback URL:", window.location.href);
+        console.log("Hash fragment:", window.location.hash);
+
         const hash = window.location.hash.substring(1);
         const params = new URLSearchParams(hash);
         const accessToken = params.get('access_token');
+
+        console.log("Parsed token:", accessToken);
 
         if (accessToken) {
             localStorage.setItem('access_token', accessToken);

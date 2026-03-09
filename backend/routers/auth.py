@@ -87,8 +87,10 @@ def google_auth():
     supabase_url = os.getenv("SUPABASE_URL")
     frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
     redirect_url = f"{frontend_url}/auth/callback"
-    encoded_redirect = urllib.parse.quote(redirect_url)
-    auth_url = f"{supabase_url}/auth/v1/authorize?provider=google&redirect_to={encoded_redirect}"
+    auth_url = f"{supabase_url}/auth/v1/authorize?provider=google&redirect_to={redirect_url}"
+    print("Google OAuth redirect URL:", auth_url)
+    print("Frontend callback URL:", redirect_url)
+    print("Supabase URL:", supabase_url)
     return RedirectResponse(auth_url)
 
 @router.get("/callback")
