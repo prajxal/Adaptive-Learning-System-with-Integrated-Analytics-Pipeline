@@ -7,13 +7,13 @@ export interface Progress {
     proficiency_level: number;
 }
 
-import BACKEND_URL from "./api";
+import BACKEND_URL, { getClerkToken } from "./api";
 
 export async function getProgress(roadmapId: string): Promise<Progress | null> {
     try {
         const res = await fetch(`${BACKEND_URL}/progress/${roadmapId}`, {
             headers: {
-                Authorization: `Bearer ${localStorage.getItem("access_token")}`
+                Authorization: `Bearer ${await getClerkToken()}`
             }
         });
         if (!res.ok) return null;

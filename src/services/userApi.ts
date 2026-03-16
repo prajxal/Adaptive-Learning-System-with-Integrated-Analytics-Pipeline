@@ -1,9 +1,9 @@
-import BACKEND_URL from "./api";
+import BACKEND_URL, { getClerkToken } from "./api";
 
 export async function getUserProfile() {
     const response = await fetch(`${BACKEND_URL}/users/me/profile`, {
         headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            Authorization: `Bearer ${await getClerkToken()}`,
             "Content-Type": "application/json"
         }
     });
@@ -13,11 +13,11 @@ export async function getUserProfile() {
 }
 
 export async function getUserSkills() {
-    console.log("Token:", localStorage.getItem("access_token"));
+    console.log("Token:", await getClerkToken());
 
     const response = await fetch(`${BACKEND_URL}/users/me/skills`, {
         headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            Authorization: `Bearer ${await getClerkToken()}`,
             "Content-Type": "application/json"
         }
     });

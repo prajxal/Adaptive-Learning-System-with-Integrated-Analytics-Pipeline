@@ -8,7 +8,7 @@ from models.skill_profile import SkillProfile
 from models.skill_weight import SkillWeight
 from models.user import User
 from models.user_skill import UserSkill
-from core.security import get_current_user
+from core.clerk_auth import get_current_user
 from services.skill_synthesizer import get_skill_profile
 from models.event import Event
 

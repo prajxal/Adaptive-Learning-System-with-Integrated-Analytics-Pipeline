@@ -33,8 +33,6 @@ import models.skill_weight
 import models.user
 import models.user_skill
 
-Base.metadata.create_all(bind=engine)
-
 app = FastAPI(title="AI Learning Path Recommendation System")
 
 app.add_middleware(

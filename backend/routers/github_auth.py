@@ -6,7 +6,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 
-from core.security import get_current_user
+from core.clerk_auth import get_current_user
 from db.database import get_db
 from models.user import User
 from services.github_skill_extractor import extract_github_skills

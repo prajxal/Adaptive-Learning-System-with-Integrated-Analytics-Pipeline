@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, Outlet } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, Outlet, useLocation } from 'react-router-dom';
+import { SignedIn, SignedOut, useAuth } from '@clerk/clerk-react';
 import { AppNavbar } from './components/AppNavbar';
 import { AppSidebar } from './components/AppSidebar';
 import { Login } from './pages/Login';
@@ -12,21 +13,8 @@ import DashboardPage from './pages/DashboardPage';
 import ResourceViewerPage from './pages/ResourceViewerPage';
 import MyProgressPage from './pages/MyProgressPage';
 import QuizPage from './pages/QuizPage';
-import AuthCallbackPage from './pages/AuthCallbackPage';
 
-function ProtectedRoute() {
-  const token = localStorage.getItem('access_token');
-  console.log("[ProtectedRoute] Evaluated. Token present:", !!token);
-
-  if (!token) {
-    console.log("[ProtectedRoute] Redirecting to /signin");
-    return <Navigate to="/signin" replace />;
-  }
-
-  return <Outlet />;
-}
-
-import { useLocation } from 'react-router-dom';
+import { useEffect as UseEffectAlias } from 'react';
 
 function AppLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -66,10 +54,17 @@ export default function App() {
         <Route path="/signin" element={<Login />} />
         <Route path="/login" element={<Navigate to="/signin" replace />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
-        <Route element={<ProtectedRoute />}>
-          <Route element={<AppLayout />}>
+        <Route element={
+          <>
+            <SignedIn>
+              <AppLayout />
+            </SignedIn>
+            <SignedOut>
+              <Navigate to="/signin" replace />
+            </SignedOut>
+          </>
+        }>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/roadmaps" element={<RoadmapCatalogPage />} />
             <Route path="/roadmap/:roadmapId" element={<RoadmapDetailPage />} />
@@ -78,7 +73,6 @@ export default function App() {
             <Route path="/course/:courseId/quiz" element={<QuizPage />} />
             <Route path="/progress" element={<MyProgressPage />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

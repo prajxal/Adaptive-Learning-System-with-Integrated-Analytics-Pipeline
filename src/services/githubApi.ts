@@ -1,9 +1,9 @@
-import BACKEND_URL from "./api";
+import BACKEND_URL, { getClerkToken } from "./api";
 
 export async function getGithubStatus() {
     const res = await fetch(`${BACKEND_URL}/github/status`, {
         headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            Authorization: `Bearer ${await getClerkToken()}`,
         },
     });
 
@@ -15,7 +15,7 @@ export async function getGithubStatus() {
 export async function redirectToGithubConnect() {
     const res = await fetch(`${BACKEND_URL}/github/connect`, {
         headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            Authorization: `Bearer ${await getClerkToken()}`,
         },
     });
 

@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getToken } from "../../services/auth";
 import { useProgress } from "../hooks/useProgress";
-import BACKEND_URL from "../../services/api";
+import BACKEND_URL, { getClerkToken } from "../../services/api";
 import { usePostHog } from "@posthog/react";
 
 type Resource = {
@@ -49,21 +48,22 @@ export default function ResourceViewerPage() {
     useEffect(() => {
         if (!courseId) return;
 
-        const tokenStr = localStorage.getItem("access_token");
-        const headers: Record<string, string> = { "Content-Type": "application/json" };
-        if (tokenStr) headers["Authorization"] = `Bearer ${tokenStr}`;
+        getClerkToken().then(tokenStr => {
+            const headers: Record<string, string> = { "Content-Type": "application/json" };
+            if (tokenStr) headers["Authorization"] = `Bearer ${tokenStr}`;
 
-        setLoading(true);
-        fetch(`${BACKEND_URL}/courses/${courseId}/resources`, { headers })
-            .then((res) => res.json())
-            .then((data) => {
-                setResources(data || { primary: null, additional: [] });
-                setLoading(false);
-            })
-            .catch((err) => {
-                console.error(err);
-                setLoading(false);
-            });
+            setLoading(true);
+            fetch(`${BACKEND_URL}/courses/${courseId}/resources`, { headers })
+                .then((res) => res.json())
+                .then((data) => {
+                    setResources(data || { primary: null, additional: [] });
+                    setLoading(false);
+                })
+                .catch((err) => {
+                    console.error(err);
+                    setLoading(false);
+                });
+        });
     }, [courseId]);
 
     useEffect(() => {

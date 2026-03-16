@@ -1,5 +1,6 @@
 import React from 'react';
 import { GraduationCap, Menu } from 'lucide-react';
+import { UserButton } from '@clerk/clerk-react';
 
 interface AppNavbarProps {
   onMenuClick?: () => void;
@@ -30,10 +31,11 @@ export function AppNavbar({ onMenuClick, showMenuButton = false }: AppNavbarProp
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <span className="text-sm text-[#f1f5f9] hidden sm:block">
               Engineering Learning Platform
             </span>
+            <UserButton />
           </div>
         </div>
       </div>

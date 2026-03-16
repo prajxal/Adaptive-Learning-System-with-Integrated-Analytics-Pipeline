@@ -11,5 +11,5 @@ class QuizAttempt(Base):
     skill_id = Column(String, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
     score = Column(Float, nullable=False)
     passed = Column(Boolean, nullable=False)
-    answers = Column(JSON().with_variant(Text(), "sqlite"), nullable=True) # User's submitted answers
+    answers = Column(JSON(), nullable=True) # User's submitted answers
     created_at = Column(DateTime, default=datetime.utcnow)

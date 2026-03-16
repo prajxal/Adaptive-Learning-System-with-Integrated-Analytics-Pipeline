@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 import os
 import httpx
 
-from core.security import create_access_token, get_current_user, hash_password, verify_password
+from core.security import create_access_token, hash_password, verify_password
+from core.clerk_auth import get_current_user
 from db.database import get_db
 from models.user import User
 from core.rate_limit import RateLimiter

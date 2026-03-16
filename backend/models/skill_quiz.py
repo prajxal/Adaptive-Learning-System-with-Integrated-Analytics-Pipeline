@@ -9,6 +9,6 @@ class SkillQuiz(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     skill_id = Column(String, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
-    questions = Column(JSON().with_variant(Text(), "sqlite"), nullable=False, default=list) # [{ question: "...", options: ["A", "B", ...], correct_answer: "A" }]
+    questions = Column(JSON(), nullable=False, default=list) # [{ question: "...", options: ["A", "B", ...], correct_answer: "A" }]
     passing_score = Column(Integer, nullable=False, default=80) # Default to 80%
     created_at = Column(DateTime, default=datetime.utcnow)

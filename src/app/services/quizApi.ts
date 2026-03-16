@@ -1,4 +1,4 @@
-import BACKEND_URL from "../../services/api";
+import BACKEND_URL, { getClerkToken } from "../../services/api";
 
 // --- Types ---
 export interface SkillProfile {
@@ -35,8 +35,8 @@ export interface QuizSubmissionResponse {
 }
 
 // --- Helper for Authorized Requests ---
-function getAuthHeaders(): HeadersInit {
-    const token = localStorage.getItem("access_token");
+async function getAuthHeaders(): Promise<HeadersInit> {
+    const token = await getClerkToken();
     return {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -48,7 +48,7 @@ function getAuthHeaders(): HeadersInit {
 export async function getSkillProfile(skillId: string): Promise<SkillProfile | null> {
     try {
         const response = await fetch(`${BACKEND_URL}/skill-profile/${encodeURIComponent(skillId)}`, {
-            headers: getAuthHeaders(),
+            headers: await getAuthHeaders(),
         });
         if (!response.ok) throw new Error(`Failed to fetch profile: ${response.status}`);
         return await response.json();
@@ -61,7 +61,7 @@ export async function getSkillProfile(skillId: string): Promise<SkillProfile | n
 export async function getQuiz(skillId: string): Promise<Quiz | null> {
     try {
         const response = await fetch(`${BACKEND_URL}/quiz/${encodeURIComponent(skillId)}`, {
-            headers: getAuthHeaders(),
+            headers: await getAuthHeaders(),
         });
         // Can also 503 if Gemini fails
         if (!response.ok) throw new Error(`Failed to fetch/generate quiz: ${response.status}`);
@@ -76,7 +76,7 @@ export async function submitQuizAttempt(skillId: string, answers: Record<string,
     try {
         const response = await fetch(`${BACKEND_URL}/quiz/${encodeURIComponent(skillId)}/submit`, {
             method: "POST",
-            headers: getAuthHeaders(),
+            headers: await getAuthHeaders(),
             body: JSON.stringify({ answers }),
         });
         if (!response.ok) throw new Error(`Failed to submit quiz: ${response.status}`);

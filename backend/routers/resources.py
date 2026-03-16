@@ -6,7 +6,7 @@ from db.database import get_db
 from models.course import Course
 from models.course_resource import CourseResource
 from models.user import User
-from core.security import get_current_user
+from core.clerk_auth import get_current_user
 from routers.learning_path import get_adaptive_skill_score
 import logging
 

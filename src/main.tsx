@@ -4,6 +4,14 @@ import App from './app/App'
 import './styles/index.css'
 import posthog from 'posthog-js'
 import { PostHogErrorBoundary, PostHogProvider } from '@posthog/react'
+import { ClerkProvider } from '@clerk/clerk-react'
+import TokenSynchronizer from './auth/TokenSynchronizer'
+
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+
+if (!PUBLISHABLE_KEY) {
+  throw new Error("Missing Publishable Key")
+}
 
 posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_KEY, {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
@@ -12,10 +20,13 @@ posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_KEY, {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <PostHogProvider client={posthog}>
-      <PostHogErrorBoundary>
-        <App />
-      </PostHogErrorBoundary>
-    </PostHogProvider>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
+      <PostHogProvider client={posthog}>
+        <PostHogErrorBoundary>
+          <TokenSynchronizer />
+          <App />
+        </PostHogErrorBoundary>
+      </PostHogProvider>
+    </ClerkProvider>
   </React.StrictMode>,
 )

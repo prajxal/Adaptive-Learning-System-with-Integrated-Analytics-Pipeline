@@ -1,4 +1,4 @@
-import BACKEND_URL from "../../services/api";
+import BACKEND_URL, { getClerkToken } from "../../services/api";
 
 export type RecommendationResponse = {
   user_id: string;
@@ -24,7 +24,7 @@ type EventResponse = {
 
 async function requestJson<T>(url: string, options: RequestInit = {}): Promise<T | null> {
   try {
-    const token = localStorage.getItem("access_token");
+    const token = await getClerkToken();
     const headers = {
       ...options.headers,
       "Content-Type": "application/json",

@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
 import { useEffect, useState } from "react";
 
-import { getToken } from "../../services/auth";
+import { getClerkToken } from "../../services/api";
 import { useProgress } from "../hooks/useProgress";
 import { getSkillProfile, SkillProfile } from "../services/quizApi";
 import BACKEND_URL from "../../services/api";
@@ -34,51 +34,52 @@ export default function CourseDetailPage() {
   useEffect(() => {
     if (!courseId) return;
 
-    const token = getToken();
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (token) headers["Authorization"] = `Bearer ${token}`;
+    getClerkToken().then(token => {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
 
-    fetch(`${BACKEND_URL}/courses/${courseId}`, { headers })
-      .then((res) => res.json())
-      .then(setCourse)
-      .catch(() => setCourse(null));
+      fetch(`${BACKEND_URL}/courses/${courseId}`, { headers })
+        .then((res) => res.json())
+        .then(setCourse)
+        .catch(() => setCourse(null));
 
-    const userId = localStorage.getItem("user_id");
+      const userId = localStorage.getItem("user_id");
 
-    fetch(`${BACKEND_URL}/learning-path/${userId}/${courseId}`, { headers })
-      .then((res) => res.json())
-      .then((data) => {
-        setLearningPath(data.path || []);
-        setPathLoading(false);
+      fetch(`${BACKEND_URL}/learning-path/${userId}/${courseId}`, { headers })
+        .then((res) => res.json())
+        .then((data) => {
+          setLearningPath(data.path || []);
+          setPathLoading(false);
+        })
+        .catch(() => setPathLoading(false));
+
+      const roadmapId = courseId.split(":")[0];
+
+      // Fetch Skill Graph Status
+      fetch(`${BACKEND_URL}/skill-graph/${roadmapId}/status`, {
+        headers: { "Authorization": `Bearer ${token}` }
       })
-      .catch(() => setPathLoading(false));
+        .then((res) => res.json())
+        .then((data) => {
+          const skillArray = Array.isArray(data) ? data : data.skills || [];
+          const currentSkill = skillArray.find((item: any) => item.skill_id === courseId);
+          if (currentSkill) {
+            setSkillStatus(currentSkill.status);
+          }
+        })
+        .catch(() => setSkillStatus("locked"));
 
-    const roadmapId = courseId.split(":")[0];
+      // Fetch Adaptive Skill Profile
+      getSkillProfile(courseId).then(setSkillProfile);
 
-    // Fetch Skill Graph Status
-    fetch(`${BACKEND_URL}/skill-graph/${roadmapId}/status`, {
-      headers: { "Authorization": `Bearer ${token}` }
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        const skillArray = Array.isArray(data) ? data : data.skills || [];
-        const currentSkill = skillArray.find((item: any) => item.skill_id === courseId);
-        if (currentSkill) {
-          setSkillStatus(currentSkill.status);
-        }
-      })
-      .catch(() => setSkillStatus("locked"));
-
-    // Fetch Adaptive Skill Profile
-    getSkillProfile(courseId).then(setSkillProfile);
-
-    fetch(`${BACKEND_URL}/courses/${courseId}/resources`, { headers })
-      .then((res) => res.json())
-      .then((data) => {
-        setResources(data || { primary: null, additional: [] });
-        setResourcesLoading(false);
-      })
-      .catch(() => setResourcesLoading(false));
+      fetch(`${BACKEND_URL}/courses/${courseId}/resources`, { headers })
+        .then((res) => res.json())
+        .then((data) => {
+          setResources(data || { primary: null, additional: [] });
+          setResourcesLoading(false);
+        })
+        .catch(() => setResourcesLoading(false));
+    });
   }, [courseId]);
 
   const getResourceIcon = (type: string) => {

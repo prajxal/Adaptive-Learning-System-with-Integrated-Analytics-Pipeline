@@ -1,4 +1,4 @@
-import BACKEND_URL from "./api";
+import BACKEND_URL, { getClerkToken } from "./api";
 
 export async function uploadResume(file: File) {
     const formData = new FormData();
@@ -7,7 +7,7 @@ export async function uploadResume(file: File) {
     const res = await fetch(`${BACKEND_URL}/resume/upload`, {
         method: "POST",
         headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            Authorization: `Bearer ${await getClerkToken()}`,
         },
         body: formData,
     });
@@ -21,7 +21,7 @@ export async function checkResumeStatus() {
     const res = await fetch(`${BACKEND_URL}/resume/status`, {
         method: "GET",
         headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            Authorization: `Bearer ${await getClerkToken()}`,
         },
     });
 

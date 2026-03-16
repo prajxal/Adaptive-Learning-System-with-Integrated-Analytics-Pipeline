@@ -2,7 +2,7 @@ from fastapi import APIRouter, UploadFile, File, Depends, BackgroundTasks, HTTPE
 from sqlalchemy.orm import Session
 import os
 
-from core.security import get_current_user
+from core.clerk_auth import get_current_user
 from db.database import get_db, SessionLocal
 from services.resume_parser import ingest_resume
 from models.user import User

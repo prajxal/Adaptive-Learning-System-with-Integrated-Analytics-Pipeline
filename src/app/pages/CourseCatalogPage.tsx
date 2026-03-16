@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { LemonInput } from '../components/LemonInput';
 import { LemonCard } from '../components/LemonCard';
 import { Course } from '../data/courses';
-import { getToken } from "../../services/auth";
 import { ROUTES } from "../constants/routes";
 import { useCourses } from '../../hooks/useCourses';
 

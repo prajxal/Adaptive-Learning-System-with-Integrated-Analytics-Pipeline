@@ -1,7 +1,7 @@
 import React from 'react';
 import { Home, Map, User, GraduationCap, X, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { logout } from '../../services/auth';
+import { useClerk } from '@clerk/clerk-react';
 
 interface AppSidebarProps {
   currentPage: string;
@@ -17,10 +17,10 @@ const menuItems = [
 
 export function AppSidebar({ currentPage, isOpen = true, onClose }: AppSidebarProps) {
   const navigate = useNavigate();
+  const { signOut } = useClerk();
 
   const handleLogout = () => {
-    logout();
-    navigate('/signin', { replace: true });
+    signOut(() => navigate('/signin', { replace: true }));
   };
 
   return (

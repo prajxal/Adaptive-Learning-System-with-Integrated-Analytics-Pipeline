@@ -1,17 +1,17 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowRight, BookOpen, Target, TrendingUp, Search, Layout, Play, Activity } from 'lucide-react';
-import { getToken } from '../../services/auth';
+import { useAuth } from '@clerk/clerk-react';
 
 export function LandingPage() {
   const navigate = useNavigate();
-  const token = getToken() || localStorage.getItem("access_token");
+  const { isLoaded, isSignedIn } = useAuth();
 
   useEffect(() => {
-    if (token) {
+    if (isLoaded && isSignedIn) {
       navigate('/dashboard');
     }
-  }, [token, navigate]);
+  }, [isLoaded, isSignedIn, navigate]);
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
@@ -47,7 +47,7 @@ export function LandingPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              {token ? (
+              {isSignedIn ? (
                 <Link to="/dashboard" className="text-sm font-medium bg-[#111118] border border-[#00FFB2]/50 text-[#00FFB2] px-4 py-2 rounded-md hover:bg-[#00FFB2]/10 transition-colors shadow-[0_0_10px_rgba(0,255,178,0.1)]">
                   Dashboard
                 </Link>

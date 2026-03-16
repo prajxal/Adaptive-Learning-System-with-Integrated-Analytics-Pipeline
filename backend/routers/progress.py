@@ -7,7 +7,7 @@ from models.course import Course
 from models.event import Event
 from models.user import User
 from models.user_skill import UserSkill
-from core.security import get_current_user
+from core.clerk_auth import get_current_user
 
 router = APIRouter()
 

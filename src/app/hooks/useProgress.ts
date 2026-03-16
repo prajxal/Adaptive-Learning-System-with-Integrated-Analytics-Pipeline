@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getToken } from '../../services/auth';
-import BACKEND_URL from "../../services/api";
+import BACKEND_URL, { getClerkToken } from "../../services/api";
 
 /**
  * Progress structure:
@@ -36,20 +35,21 @@ export function useProgress() {
 
     // We can fetch the real user profile to get the ID, or decode JWT.
     useEffect(() => {
-        const tokenStr = localStorage.getItem("access_token");
-        const headers: Record<string, string> = { "Content-Type": "application/json" };
-        if (tokenStr) headers["Authorization"] = `Bearer ${tokenStr}`;
+        getClerkToken().then(tokenStr => {
+            const headers: Record<string, string> = { "Content-Type": "application/json" };
+            if (tokenStr) headers["Authorization"] = `Bearer ${tokenStr}`;
 
-        if (tokenStr) {
-            fetch(`${BACKEND_URL}/auth/me`, { headers })
-                .then(res => res.json())
-                .then(data => {
-                    if (data && data.id) {
-                        setUserId(String(data.id));
-                    }
-                })
-                .catch(err => console.error("Could not fetch user ID for progress tracking", err));
-        }
+            if (tokenStr) {
+                fetch(`${BACKEND_URL}/auth/me`, { headers })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.id) {
+                            setUserId(String(data.id));
+                        }
+                    })
+                    .catch(err => console.error("Could not fetch user ID for progress tracking", err));
+            }
+        });
     }, []);
 
     const getRawState = () => {

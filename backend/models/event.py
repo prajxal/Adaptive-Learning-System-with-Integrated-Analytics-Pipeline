@@ -14,7 +14,7 @@ class Event(Base):
     event_type = Column(String, nullable=False, index=True)
     course_id = Column(String, nullable=True, index=True)
     roadmap_id = Column(String, nullable=True, index=True)
-    payload = Column(JSON().with_variant(Text(), "sqlite"), nullable=True)
+    payload = Column(JSON(), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     user = relationship("User", back_populates="events")

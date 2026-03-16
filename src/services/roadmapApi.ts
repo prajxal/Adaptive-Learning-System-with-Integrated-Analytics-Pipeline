@@ -4,13 +4,13 @@ export interface Roadmap {
     topic_count: number;
 }
 
-import BACKEND_URL from "./api";
+import BACKEND_URL, { getClerkToken } from "./api";
 
 export async function getRoadmaps(): Promise<Roadmap[]> {
     try {
         const res = await fetch(`${BACKEND_URL}/roadmaps`, {
             headers: {
-                Authorization: `Bearer ${localStorage.getItem("access_token")}`
+                Authorization: `Bearer ${await getClerkToken()}`
             }
         });
         if (!res.ok) throw new Error("Failed to fetch roadmaps");

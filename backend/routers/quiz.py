@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from db.database import get_db
 from models.user import User
-from core.security import get_current_user
+from core.clerk_auth import get_current_user
 from services.quiz_service import evaluate_quiz_attempt
 from services.quiz_generation_service import get_or_generate_quiz
 

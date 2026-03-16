@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useProgress } from '../hooks/useProgress';
-import { getToken } from '../../services/auth';
-import BACKEND_URL from "../../services/api";
+import BACKEND_URL, { getClerkToken } from "../../services/api";
 
 export default function MyProgressPage() {
     const navigate = useNavigate();
@@ -13,10 +12,9 @@ export default function MyProgressPage() {
 
     useEffect(() => {
         const fetchData = async () => {
-            const token = getToken();
             try {
                 // Fetch User Skills to display exact adaptive scores
-                const tokenStr = localStorage.getItem("access_token");
+                const tokenStr = await getClerkToken();
                 const headers: Record<string, string> = { "Content-Type": "application/json" };
                 if (tokenStr) headers["Authorization"] = `Bearer ${tokenStr}`;
 

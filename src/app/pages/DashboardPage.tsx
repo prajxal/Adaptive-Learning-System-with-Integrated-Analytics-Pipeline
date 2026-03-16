@@ -3,23 +3,15 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { getGithubStatus, redirectToGithubConnect } from "../../services/githubApi";
 import { uploadResume, checkResumeStatus } from "../../services/resumeApi";
 import { getUserSkills } from "../../services/userApi";
-import { getToken } from "../../services/auth";
 import { useProgress } from "../hooks/useProgress";
 import { Brain, Check } from "lucide-react";
 import { usePostHog } from "@posthog/react";
 
 export default function DashboardPage() {
-  const token = getToken();
   const navigate = useNavigate();
   const location = useLocation();
   const posthog = usePostHog();
   const [githubSuccess, setGithubSuccess] = useState(false);
-
-  useEffect(() => {
-    if (!token) {
-      navigate('/signin', { replace: true });
-    }
-  }, [token, navigate]);
 
   // Consolidating skills state
   const [skills, setSkills] = useState<any[]>([]);
@@ -52,8 +44,6 @@ export default function DashboardPage() {
   }, [location]);
 
   useEffect(() => {
-    if (!token) return;
-
     getGithubStatus()
       .then(data => {
         setGithubConnected(data.connected);
@@ -76,8 +66,7 @@ export default function DashboardPage() {
       .finally(() => {
         setLoading(false);
       });
-
-  }, [token]);
+  }, []);
 
   const startPolling = () => {
     pollingIntervalRef.current = setInterval(async () => {
@@ -138,7 +127,7 @@ export default function DashboardPage() {
   };
 
   async function handleResumeUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!e.target.files?.length || !token) return;
+    if (!e.target.files?.length) return;
 
     const file = e.target.files[0];
     setResumeUploading(true);

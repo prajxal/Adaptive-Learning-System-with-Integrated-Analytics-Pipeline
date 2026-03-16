@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from models import Event, UserSkill
 from models.user import User
-from core.security import get_current_user
+from core.clerk_auth import get_current_user
 
 router = APIRouter()
 

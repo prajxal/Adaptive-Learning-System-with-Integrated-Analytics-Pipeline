@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from models.user import User
 from models.course import Course
-from core.security import get_current_user
+from core.clerk_auth import get_current_user
 from routers.learning_path import get_next_ready_nodes
 
 router = APIRouter()

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from db.database import get_db
 from models.user import User
-from core.security import get_current_user
+from core.clerk_auth import get_current_user
 from services.skill_graph_service import get_roadmap_skill_status
 from models.course import Course
 from services.skill_profile_service import get_or_create_skill_profile, initialize_skill_profile_from_cold_start
