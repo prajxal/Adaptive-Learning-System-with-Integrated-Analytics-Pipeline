@@ -10,7 +10,7 @@ interface Course {
     difficulty_level: number;
 }
 
-import BACKEND_URL from "../../services/api";
+import BACKEND_URL, { fetchWithAuth } from "../../services/api";
 
 export default function RoadmapDetailPage() {
     const { roadmapId } = useParams();
@@ -26,20 +26,14 @@ export default function RoadmapDetailPage() {
     useEffect(() => {
         async function loadCoursesAndStatus() {
             try {
-                const tokenStr = localStorage.getItem("access_token");
-                const headers: Record<string, string> = { "Content-Type": "application/json" };
-                if (tokenStr) headers["Authorization"] = `Bearer ${tokenStr}`;
-
                 // Fetch Course List
-                const res = await fetch(`${BACKEND_URL}/courses?roadmap_id=${roadmapId}`, { headers });
+                const res = await fetchWithAuth(`${BACKEND_URL}/courses?roadmap_id=${roadmapId}`);
                 if (!res.ok) throw new Error("Failed to fetch courses");
                 const data = await res.json();
                 setCourses(data);
 
                 // Fetch Skill Graph Status mappings
-                const statusRes = await fetch(`${BACKEND_URL}/skill-graph/${roadmapId}/status`, {
-                    headers
-                });
+                const statusRes = await fetchWithAuth(`${BACKEND_URL}/skill-graph/${roadmapId}/status`);
 
                 if (statusRes.ok) {
                     const statusData = await statusRes.json();

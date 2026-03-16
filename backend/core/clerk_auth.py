@@ -58,6 +58,7 @@ def get_current_user(
     clerk_user_id: str = Depends(verify_clerk_token),
     db: Session = Depends(get_db)
 ) -> User:
+    print(f"[get_current_user] Authenticated Clerk User ID: {clerk_user_id}")
     user = db.query(User).filter(User.clerk_user_id == clerk_user_id).first()
 
     if not user:

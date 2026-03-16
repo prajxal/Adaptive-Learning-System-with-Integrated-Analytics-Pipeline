@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../../services/api';
 import BACKEND_URL from '../../services/api';
 import './RecommendationPanel.css';
 import { Play, TrendingUp, Compass, Award, AlertCircle } from 'lucide-react';
@@ -100,18 +101,8 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({ curren
             setError(null);
 
             try {
-                const token = localStorage.getItem("token") || localStorage.getItem("access_token");
-                console.log("DEBUG: token =", token);
-                console.log("DEBUG: BACKEND_URL =", BACKEND_URL);
-
-                const res = await fetch(
-                    `${BACKEND_URL}/recommend/recommend?current_roadmap_id=${currentRoadmapId}`,
-                    {
-                        headers: {
-                            "Content-Type": "application/json",
-                            ...(token ? { Authorization: `Bearer ${token}` } : {})
-                        }
-                    }
+                const res = await fetchWithAuth(
+                    `${BACKEND_URL}/recommend/recommend?current_roadmap_id=${currentRoadmapId}`
                 );
 
                 console.log("DEBUG: status =", res.status);
