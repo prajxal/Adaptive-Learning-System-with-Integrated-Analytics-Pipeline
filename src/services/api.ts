@@ -6,20 +6,23 @@ export const apiFetch = (path: string, options?: RequestInit) => {
     return fetch(`${BASE_URL}${path}`, options);
 };
 
-let clerkToken: string | null = null;
+let getClerkTokenFn: (() => Promise<string | null>) | null = null;
 
-export function setClerkToken(token: string | null) {
-    clerkToken = token;
+export function setClerkTokenFn(fn: () => Promise<string | null>) {
+    getClerkTokenFn = fn;
 }
 
-export const getClerkToken = async () => clerkToken;
+export const getClerkToken = async () => {
+    return getClerkTokenFn ? await getClerkTokenFn() : null;
+};
 
 export async function fetchWithAuth(url: string, options: RequestInit = {}) {
+    const token = await getClerkToken();
     return fetch(url, {
         ...options,
         headers: {
             ...(options.headers || {}),
-            ...(clerkToken ? { Authorization: `Bearer ${clerkToken}` } : {})
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
         }
     });
 }
