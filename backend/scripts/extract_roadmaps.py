@@ -77,19 +77,19 @@ def extract_roadmaps():
                     # 1. Extract Nodes
                     file_courses_count = 0
                     current_course_ids = set()
+                    all_nodes = {}
                     
                     for node in nodes:
-                        node_type = node.get("type")
-                        if node_type not in ["topic"]:
-                            # Prompt says extract ONLY "topic"
-                            # But if the file has "subtopic" we might miss content.
-                            # However, strict compliance with prompt:
-                            continue
-                        
+                        node_type = node.get("type", "unknown")
                         node_id = node.get("id")
                         if not node_id:
                             continue
                             
+                        all_nodes[node_id] = node_type
+                        
+                        if node_type not in ["topic"]:
+                            continue
+                        
                         # Use label as title if title is missing
                         node_data = node.get("data", {})
                         title = node_data.get("title")
@@ -128,41 +128,49 @@ def extract_roadmaps():
                     total_courses += file_courses_count
 
                     # 2. Extract Prerequisites (Edges)
-                    file_prereqs_count = 0
+                    # Build adjacency list from JSON
+                    adj_list = {}
                     for edge in edges:
-                        source = edge.get("source")
-                        target = edge.get("target")
-                        
-                        if not source or not target:
-                            continue
+                        src = edge.get("source")
+                        tgt = edge.get("target")
+                        if src and tgt:
+                            adj_list.setdefault(src, []).append(tgt)
                             
-                        prereq_id = f"{roadmap_id}:{source}"
-                        course_id = f"{roadmap_id}:{target}"
+                    file_prereqs_count = 0
+                    
+                    # For each topic (source), find reachable topics
+                    for source_topic in current_course_ids:
+                        raw_source = source_topic.split(":", 1)[1]
                         
-                        # Verify both exist as Courses (filtered by type="topic")
-                        # We only added type="topic" to DB. If an edge connects to a non-topic node, skip it.
-                        # We can check existence in DB or against current_course_ids set.
-                        # Using DB check is safer but slower? Use set for speed within this file context.
-                        # Wait, edges might connect to nodes we skipped?
-                        # If so, we can't create a FK relationship.
-                        if prereq_id not in current_course_ids or course_id not in current_course_ids:
-                            continue
-                            
-                        # Check existance of relationship
-                        # Because PK is composite (course_id, prerequisite_id)
-                        existing_prereq = session.query(CoursePrerequisite).filter_by(
-                            course_id=course_id, 
-                            prerequisite_id=prereq_id
-                        ).first()
+                        visited = set()
+                        queue = [raw_source]
                         
-                        if not existing_prereq:
-                            new_prereq = CoursePrerequisite(
-                                course_id=course_id,
-                                prerequisite_id=prereq_id
-                            )
-                            session.add(new_prereq)
-                            file_prereqs_count += 1
+                        while queue:
+                            curr_node = queue.pop(0)
                             
+                            for next_node in adj_list.get(curr_node, []):
+                                if next_node not in visited:
+                                    visited.add(next_node)
+                                    
+                                    next_topic_id = f"{roadmap_id}:{next_node}"
+                                    if next_topic_id in current_course_ids:
+                                        # Reached a topic node, create edge and STOP traversing this path
+                                        existing_prereq = session.query(CoursePrerequisite).filter_by(
+                                            course_id=next_topic_id, 
+                                            prerequisite_id=source_topic
+                                        ).first()
+                                        
+                                        if not existing_prereq:
+                                            new_prereq = CoursePrerequisite(
+                                                course_id=next_topic_id,
+                                                prerequisite_id=source_topic
+                                            )
+                                            session.add(new_prereq)
+                                            file_prereqs_count += 1
+                                    else:
+                                        # Reached a non-topic node, CONTINUE traversing its children
+                                        queue.append(next_node)
+                                        
                     total_prereqs += file_prereqs_count
                     
                 except Exception as e:
@@ -172,16 +180,37 @@ def extract_roadmaps():
 
         session.commit()
         
-        print("\nGenerating Skill Graphs...")
-        from services.skill_graph_service import generate_graph_for_roadmap
-        for r_id in processed_roadmaps:
-            generate_graph_for_roadmap(r_id, session)
-        print("Skill Graphs Generated.")
+        print("\nGenerating Skill Graphs... (DISABLED)")
+        # from services.skill_graph_service import generate_graph_for_roadmap
+        # for r_id in processed_roadmaps:
+        #     generate_graph_for_roadmap(r_id, session)
+        print("Skill Graphs Generated. (DISABLED)")
 
         print("\nExtraction Complete.")
         print(f"Scanned {scanned_files} files.")
         print(f"Inserted/Updated {total_courses} courses.")
         print(f"Inserted {total_prereqs} prerequisite relationships.")
+        
+        print("\n--- Graph Statistics ---")
+        from services.learning_priority_service import get_root_nodes, compute_graph_depth
+        for r_id in processed_roadmaps:
+            nodes_count = session.query(Course).filter(Course.roadmap_id == r_id).count()
+            edges_count = session.query(CoursePrerequisite).join(Course, Course.id == CoursePrerequisite.course_id).filter(Course.roadmap_id == r_id).count()
+            
+            root_nodes = get_root_nodes(r_id, session)
+            
+            courses = session.query(Course).filter(Course.roadmap_id == r_id).all()
+            max_depth = 0
+            for c in courses:
+                depth = compute_graph_depth(c.id, session)
+                if depth > max_depth:
+                    max_depth = depth
+                    
+            print(f"\nRoadmap: {r_id}")
+            print(f"  - nodes: {nodes_count}")
+            print(f"  - edges: {edges_count}")
+            print(f"  - root nodes: {len(root_nodes)}")
+            print(f"  - max depth: {max_depth}")
 
     except Exception as e:
         session.rollback()

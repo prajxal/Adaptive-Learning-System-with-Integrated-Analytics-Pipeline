@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from models.course import Course
 from models.skill_edge import SkillEdge
+from models.course_prerequisite import CoursePrerequisite
 from models.event import Event
 import logging
 
@@ -49,14 +50,18 @@ def generate_graph_for_roadmap(roadmap_id: str, db: Session):
         db.rollback()
         logger.error(f"Error generating graph for roadmap {roadmap_id}: {e}")
 
-def get_edges_for_roadmap(roadmap_id: str, db: Session) -> list[SkillEdge]:
-    return db.query(SkillEdge).filter(SkillEdge.roadmap_id == roadmap_id).all()
+def get_edges_for_roadmap(roadmap_id: str, db: Session):
+    # This might not be easily filtered by roadmap_id without a join, 
+    # but returning all for course_ids in roadmap_id is better.
+    # Leaving it to return dummy if not used, or re-implement using join:
+    from models.course import Course
+    return db.query(CoursePrerequisite).join(Course, Course.id == CoursePrerequisite.course_id).filter(Course.roadmap_id == roadmap_id).all()
 
-def get_prerequisites(skill_id: str, db: Session) -> list[SkillEdge]:
-    return db.query(SkillEdge).filter(SkillEdge.to_skill_id == skill_id).all()
+def get_prerequisites(skill_id: str, db: Session):
+    return db.query(CoursePrerequisite).filter(CoursePrerequisite.course_id == skill_id).all()
 
-def get_next_skills(skill_id: str, db: Session) -> list[SkillEdge]:
-    return db.query(SkillEdge).filter(SkillEdge.from_skill_id == skill_id).all()
+def get_next_skills(skill_id: str, db: Session):
+    return db.query(CoursePrerequisite).filter(CoursePrerequisite.prerequisite_id == skill_id).all()
 
 def is_skill_completed(user_id: str, skill_id: str, db: Session) -> bool:
     """
@@ -81,7 +86,7 @@ def is_skill_unlocked(user_id: str, skill_id: str, db: Session) -> bool:
     
     # Check if all prerequisites are completed
     for edge in prereqs:
-        if not is_skill_completed(user_id, edge.from_skill_id, db):
+        if not is_skill_completed(user_id, edge.prerequisite_id, db):
             return False # Found a locked prerequisite
             
     return True
@@ -122,12 +127,19 @@ def get_roadmap_skill_status(user_id: str, roadmap_id: str, db: Session) -> dict
     
     # 3. Fetch all skill edges for this roadmap to reconstruct prerequisite map
     # mapping: course_id -> list of prerequisite_ids
-    edges = db.query(SkillEdge).filter(SkillEdge.roadmap_id == roadmap_id).all()
+    edges = db.query(CoursePrerequisite).filter(CoursePrerequisite.course_id.in_(course_ids)).all()
+    
+    # Validation check for Phase 5
+    if len(edges) == 0:
+        logger.warning(f"Validation: 0 edges loaded from course_prerequisites for roadmap {roadmap_id}")
+    else:
+        logger.info(f"Validation: {len(edges)} edges loaded from course_prerequisites for roadmap {roadmap_id}")
+
     prereq_map = {cid: [] for cid in course_ids}
     for edge in edges:
-        # edge.to_skill_id depends on edge.from_skill_id
-        if edge.to_skill_id in prereq_map:
-            prereq_map[edge.to_skill_id].append(edge.from_skill_id)
+        # edge.course_id depends on edge.prerequisite_id
+        if edge.course_id in prereq_map:
+            prereq_map[edge.course_id].append(edge.prerequisite_id)
             
     # 4. Resolve status for all courses
     skills_status = []
