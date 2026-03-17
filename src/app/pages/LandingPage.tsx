@@ -2,10 +2,12 @@ import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowRight, BookOpen, Target, TrendingUp, Search, Layout, Play, Activity } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
+import { usePostHog } from '@posthog/react';
 
 export function LandingPage() {
   const navigate = useNavigate();
   const { isLoaded, isSignedIn } = useAuth();
+  const posthog = usePostHog();
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
@@ -86,11 +88,11 @@ export function LandingPage() {
                 Master engineering skills faster with adaptive roadmaps, curated resources, and intelligent progress tracking — tailored specifically to your skill level.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/signup" className="flex items-center justify-center gap-2 bg-transparent border border-[#00FFB2]/70 text-[#00FFB2] px-6 py-3 rounded-lg font-bold hover:bg-[#00FFB2]/10 transition-colors shadow-[0_0_15px_rgba(0,255,178,0.15)] hover:shadow-[0_0_20px_rgba(0,255,178,0.3)]">
+                <Link to="/signup" onClick={() => posthog?.capture('signup_cta_clicked', { location: 'hero' })} className="flex items-center justify-center gap-2 bg-transparent border border-[#00FFB2]/70 text-[#00FFB2] px-6 py-3 rounded-lg font-bold hover:bg-[#00FFB2]/10 transition-colors shadow-[0_0_15px_rgba(0,255,178,0.15)] hover:shadow-[0_0_20px_rgba(0,255,178,0.3)]">
                   Get Started Free
                   <ArrowRight className="w-5 h-5" />
                 </Link>
-                <Link to="/roadmaps" className="flex items-center justify-center gap-2 bg-[#111118]/80 border border-white/10 text-white px-6 py-3 rounded-lg font-bold hover:border-white/30 transition-colors backdrop-blur-sm">
+                <Link to="/roadmaps" onClick={() => posthog?.capture('explore_roadmaps_clicked', { location: 'hero' })} className="flex items-center justify-center gap-2 bg-[#111118]/80 border border-white/10 text-white px-6 py-3 rounded-lg font-bold hover:border-white/30 transition-colors backdrop-blur-sm">
                   Explore Roadmaps
                 </Link>
               </div>
@@ -341,7 +343,7 @@ export function LandingPage() {
           <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
             Join thousands of developers who are mastering new skills with personalized, AI-driven learning paths.
           </p>
-          <Link to="/signup" className="inline-flex items-center justify-center gap-2 bg-transparent border border-[#00FFB2]/70 text-[#00FFB2] px-8 py-4 rounded-xl text-lg font-bold hover:bg-[#00FFB2]/10 transition-all shadow-[0_0_15px_rgba(0,255,178,0.15)] hover:shadow-[0_0_25px_rgba(0,255,178,0.3)] hover:-translate-y-1">
+          <Link to="/signup" onClick={() => posthog?.capture('signup_cta_clicked', { location: 'bottom_cta' })} className="inline-flex items-center justify-center gap-2 bg-transparent border border-[#00FFB2]/70 text-[#00FFB2] px-8 py-4 rounded-xl text-lg font-bold hover:bg-[#00FFB2]/10 transition-all shadow-[0_0_15px_rgba(0,255,178,0.15)] hover:shadow-[0_0_25px_rgba(0,255,178,0.3)] hover:-translate-y-1">
             Create Free Account
             <ArrowRight className="w-6 h-6" />
           </Link>

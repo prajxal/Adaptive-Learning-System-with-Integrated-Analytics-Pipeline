@@ -2,10 +2,12 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useRoadmaps } from "../../hooks/useRoadmaps";
 import { useProgress } from "../../hooks/useProgress";
+import { usePostHog } from "@posthog/react";
 
 function RoadmapCard({ roadmap }: { roadmap: any }) {
     const userId = localStorage.getItem("user_id") || "1";
     const { progress } = useProgress(userId, roadmap.id);
+    const posthog = usePostHog();
 
     const getAccentColor = (title: string) => {
         const t = title.toLowerCase();
@@ -25,6 +27,7 @@ function RoadmapCard({ roadmap }: { roadmap: any }) {
     return (
         <Link
             to={`/roadmap/${roadmap.id}`}
+            onClick={() => posthog?.capture('roadmap_selected', { roadmap_id: roadmap.id, has_progress: !!progress })}
             className="roadmap-card rounded-xl p-6 group cursor-pointer relative"
         >
             <div className="flex justify-between items-start mb-2">

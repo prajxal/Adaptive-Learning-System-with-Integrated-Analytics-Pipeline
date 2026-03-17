@@ -1,53 +1,54 @@
 <wizard-report>
 # PostHog post-wizard report
 
-The wizard has completed a deep integration of PostHog analytics into the AI Learning Path Generator. PostHog was initialized in `src/main.tsx` with `PostHogProvider` and `PostHogErrorBoundary` wrapping the entire app for automatic error capture. User identification is performed on both login and signup so all events are correlated to a known user. Fourteen custom events were instrumented across seven files covering the full user journey: authentication, onboarding (GitHub connect, resume upload), learning (resource viewing and completion), and assessment (quiz start, submission, retake). Exception tracking via `captureException` was added at key failure points. Environment variables (`VITE_PUBLIC_POSTHOG_KEY`, `VITE_PUBLIC_POSTHOG_HOST`) are used throughout — no keys are hardcoded.
+The wizard has completed a deep integration of PostHog analytics into your LearnPathAI project. PostHog was already partially integrated (SDK installed, `PostHogProvider` + `PostHogErrorBoundary` configured in `src/main.tsx`, user identification via `src/auth/PostHogIdentifier.tsx`, and several events already tracked). This session extended coverage by:
 
-## Files changed
+- **Setting environment variables**: `VITE_PUBLIC_POSTHOG_KEY` and `VITE_PUBLIC_POSTHOG_HOST` written to `.env.local`.
+- **Adding 3 new event capture locations** across the landing page, roadmap catalog, and roadmap detail pages to fill in gaps in top-of-funnel and learning journey tracking.
+- **Preserving all existing events** already in place (quiz, resource, dashboard onboarding events, recommendations).
+
+## Files changed this session
 
 | File | Changes |
 |------|---------|
-| `src/main.tsx` | Added `posthog.init`, `PostHogProvider`, `PostHogErrorBoundary` |
-| `src/app/pages/Login.tsx` | `posthog.identify` on success; capture `user_logged_in`, `login_failed`, `captureException` |
-| `src/app/pages/Signup.tsx` | `posthog.identify` on success; capture `user_signed_up`, `captureException` |
-| `src/app/pages/DashboardPage.tsx` | Capture `github_connect_clicked`, `resume_uploaded`, `resume_processing_failed`, `continue_learning_clicked`, `captureException` |
-| `src/app/pages/CourseDetailPage.tsx` | Capture `quiz_started` (with `retake` property) on both Take Quiz and Retake Quiz buttons |
-| `src/app/pages/QuizPage.tsx` | Capture `quiz_submitted` (with score/passed/total_questions), `quiz_retaken`, `captureException` |
-| `src/app/pages/ResourceViewerPage.tsx` | Capture `resource_opened` (on active resource change), `resource_completed` (on Mark Complete click) |
-| `src/app/components/RecommendationPanel.tsx` | Capture `recommendation_course_clicked`, `recommended_roadmap_explored` |
+| `src/app/pages/LandingPage.tsx` | Added `usePostHog`; capture `signup_cta_clicked` on hero and bottom CTAs, `explore_roadmaps_clicked` on Explore Roadmaps button |
+| `src/app/pages/RoadmapCatalogPage.tsx` | Added `usePostHog`; capture `roadmap_selected` when user clicks a roadmap card |
+| `src/app/pages/RoadmapDetailPage.tsx` | Added `usePostHog`; capture `course_selected` when user clicks an unlocked course card |
 
-## Events instrumented
+## All instrumented events
 
 | Event | Description | File |
 |-------|-------------|------|
-| `user_signed_up` | User successfully creates a new account | `src/app/pages/Signup.tsx` |
-| `user_logged_in` | User successfully logs in | `src/app/pages/Login.tsx` |
-| `login_failed` | Login attempt failed (invalid credentials or server error) | `src/app/pages/Login.tsx` |
-| `github_connect_clicked` | User clicks Connect GitHub on the dashboard | `src/app/pages/DashboardPage.tsx` |
-| `resume_uploaded` | User selects and uploads a resume PDF | `src/app/pages/DashboardPage.tsx` |
-| `resume_processing_failed` | Resume processing completed with a failure status | `src/app/pages/DashboardPage.tsx` |
-| `continue_learning_clicked` | User clicks Resume in the Continue Learning banner | `src/app/pages/DashboardPage.tsx` |
-| `quiz_started` | User clicks Take Quiz or Retake Quiz on a course | `src/app/pages/CourseDetailPage.tsx` |
-| `quiz_submitted` | User submits quiz answers and receives a score | `src/app/pages/QuizPage.tsx` |
-| `quiz_retaken` | User clicks Retake Quiz after viewing results | `src/app/pages/QuizPage.tsx` |
-| `resource_opened` | User navigates to a specific learning resource | `src/app/pages/ResourceViewerPage.tsx` |
-| `resource_completed` | User marks a learning resource as complete | `src/app/pages/ResourceViewerPage.tsx` |
-| `recommendation_course_clicked` | User clicks Start on a recommended course | `src/app/components/RecommendationPanel.tsx` |
-| `recommended_roadmap_explored` | User clicks a suggested new roadmap in the recommendation panel | `src/app/components/RecommendationPanel.tsx` |
+| `signup_cta_clicked` | User clicks "Get Started Free" or "Create Free Account" CTA. Properties: `location` | `src/app/pages/LandingPage.tsx` |
+| `explore_roadmaps_clicked` | User clicks "Explore Roadmaps" CTA. Properties: `location` | `src/app/pages/LandingPage.tsx` |
+| `roadmap_selected` | User clicks a roadmap card in the catalog. Properties: `roadmap_id`, `has_progress` | `src/app/pages/RoadmapCatalogPage.tsx` |
+| `course_selected` | User clicks an unlocked course in a roadmap. Properties: `course_id`, `roadmap_id`, `course_title`, `difficulty_level` | `src/app/pages/RoadmapDetailPage.tsx` |
+| `github_connect_clicked` | User clicks "Connect GitHub" on the dashboard | `src/app/pages/DashboardPage.tsx` |
+| `resume_uploaded` | User uploads a resume PDF. Properties: `file_name`, `file_size` | `src/app/pages/DashboardPage.tsx` |
+| `resume_processing_failed` | Resume processing failed after upload | `src/app/pages/DashboardPage.tsx` |
+| `github_sync_failed` | GitHub sync failed after connecting | `src/app/pages/DashboardPage.tsx` |
+| `continue_learning_clicked` | User clicks "Resume" in the Continue Learning banner. Properties: `course_title`, `course_id` | `src/app/pages/DashboardPage.tsx` |
+| `quiz_started` | User clicks "Take Quiz" or "Retake Quiz". Properties: `course_id`, `course_title`, `retake` | `src/app/pages/CourseDetailPage.tsx` |
+| `quiz_submitted` | User submits quiz answers. Properties: `course_id`, `score`, `passed`, `total_questions` | `src/app/pages/QuizPage.tsx` |
+| `quiz_retaken` | User retakes a quiz from the results screen. Properties: `course_id`, `previous_score` | `src/app/pages/QuizPage.tsx` |
+| `resource_opened` | User navigates to a learning resource. Properties: `course_id`, `resource_id`, `resource_title`, `resource_type`, `platform` | `src/app/pages/ResourceViewerPage.tsx` |
+| `resource_completed` | User marks a resource as complete. Properties: `course_id`, `resource_id`, `resource_title`, `resource_type`, `platform` | `src/app/pages/ResourceViewerPage.tsx` |
+| `recommendation_course_clicked` | User clicks a recommended course | `src/app/components/RecommendationPanel.tsx` |
+| `recommended_roadmap_explored` | User clicks a suggested new roadmap | `src/app/components/RecommendationPanel.tsx` |
 
 ## Next steps
 
 We've built some insights and a dashboard for you to keep an eye on user behavior, based on the events we just instrumented:
 
-- **Dashboard — Analytics basics**: https://us.posthog.com/project/331544/dashboard/1331051
-- **User Acquisition: Signups & Logins**: https://us.posthog.com/project/331544/insights/gJuaSlne
-- **Quiz Completion Funnel**: https://us.posthog.com/project/331544/insights/wwBjdR4k
-- **Learning Engagement: Resources Opened vs Completed**: https://us.posthog.com/project/331544/insights/3j6bws7W
-- **Onboarding Funnel: Signup → GitHub → Resume**: https://us.posthog.com/project/331544/insights/vUjptGP2
-- **Failure & Churn Signals**: https://us.posthog.com/project/331544/insights/En0LnmkM
+- **Dashboard — Analytics basics**: https://us.posthog.com/project/331544/dashboard/1368968
+- **Learning Path Conversion Funnel** (signup CTA → roadmap → course → quiz started → quiz submitted): https://us.posthog.com/project/331544/insights/iqjCgXUF
+- **Daily Active Events Overview** (trend of key actions over 30 days): https://us.posthog.com/project/331544/insights/HvR8N2WI
+- **Resume & GitHub Onboarding Events** (onboarding rates + failure tracking): https://us.posthog.com/project/331544/insights/iOTVDr7L
+- **Resource Engagement** (resources opened vs completed): https://us.posthog.com/project/331544/insights/NJUjT2y6
+- **Quiz Performance** (quiz starts, submissions, retakes per day): https://us.posthog.com/project/331544/insights/3H777zak
 
 ### Agent skill
 
-We've left an agent skill folder in your project at `.claude/skills/posthog-integration-react-react-router-7-declarative/`. You can use this context for further agent development when using Claude Code. This will help ensure the model provides the most up-to-date approaches for integrating PostHog.
+We've left an agent skill folder in your project at `.claude/skills/integration-react-react-router-7-declarative/`. You can use this context for further agent development when using Claude Code. This will help ensure the model provides the most up-to-date approaches for integrating PostHog.
 
 </wizard-report>

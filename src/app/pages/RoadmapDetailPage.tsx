@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
 import { useProgress } from "../hooks/useProgress";
 import { RecommendationPanel } from "../components/RecommendationPanel";
+import { usePostHog } from "@posthog/react";
 
 interface Course {
     id: string;
@@ -16,6 +17,7 @@ export default function RoadmapDetailPage() {
     const { roadmapId } = useParams();
     const userId = localStorage.getItem("user_id") || "1";
     const navigate = useNavigate();
+    const posthog = usePostHog();
 
     const { getRoadmapProgress, getCourseProgress } = useProgress();
 
@@ -215,6 +217,7 @@ export default function RoadmapDetailPage() {
                                                 e.preventDefault();
                                                 return;
                                             }
+                                            posthog?.capture('course_selected', { course_id: course.id, roadmap_id: roadmapId, course_title: course.title, difficulty_level: course.difficulty_level });
                                             navigate(ROUTES.COURSE(course.id));
                                         }}
                                     >

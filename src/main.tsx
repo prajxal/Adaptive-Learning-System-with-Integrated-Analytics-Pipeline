@@ -6,6 +6,7 @@ import posthog from 'posthog-js'
 import { PostHogErrorBoundary, PostHogProvider } from '@posthog/react'
 import { ClerkProvider } from '@clerk/clerk-react'
 import TokenSynchronizer from './auth/TokenSynchronizer'
+import PostHogIdentifier from './auth/PostHogIdentifier'
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 
@@ -24,6 +25,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <PostHogProvider client={posthog}>
         <PostHogErrorBoundary>
           <TokenSynchronizer />
+          <PostHogIdentifier />
           <App />
         </PostHogErrorBoundary>
       </PostHogProvider>
