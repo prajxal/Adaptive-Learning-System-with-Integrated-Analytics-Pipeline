@@ -38,7 +38,7 @@ app = FastAPI(title="AI Learning Path Recommendation System")
 allowed_origins = [
     "http://localhost:5173",              # local dev
     "http://127.0.0.1:8000",              # local dev fallback
-    "adaptive-learning-system-with-integ.vercel.app",    # vercel deployment
+    "https://adaptive-learning-system-with-integ.vercel.app",    # vercel deployment
 ]
 
 app.add_middleware(
