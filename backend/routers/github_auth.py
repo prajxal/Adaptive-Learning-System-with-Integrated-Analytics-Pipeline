@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from core.clerk_auth import get_current_user
 from db.database import get_db
 from models.user import User
+from models.skill_weight import SkillWeight
 from services.github_skill_extractor import extract_github_skills
 from core.rate_limit import RateLimiter
 
@@ -116,3 +117,103 @@ def github_status(current_user: User = Depends(get_current_user)):
         "username": current_user.github_username,
         "sync_status": current_user.github_sync_status
     }
+
+
+@router.post("/sync", dependencies=[Depends(rate_limiter)])
+async def github_sync(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user_id = str(current_user.id)
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not user.github_access_token:
+        raise HTTPException(status_code=400, detail="GitHub account is not connected")
+
+    user.github_sync_status = "syncing"
+    db.commit()
+
+    access_token = user.github_access_token
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+
+    repositories_analyzed = 0
+
+    try:
+        # Count active repositories that will be analyzed.
+        async with httpx.AsyncClient() as client:
+            page = 1
+            while True:
+                resp = await client.get(
+                    f"https://api.github.com/user/repos?per_page=100&page={page}",
+                    headers=headers,
+                )
+                if resp.status_code != 200:
+                    raise HTTPException(status_code=502, detail="Failed to fetch repositories from GitHub")
+
+                page_rows = resp.json()
+                if not isinstance(page_rows, list) or not page_rows:
+                    break
+
+                repositories_analyzed += len(
+                    [repo for repo in page_rows if not repo.get("fork") and not repo.get("archived")]
+                )
+                page += 1
+
+        # Recompute analysis from scratch to avoid stale language rows.
+        db.query(SkillWeight).filter(
+            SkillWeight.user_id == user_id,
+            SkillWeight.source == "github"
+        ).delete(synchronize_session=False)
+        db.commit()
+
+        await extract_github_skills(user_id=user_id, access_token=access_token)
+        db.refresh(user)
+
+        if user.github_sync_status == "failed":
+            raise HTTPException(status_code=502, detail="GitHub sync failed")
+
+        return {
+            "status": "synced",
+            "repositories_analyzed": repositories_analyzed
+        }
+    except HTTPException:
+        user.github_sync_status = "failed"
+        db.commit()
+        raise
+    except Exception:
+        db.rollback()
+        try:
+            user.github_sync_status = "failed"
+            db.commit()
+        except Exception:
+            pass
+        raise HTTPException(status_code=502, detail="Failed to sync GitHub data")
+
+
+@router.delete("/disconnect")
+def github_disconnect(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user_id = str(current_user.id)
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    try:
+        db.query(SkillWeight).filter(
+            SkillWeight.user_id == user_id,
+            SkillWeight.source == "github"
+        ).delete(synchronize_session=False)
+
+        user.github_access_token = None
+        user.github_username = None
+        user.github_status = "disconnected"
+        user.github_sync_status = "idle"
+        user.last_github_sync = None
+        user.github_connected_at = None
+
+        db.commit()
+        return {"status": "disconnected"}
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to disconnect GitHub")

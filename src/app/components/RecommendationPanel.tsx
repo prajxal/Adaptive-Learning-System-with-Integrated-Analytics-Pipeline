@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { fetchWithAuth } from '../../services/api';
 import BACKEND_URL from '../../services/api';
 import './RecommendationPanel.css';
-import { Play, TrendingUp, Compass, Award, AlertCircle } from 'lucide-react';
+import { Play, TrendingUp, Compass, Award, AlertCircle, Star } from 'lucide-react';
 import { LemonButton } from './LemonButton';
 import { usePostHog } from '@posthog/react';
+import { ROUTES } from '../constants/routes';
 
 // Types
 interface RoadmapNode {
@@ -23,6 +24,8 @@ interface RecommendationResponse {
 
 interface RecommendationPanelProps {
     currentRoadmapId?: string;
+    recommendedStart?: { id: string; title: string } | null;
+    alternativeStarts?: { id: string; title: string }[];
 }
 
 // Utility to normalize difficulty
@@ -82,7 +85,7 @@ const DifficultyPips: React.FC<{ difficulty: number }> = ({ difficulty }) => {
     );
 };
 
-export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({ currentRoadmapId }) => {
+export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({ currentRoadmapId, recommendedStart, alternativeStarts }) => {
     const navigate = useNavigate();
     const posthog = usePostHog();
     const [data, setData] = useState<RecommendationResponse | null>(null);
@@ -197,49 +200,77 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({ curren
                 </div>
             </div>
 
-            {/* ZONE 2: Continue Learning */}
-            <div className="relative z-10 flex flex-col flex-grow space-y-3">
-                <div className="flex items-center gap-2 pb-2 border-b border-white/10 text-gray-300">
-                    <TrendingUp className="w-5 h-5 text-indigo-400" />
-                    <h3 className="text-sm font-semibold tracking-wide uppercase text-white/70">
-                        Continue Learning
-                    </h3>
-                </div>
-
-                {data.next_in_current_roadmap.length === 0 ? (
-                    <div className="bg-gray-900/50 rounded-lg p-6 text-center border border-gray-800">
-                        <span className="text-gray-400 text-sm">
-                            No courses available right now. Try exploring a new roadmap below.
-                        </span>
+            {/* ZONE 2: Recommended Start */}
+            {recommendedStart && (
+                <div className="relative z-10 flex flex-col space-y-3">
+                    <div className="flex items-center gap-2 pb-2 border-b border-white/10 text-gray-300">
+                        <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
+                        <h3 className="text-sm font-semibold tracking-wide uppercase text-white/70">
+                            Recommended Start
+                        </h3>
                     </div>
-                ) : (
+
+                    <div
+                        className="hover-glow bg-gray-900/60 border border-[#00FFB2]/30 rounded-lg p-4 flex items-center justify-between gap-3 w-full group cursor-default shadow-[0_0_16px_rgba(0,255,178,0.06)]"
+                    >
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium line-clamp-2 break-words text-gray-100 group-hover:text-white transition-colors">
+                                {recommendedStart.title}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                                Best starting point based on prerequisite graph
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                posthog?.capture('recommended_start_clicked', {
+                                    course_id: recommendedStart.id,
+                                    course_title: recommendedStart.title,
+                                    current_roadmap_id: currentRoadmapId,
+                                });
+                                navigate(ROUTES.COURSE(recommendedStart.id));
+                            }}
+                            className="shrink-0 px-3 py-1.5 text-xs rounded-md bg-[#00FFB2]/10 hover:bg-[#00FFB2]/20 text-[#00FFB2] border border-[#00FFB2]/30 flex items-center gap-1.5 transition-all hover:shadow-[0_0_12px_rgba(0,255,178,0.4)]"
+                        >
+                            <Play className="w-3 h-3" /> Start Learning
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ZONE 2b: Alternative Starting Points */}
+            {alternativeStarts && alternativeStarts.length > 0 && (
+                <div className="relative z-10 flex flex-col space-y-3">
+                    <div className="flex items-center gap-2 pb-2 border-b border-white/10 text-gray-300">
+                        <TrendingUp className="w-5 h-5 text-indigo-400" />
+                        <h3 className="text-sm font-semibold tracking-wide uppercase text-white/70">
+                            Other Good Starting Points
+                        </h3>
+                    </div>
+
                     <div className="space-y-3">
-                        {data.next_in_current_roadmap.map((node) => (
+                        {alternativeStarts.map((alt) => (
                             <div
-                                key={node.id}
+                                key={alt.id}
                                 className="hover-glow bg-gray-900/60 border border-gray-800 rounded-lg p-4 flex items-center justify-between gap-3 w-full group cursor-default"
                             >
                                 <div className="flex-1 min-w-0">
-                                    <p className={"text-sm font-medium line-clamp-2 break-words text-gray-100 group-hover:text-white transition-colors"}>
-                                        {node.title}
+                                    <p className="text-sm font-medium line-clamp-2 break-words text-gray-100 group-hover:text-white transition-colors">
+                                        {alt.title}
                                     </p>
-                                    <div className="mt-1 flex items-center">
-                                        <span className="text-xs text-gray-500 mr-2 uppercase tracking-wide">Difficulty</span>
-                                        <DifficultyPips difficulty={node.difficulty} />
-                                    </div>
                                 </div>
 
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        posthog?.capture('recommendation_course_clicked', {
-                                            course_id: node.id,
-                                            course_title: node.title,
-                                            roadmap_id: node.roadmap_id,
-                                            difficulty: node.difficulty,
+                                        posthog?.capture('alternative_start_clicked', {
+                                            course_id: alt.id,
+                                            course_title: alt.title,
                                             current_roadmap_id: currentRoadmapId,
                                         });
-                                        navigate(`/course/${node.id}`);
+                                        navigate(ROUTES.COURSE(alt.id));
                                     }}
                                     className="shrink-0 px-3 py-1.5 text-xs rounded-md bg-[#00FFB2]/10 hover:bg-[#00FFB2]/20 text-[#00FFB2] border border-[#00FFB2]/30 flex items-center gap-1.5 transition-all hover:shadow-[0_0_12px_rgba(0,255,178,0.4)]"
                                 >
@@ -248,8 +279,8 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({ curren
                             </div>
                         ))}
                     </div>
-                )}
-            </div>
+                </div>
+            )}
 
             {/* ZONE 3: Explore New Roadmaps */}
             {data.suggested_new_roadmaps.length > 0 && (

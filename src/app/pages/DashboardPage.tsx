@@ -1,17 +1,31 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { getGithubStatus, redirectToGithubConnect } from "../../services/githubApi";
-import { uploadResume, checkResumeStatus } from "../../services/resumeApi";
+import { getGithubAnalysis, getGithubStatus, redirectToGithubConnect } from "../../services/githubApi";
+import { uploadResume, checkResumeStatus as getResumeStatus } from "../../services/resumeApi";
 import { getUserSkills } from "../../services/userApi";
+import BACKEND_URL, { fetchWithAuth } from "../../services/api";
 import { useProgress } from "../hooks/useProgress";
-import { Brain, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { usePostHog } from "@posthog/react";
+import SkillSnapshotCard from "../../components/dashboard/SkillSnapshotCard";
+import SkillProfileCard from "../../components/dashboard/SkillProfileCard";
+import GithubInsightsCard from "../../components/dashboard/GithubInsightsCard";
+
+interface DashboardGithubAnalysis {
+  connected?: boolean;
+  username?: string;
+  languages?: { skill: string; weight: number; confidence: number }[];
+  last_sync?: string | null;
+  repo_count?: number;
+  repositories?: unknown[];
+}
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const posthog = usePostHog();
   const [githubSuccess, setGithubSuccess] = useState(false);
+  const [githubAnalysis, setGithubAnalysis] = useState<DashboardGithubAnalysis | null>(null);
 
   // Consolidating skills state
   const [skills, setSkills] = useState<any[]>([]);
@@ -22,16 +36,11 @@ export default function DashboardPage() {
   const [githubConnected, setGithubConnected] = useState(false);
   const [githubUsername, setGithubUsername] = useState("");
   const [resumeUploading, setResumeUploading] = useState(false);
-  const pollingIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const [githubActionLoading, setGithubActionLoading] = useState(false);
+  const hasFetchedInitialDataRef = React.useRef(false);
 
   const { getLastAccessed } = useProgress();
   const lastAccessed = getLastAccessed();
-
-  useEffect(() => {
-    return () => {
-      if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
-    };
-  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -43,54 +52,142 @@ export default function DashboardPage() {
     }
   }, [location]);
 
-  useEffect(() => {
-    getGithubStatus()
-      .then(data => {
-        setGithubConnected(data.connected);
-        setGithubUsername(data.username || "");
-        if (data.sync_status === "syncing") {
-          startGithubPolling();
-        }
-      })
-      .catch(console.error);
+  const fetchGithubStatus = async () => {
+    const data = await getGithubStatus();
+    setGithubConnected(data.connected);
+    setGithubUsername(data.username || "");
+    if (data.sync_status === "syncing") {
+      startGithubPolling();
+    }
+  };
 
-    getUserSkills()
-      .then(data => {
-        setSkills(data.skills || []);
-      })
-      .catch((e: any) => {
-        console.error("Skill load error:", e);
-        setSkills([]);
-        setError(null);
-      })
-      .finally(() => {
-        setLoading(false);
+  const fetchSkills = async () => {
+    try {
+      const data = await getUserSkills();
+      setSkills(data.skills || []);
+    } catch (e: any) {
+      console.error("Skill load error:", e);
+      setSkills([]);
+      setError(null);
+    }
+  };
+
+  const fetchGithubAnalysisData = async () => {
+    try {
+      const data = await getGithubAnalysis();
+      setGithubAnalysis(data);
+    } catch (e: any) {
+      console.error("GitHub analysis load error:", e);
+      setGithubAnalysis(null);
+    }
+  };
+
+  const refreshGithubAnalysis = async () => {
+    await Promise.all([
+      fetchGithubStatus(),
+      fetchGithubAnalysisData(),
+      fetchSkills(),
+    ]);
+  };
+
+  const handleSyncGithub = async () => {
+    try {
+      setGithubActionLoading(true);
+
+      const response = await fetchWithAuth(`${BACKEND_URL}/github/sync`, {
+        method: "POST"
       });
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      await refreshGithubAnalysis();
+    } catch (err) {
+      console.error("GitHub sync failed", err);
+      posthog?.capture("github_manual_sync_failed");
+      alert("GitHub sync failed. Please try again.");
+    } finally {
+      setGithubActionLoading(false);
+    }
+  };
+
+  const handleDisconnectGithub = async () => {
+    try {
+      setGithubActionLoading(true);
+
+      const response = await fetchWithAuth(`${BACKEND_URL}/github/disconnect`, {
+        method: "DELETE"
+      });
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      setGithubConnected(false);
+      setGithubUsername("");
+      setGithubAnalysis(null);
+    } catch (err) {
+      console.error("GitHub disconnect failed", err);
+      posthog?.capture("github_disconnect_failed");
+      alert("GitHub disconnect failed. Please try again.");
+    } finally {
+      setGithubActionLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (hasFetchedInitialDataRef.current) return;
+    hasFetchedInitialDataRef.current = true;
+
+    const fetchDashboardData = async () => {
+      try {
+        await Promise.all([
+          fetchGithubStatus(),
+          fetchSkills(),
+          fetchGithubAnalysisData(),
+        ]);
+      } catch (err) {
+        console.error("Dashboard data load error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
   }, []);
 
-  const startPolling = () => {
-    pollingIntervalRef.current = setInterval(async () => {
-      try {
-        const res = await checkResumeStatus();
-        if (res.status === "completed" || res.status === "failed") {
-          if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
-          setResumeUploading(false);
+  async function pollResumeStatus() {
+    const maxAttempts = 20;
+    const interval = 3000;
 
-          if (res.status === "completed") {
-            const updatedSkills = await getUserSkills();
-            setSkills(updatedSkills.skills || []);
-          } else {
-            posthog?.capture('resume_processing_failed');
-            alert("Resume processing failed.");
-          }
+    try {
+      for (let i = 0; i < maxAttempts; i++) {
+        const response = await getResumeStatus();
+        const status = response?.status;
+
+        if (status === "completed") {
+          await Promise.all([fetchSkills(), fetchGithubAnalysisData()]);
+          return;
         }
-      } catch (err: any) {
-        console.error("Polling error", err);
-        if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
-        setResumeUploading(false);
+
+        if (status === "failed") {
+          posthog?.capture('resume_processing_failed');
+          alert("Resume processing failed. Please try again.");
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, interval));
       }
-    }, 5000);
-  };
+
+      posthog?.capture('resume_processing_failed');
+      alert("Resume processing failed. Please try again.");
+    } catch (err: any) {
+      console.error("Resume status polling error:", err);
+      posthog?.captureException(err);
+      alert("Resume processing failed. Please try again.");
+    } finally {
+      setResumeUploading(false);
+    }
+  }
 
   const githubPollingRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -113,6 +210,8 @@ export default function DashboardPage() {
           if (res.sync_status === "completed") {
             const updatedSkills = await getUserSkills();
             setSkills(updatedSkills.skills || []);
+            const analysis = await getGithubAnalysis();
+            setGithubAnalysis(analysis);
             setGithubSuccess(true);
             setTimeout(() => setGithubSuccess(false), 5000);
           } else {
@@ -135,7 +234,7 @@ export default function DashboardPage() {
     try {
       await uploadResume(file);
       posthog?.capture('resume_uploaded', { file_name: file.name, file_size: file.size });
-      startPolling();
+      await pollResumeStatus();
     } catch (err: any) {
       console.error(err);
       posthog?.captureException(err);
@@ -253,7 +352,7 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 mt-10">
+        <div className="space-y-6 mb-8 mt-10">
           {/* Account Setup Card */}
           <div className="dark-card p-6 flex flex-col">
             <div className="flex justify-between items-center mb-6">
@@ -267,12 +366,32 @@ export default function DashboardPage() {
 
             <div className="mb-6">
               {githubConnected ? (
-                <div
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
-                  style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.2)' }}
-                >
-                  <Check className="w-4 h-4" />
-                  Connected to GitHub as {githubUsername}
+                <div className="space-y-3">
+                  <div
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
+                    style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.2)' }}
+                  >
+                    <Check className="w-4 h-4" />
+                    Connected to GitHub as {githubUsername}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="upload-btn px-4 py-2 text-sm rounded-md font-medium"
+                      onClick={handleSyncGithub}
+                      disabled={githubActionLoading}
+                    >
+                      {githubActionLoading ? "Syncing..." : "Sync GitHub Data"}
+                    </button>
+                    <button
+                      type="button"
+                      className="upload-btn px-4 py-2 text-sm rounded-md font-medium"
+                      onClick={handleDisconnectGithub}
+                      disabled={githubActionLoading}
+                    >
+                      Disconnect
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <button
@@ -305,99 +424,12 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Your Skill Profile Card */}
-          <div className="dark-card p-6 flex flex-col h-full">
-            <h2 className="title-font text-xl font-semibold mb-6">Your Skill Profile</h2>
-
-            {loading ? (
-              <div className="flex-1 flex items-center justify-center" style={{ color: 'var(--text-muted)' }}>Loading skills...</div>
-            ) : error ? (
-              <div className="flex-1 flex items-center justify-center text-red-400">{error}</div>
-            ) : skills.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center py-6 text-center">
-                <div
-                  className="w-12 h-12 rounded-xl mb-4 flex items-center justify-center"
-                  style={{ backgroundColor: 'rgba(99,102,241,0.1)', color: 'var(--accent-primary)' }}
-                >
-                  <Brain className="w-6 h-6" />
-                </div>
-                <h3 className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Complete your first quiz to unlock your skill profile</h3>
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Your adaptive scores will appear here as you learn</p>
-              </div>
-            ) : (
-              <div className="space-y-4 flex-1">
-                {skills.map(skill => (
-                  <div key={skill.roadmap_id + "_profile"} className="mb-4 last:mb-0">
-                    <div className="flex justify-between items-end mb-2">
-                      <span className="capitalize font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
-                        {skill.roadmap_id.replace(/-/g, ' ')}
-                      </span>
-                      <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                        Confidence: {skill.proficiency_level ? (skill.proficiency_level * 100).toFixed(0) : 0}%
-                      </span>
-                    </div>
-                    <div className="w-full h-[4px] rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          backgroundColor: 'var(--accent-primary)',
-                          width: `${skill.proficiency_level ? skill.proficiency_level * 100 : 0}%`,
-                          transition: 'width 0.5s ease-in-out'
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Continue Learning Feature */}
-        <div className="mb-10">
-          <div
-            className="rounded-xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center relative overflow-hidden"
-            style={{ backgroundImage: 'linear-gradient(135deg, #4f46e5, #6366f1)' }}
-          >
-            {lastAccessed && lastAccessed.courseId && lastAccessed.resourceId ? (
-              <>
-                <div className="z-10 relative mb-4 sm:mb-0">
-                  <p
-                    className="text-[11px] font-bold tracking-[0.08em] uppercase mb-2"
-                    style={{ color: 'rgba(255,255,255,0.6)' }}
-                  >
-                    ACTIVE COURSE MODULE
-                  </p>
-                  <h3 className="title-font text-2xl font-bold text-white tracking-tight">
-                    {lastAccessed.courseTitle}
-                  </h3>
-                </div>
-                <button
-                  onClick={() => {
-                    posthog?.capture('continue_learning_clicked', { course_title: lastAccessed.courseTitle, course_id: lastAccessed.courseId });
-                    navigate(`/course/${lastAccessed.courseId}/resource/${lastAccessed.resourceId}`);
-                  }}
-                  className="z-10 relative bg-white text-[#6366f1] hover:bg-[#6366f1] hover:text-white border border-transparent hover:border-white font-bold py-2.5 px-6 rounded-lg transition-all shadow-sm whitespace-nowrap"
-                >
-                  Resume ↗
-                </button>
-              </>
-            ) : (
-              <div className="z-10 relative w-full flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                <div className="mb-4 sm:mb-0">
-                  <p
-                    className="text-[11px] font-bold tracking-[0.08em] uppercase mb-2"
-                    style={{ color: 'rgba(255,255,255,0.6)' }}
-                  >
-                    CONTINUE LEARNING
-                  </p>
-                  <h3 className="title-font text-2xl font-bold text-white tracking-tight">
-                    Start a roadmap to begin learning
-                  </h3>
-                </div>
-              </div>
-            )}
-          </div>
+          <SkillSnapshotCard
+            skills={skills}
+            githubAnalysis={githubAnalysis}
+          />
+          <SkillProfileCard skills={skills} loading={loading} />
+          <GithubInsightsCard githubAnalysis={githubAnalysis} loading={loading} />
         </div>
 
         <div className="mb-8 mt-12">
@@ -511,6 +543,53 @@ export default function DashboardPage() {
               })}
             </div>
           )}
+        </div>
+
+        {/* Continue Learning Feature */}
+        <div className="mb-10">
+          <div
+            className="rounded-xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center relative overflow-hidden"
+            style={{ backgroundImage: 'linear-gradient(135deg, #4f46e5, #6366f1)' }}
+          >
+            {lastAccessed && lastAccessed.courseId && lastAccessed.resourceId ? (
+              <>
+                <div className="z-10 relative mb-4 sm:mb-0">
+                  <p
+                    className="text-[11px] font-bold tracking-[0.08em] uppercase mb-2"
+                    style={{ color: 'rgba(255,255,255,0.6)' }}
+                  >
+                    ACTIVE COURSE MODULE
+                  </p>
+                  <h3 className="title-font text-2xl font-bold text-white tracking-tight">
+                    {lastAccessed.courseTitle}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => {
+                    posthog?.capture('continue_learning_clicked', { course_title: lastAccessed.courseTitle, course_id: lastAccessed.courseId });
+                    navigate(`/course/${lastAccessed.courseId}/resource/${lastAccessed.resourceId}`);
+                  }}
+                  className="z-10 relative bg-white text-[#6366f1] hover:bg-[#6366f1] hover:text-white border border-transparent hover:border-white font-bold py-2.5 px-6 rounded-lg transition-all shadow-sm whitespace-nowrap"
+                >
+                  Resume ↗
+                </button>
+              </>
+            ) : (
+              <div className="z-10 relative w-full flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                <div className="mb-4 sm:mb-0">
+                  <p
+                    className="text-[11px] font-bold tracking-[0.08em] uppercase mb-2"
+                    style={{ color: 'rgba(255,255,255,0.6)' }}
+                  >
+                    CONTINUE LEARNING
+                  </p>
+                  <h3 className="title-font text-2xl font-bold text-white tracking-tight">
+                    Start a roadmap to begin learning
+                  </h3>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

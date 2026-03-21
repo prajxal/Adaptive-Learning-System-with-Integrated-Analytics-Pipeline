@@ -1,4 +1,35 @@
-import BACKEND_URL, { getClerkToken } from "./api";
+import BACKEND_URL, { fetchWithAuth, getClerkToken } from "./api";
+
+export interface GithubLanguageInsight {
+    skill: string;
+    weight: number;
+    confidence: number;
+}
+
+export interface GithubAnalysisResponse {
+    connected: boolean;
+    username: string;
+    languages: GithubLanguageInsight[];
+}
+
+const toNumber = (value: unknown): number => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const normalizeLanguages = (payload: unknown): GithubLanguageInsight[] => {
+    if (!Array.isArray(payload)) {
+        return [];
+    }
+
+    return payload
+        .map((item: any) => ({
+            skill: String(item?.skill ?? "").trim(),
+            weight: toNumber(item?.weight),
+            confidence: toNumber(item?.confidence),
+        }))
+        .filter((item) => item.skill.length > 0);
+};
 
 export async function getGithubStatus() {
     const res = await fetch(`${BACKEND_URL}/github/status`, {
@@ -25,4 +56,19 @@ export async function redirectToGithubConnect() {
 
     const data = await res.json();
     window.location.href = data.url;
+}
+
+export async function getGithubAnalysis(): Promise<GithubAnalysisResponse> {
+    const res = await fetchWithAuth(`${BACKEND_URL}/users/me/github-analysis`);
+    if (!res.ok) {
+        throw new Error("Failed to fetch GitHub analysis");
+    }
+
+    const payload = await res.json();
+
+    return {
+        connected: Boolean(payload?.connected),
+        username: String(payload?.username ?? ""),
+        languages: normalizeLanguages(payload?.languages),
+    };
 }

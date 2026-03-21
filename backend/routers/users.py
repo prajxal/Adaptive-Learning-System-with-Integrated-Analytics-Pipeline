@@ -123,3 +123,61 @@ def rebuild_skills(current_user: User = Depends(get_current_user), db: Session =
     user_id = str(current_user.id)
     synthesize_all_skills_for_user(user_id, db)
     return {"status": "success", "message": "Skills recalculated successfully"}
+
+
+@router.get("/me/github-analysis")
+def get_github_analysis(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Returns GitHub skill analysis data for the current user.
+    Surfaces languages, commit weights, and top skills derived from
+    the github-sourced SkillWeight rows — used to power frontend analytics.
+    """
+    user_id = str(current_user.id)
+
+    if current_user.github_status != "connected":
+        return {
+            "connected": False,
+            "username": None,
+            "sync_status": current_user.github_sync_status,
+            "last_sync": None,
+            "languages": [],
+            "top_skills": [],
+        }
+
+    from models.skill_weight import SkillWeight
+
+    github_weights = (
+        db.query(SkillWeight)
+        .filter(
+            SkillWeight.user_id == user_id,
+            SkillWeight.source == "github",
+        )
+        .all()
+    )
+
+    languages = [
+        {
+            "skill": sw.skill_name,
+            "weight": round(sw.weight * 100, 1),       # as a percentage of total bytes
+            "confidence": round(sw.confidence * 100, 1),
+        }
+        for sw in sorted(github_weights, key=lambda x: x.weight, reverse=True)
+    ]
+
+    # Top skills from SkillProfile (synthesized across all sources)
+    profiles = db.query(SkillProfile).filter(SkillProfile.user_id == user_id).all()
+    top_skills = sorted(
+        [{"skill": p.roadmap_id, "proficiency": round(p.proficiency_level * 100, 1)} for p in profiles],
+        key=lambda x: x["proficiency"],
+        reverse=True,
+    )[:5]
+
+    return {
+        "connected": True,
+        "username": current_user.github_username,
+        "sync_status": current_user.github_sync_status,
+        "last_sync": current_user.last_github_sync,
+        "languages": languages,
+        "top_skills": top_skills,
+    }
+

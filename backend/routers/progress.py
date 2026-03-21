@@ -12,6 +12,42 @@ from core.clerk_auth import get_current_user
 router = APIRouter()
 
 
+@router.get("/roadmap/{roadmap_id}")
+def get_roadmap_course_progress(
+    roadmap_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user_id = str(current_user.id)
+
+    # 1) Fetch all courses for the roadmap in one query
+    courses = db.query(Course).filter(Course.roadmap_id == roadmap_id).all()
+    course_slugs = [course.id for course in courses]
+
+    if not course_slugs:
+        return {"course_progress": {}}
+
+    # 2) Fetch completed progress rows for these courses in one query
+    completed_rows = (
+        db.query(Event.course_id)
+        .filter(
+            Event.user_id == user_id,
+            Event.event_type == "course_completed",
+            Event.course_id.in_(course_slugs),
+        )
+        .distinct()
+        .all()
+    )
+
+    # Build default map (0 = not completed, 1 = completed)
+    progress_map = {course_slug: 0 for course_slug in course_slugs}
+    for (course_slug,) in completed_rows:
+        if course_slug in progress_map:
+            progress_map[course_slug] = 1
+
+    return {"course_progress": progress_map}
+
+
 @router.get("/{roadmap_id}")
 def get_progress(roadmap_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     user_id = str(current_user.id)

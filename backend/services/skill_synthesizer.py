@@ -60,9 +60,8 @@ def synthesize_skill_profile(user_id: str, skill_id: str, db: Session) -> SkillP
     else:
         print(f"[SkillSynth Debug] Profile found existing id={profile.id}")
 
-    profile.synthesized_weight = synthesized_weight
+    profile.proficiency_level = synthesized_weight
     profile.confidence = aggregated_confidence
-    profile.last_updated = datetime.utcnow()
 
     db.commit()
     db.refresh(profile)

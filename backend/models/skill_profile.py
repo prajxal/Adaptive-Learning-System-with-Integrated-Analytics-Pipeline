@@ -8,7 +8,7 @@ class SkillProfile(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    skill_id = Column(String, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    skill_id = Column(String, nullable=False, index=True)  # roadmap/skill identifier; no FK constraint
     roadmap_id = Column(String, nullable=False, index=True)
     
     proficiency_level = Column(Float, default=0.0)

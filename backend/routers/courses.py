@@ -4,6 +4,9 @@ from sqlalchemy.orm import Session
 from db.database import get_db
 from models.course import Course
 from models.course_prerequisite import CoursePrerequisite
+from models.user import User
+from core.clerk_auth import get_current_user
+from services.learning_priority_service import get_recommended_start_courses
 
 router = APIRouter()
 
@@ -12,15 +15,16 @@ router = APIRouter()
 def list_courses(
     limit: int = Query(default=100, ge=1),
     roadmap_id: str | None = Query(default=None),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> list[dict[str, str | int | None]]:
+):
     query = db.query(Course)
     
     if roadmap_id:
         query = query.filter(Course.roadmap_id == roadmap_id)
     
     courses = query.order_by(Course.difficulty_level).limit(limit).all()
-    return [
+    courses_list = [
         {
             "id": course.id,
             "title": course.title,
@@ -29,6 +33,24 @@ def list_courses(
         }
         for course in courses
     ]
+
+    recommended_start = None
+    alternative_starts = []
+
+    if roadmap_id:
+        recommended = get_recommended_start_courses(
+            current_user.id,
+            roadmap_id,
+            db
+        )
+        recommended_start = recommended.get("recommended")
+        alternative_starts = recommended.get("alternatives", [])
+
+    return {
+        "courses": courses_list,
+        "recommended_start": recommended_start,
+        "alternative_starts": alternative_starts,
+    }
 
 
 @router.get("/{course_id}")

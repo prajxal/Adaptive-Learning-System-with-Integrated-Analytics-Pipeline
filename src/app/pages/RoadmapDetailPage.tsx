@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
-import { useProgress } from "../hooks/useProgress";
 import { RecommendationPanel } from "../components/RecommendationPanel";
 import { usePostHog } from "@posthog/react";
+import { getRoadmapProgress } from "../../services/progressApi";
 
 interface Course {
     id: string;
+    slug?: string;
     title: string;
     difficulty_level: number;
 }
@@ -15,15 +16,15 @@ import BACKEND_URL, { fetchWithAuth } from "../../services/api";
 
 export default function RoadmapDetailPage() {
     const { roadmapId } = useParams();
-    const userId = localStorage.getItem("user_id") || "1";
     const navigate = useNavigate();
     const posthog = usePostHog();
 
-    const { getRoadmapProgress, getCourseProgress } = useProgress();
-
     const [courses, setCourses] = useState<Course[]>([]);
+    const [courseProgressMap, setCourseProgressMap] = useState<Record<string, number>>({});
     const [skillStatuses, setSkillStatuses] = useState<Record<string, string>>({});
     const [coursesLoading, setCoursesLoading] = useState(true);
+    const [recommendedStart, setRecommendedStart] = useState<{ id: string; title: string } | null>(null);
+    const [alternativeStarts, setAlternativeStarts] = useState<{ id: string; title: string }[]>([]);
 
     useEffect(() => {
         async function loadCoursesAndStatus() {
@@ -32,7 +33,13 @@ export default function RoadmapDetailPage() {
                 const res = await fetchWithAuth(`${BACKEND_URL}/courses?roadmap_id=${roadmapId}`);
                 if (!res.ok) throw new Error("Failed to fetch courses");
                 const data = await res.json();
-                setCourses(data);
+                setCourses(data.courses ?? data);
+                setRecommendedStart(data.recommended_start ?? null);
+                setAlternativeStarts(data.alternative_starts ?? []);
+
+                // Fetch roadmap progress in a single optimized request
+                const progressMap = await getRoadmapProgress(roadmapId as string);
+                setCourseProgressMap(progressMap);
 
                 // Fetch Skill Graph Status mappings
                 const statusRes = await fetchWithAuth(`${BACKEND_URL}/skill-graph/${roadmapId}/status`);
@@ -73,9 +80,6 @@ export default function RoadmapDetailPage() {
             </div>
         );
     }
-
-    const courseMetaForProgress = courses.map(c => ({ id: c.id, total_resources: 5 }));
-    const progress = getRoadmapProgress(roadmapId || "", courseMetaForProgress);
 
     return (
         <div className="roadmap-detail-root">
@@ -202,7 +206,11 @@ export default function RoadmapDetailPage() {
                         ) : (
                             courses.map((course) => {
                                 const status = skillStatuses[course.id] || "locked";
-                                const cProg = getCourseProgress(course.id, 5);
+                                const courseSlug = course.slug || course.id;
+                                const courseProgress = courseProgressMap[courseSlug] ?? 0;
+                                const progressPercent = courseProgress <= 1
+                                    ? Math.round(courseProgress * 100)
+                                    : Math.round(courseProgress);
 
                                 const isCompleted = status === "completed";
                                 const isUnlocked = status === "unlocked";
@@ -243,14 +251,14 @@ export default function RoadmapDetailPage() {
                                         <div className="mt-auto flex flex-col gap-3">
                                             <div className="flex items-center justify-between text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
                                                 <span>Progress</span>
-                                                <span>{!isLocked ? `${cProg.percentage}%` : '0%'}</span>
+                                                <span>{!isLocked ? `${progressPercent}%` : '0%'}</span>
                                             </div>
                                             <div className="w-full h-[3px] rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
                                                 <div
                                                     className="h-full rounded-full transition-all duration-500"
                                                     style={{
                                                         backgroundColor: 'var(--accent-primary)',
-                                                        width: !isLocked ? `${cProg.percentage}%` : '0%'
+                                                        width: !isLocked ? `${progressPercent}%` : '0%'
                                                     }}
                                                 />
                                             </div>
@@ -265,7 +273,11 @@ export default function RoadmapDetailPage() {
                 {/* Right — Recommendation Sidebar */}
                 <div className="hidden lg:block w-80 shrink-0 h-full overflow-y-auto border-l border-white/10 pl-8">
                     {roadmapId && (
-                        <RecommendationPanel currentRoadmapId={roadmapId} />
+                        <RecommendationPanel
+                            currentRoadmapId={roadmapId}
+                            recommendedStart={recommendedStart}
+                            alternativeStarts={alternativeStarts}
+                        />
                     )}
                 </div>
             </div>

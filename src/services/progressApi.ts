@@ -7,7 +7,7 @@ export interface Progress {
     proficiency_level: number;
 }
 
-import BACKEND_URL, { getClerkToken } from "./api";
+import BACKEND_URL, { fetchWithAuth, getClerkToken } from "./api";
 
 export async function getProgress(roadmapId: string): Promise<Progress | null> {
     try {
@@ -21,5 +21,16 @@ export async function getProgress(roadmapId: string): Promise<Progress | null> {
         return await res.json();
     } catch {
         return null;
+    }
+}
+
+export async function getRoadmapProgress(roadmapId: string): Promise<Record<string, number>> {
+    try {
+        const res = await fetchWithAuth(`${BACKEND_URL}/progress/roadmap/${roadmapId}`);
+        if (!res.ok) return {};
+        const data = await res.json();
+        return data?.course_progress ?? {};
+    } catch {
+        return {};
     }
 }
