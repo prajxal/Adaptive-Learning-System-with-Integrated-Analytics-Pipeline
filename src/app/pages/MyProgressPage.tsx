@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useProgress } from '../hooks/useProgress';
 import BACKEND_URL, { getClerkToken } from "../../services/api";
+import { usePostHog } from '@posthog/react';
 
 export default function MyProgressPage() {
     const navigate = useNavigate();
+    const posthog = usePostHog();
     const { getRoadmapProgress } = useProgress();
     const [skills, setSkills] = useState<any[]>([]);
     const [roadmaps, setRoadmaps] = useState<any[]>([]);
@@ -31,6 +33,7 @@ export default function MyProgressPage() {
                 setRoadmaps(roadmapsData);
             } catch (err) {
                 console.error("Failed to fetch progress data", err);
+                posthog?.captureException(err);
             } finally {
                 setLoading(false);
             }
@@ -181,7 +184,7 @@ export default function MyProgressPage() {
                                     <div
                                         key={roadmap.id}
                                         className="roadmap-card rounded-xl p-6 group cursor-pointer relative"
-                                        onClick={() => navigate(`/roadmap/${roadmap.id}`)}
+                                        onClick={() => { posthog?.capture('roadmap_progress_clicked', { roadmap_id: roadmap.id, progress_percent: calculatedPercentage }); navigate(`/roadmap/${roadmap.id}`); }}
                                     >
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="flex items-center gap-2.5">

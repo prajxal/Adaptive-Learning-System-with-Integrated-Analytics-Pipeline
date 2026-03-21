@@ -213,6 +213,7 @@ export default function DashboardPage() {
             const analysis = await getGithubAnalysis();
             setGithubAnalysis(analysis);
             setGithubSuccess(true);
+            posthog?.capture('github_synced', { repo_count: analysis?.repo_count, language_count: analysis?.languages?.length });
             setTimeout(() => setGithubSuccess(false), 5000);
           } else {
             posthog?.capture('github_sync_failed');
@@ -221,6 +222,7 @@ export default function DashboardPage() {
         }
       } catch (err) {
         console.error("GitHub Polling error", err);
+        posthog?.captureException(err);
       }
     }, 5000);
   };
