@@ -55,21 +55,88 @@ def extract_json_from_text(text: str) -> dict | None:
 
 def validate_quiz_json(quiz_data: dict) -> list[dict]:
     """
-    Strictly validates the schema of the generated quiz JSON.
+    Validates the schema of the generated quiz JSON.
+    Accepts 4-6 questions to handle minor Gemini variation.
     Returns the list of question dicts if valid, raises ValueError if not.
     """
     try:
         validated = QuizSchema(**quiz_data)
-        if len(validated.questions) != 4:
-            raise ValueError(f"Expected exactly 4 questions, got {len(validated.questions)}")
-        
+        if not (4 <= len(validated.questions) <= 6):
+            raise ValueError(f"Expected 4-6 questions, got {len(validated.questions)}")
+
         for q in validated.questions:
             if len(q.options) != 4:
                 raise ValueError("Each question must have exactly 4 options")
-                
-        return [q.model_dump() for q in validated.questions]
+
+        # Cap at 5 questions to keep quiz length consistent
+        return [q.model_dump() for q in validated.questions[:5]]
     except ValidationError as e:
         raise ValueError(f"Invalid quiz schema: {str(e)}")
+
+def generate_fallback_quiz(skill_title: str, skill_description: str) -> list[dict]:
+    """
+    Returns a minimal static quiz when Gemini is unavailable.
+    Questions are generic but contextually titled so the quiz page always renders.
+    """
+    desc_snippet = (skill_description[:80] + "...") if len(skill_description) > 80 else skill_description
+    return [
+        {
+            "question": f"What is the primary purpose of {skill_title}?",
+            "options": [
+                f"To provide a foundation for {skill_title} concepts",
+                f"To replace all other tools in the {skill_title} ecosystem",
+                f"To act as a database for {skill_title} data",
+                f"None of the above"
+            ],
+            "correct_answer": f"To provide a foundation for {skill_title} concepts",
+            "explanation": f"{skill_title} is a core topic in its domain. {desc_snippet}"
+        },
+        {
+            "question": f"Which of the following best describes {skill_title}?",
+            "options": [
+                f"A tool used in the context of {skill_title}",
+                f"An unrelated technology",
+                f"A deprecated standard",
+                f"A hardware component"
+            ],
+            "correct_answer": f"A tool used in the context of {skill_title}",
+            "explanation": f"{skill_title} is relevant in its specific domain and roadmap context."
+        },
+        {
+            "question": f"When learning {skill_title}, which approach is most effective?",
+            "options": [
+                "Practice with real projects and examples",
+                "Memorise documentation without applying it",
+                "Skip fundamentals and jump to advanced topics",
+                "Avoid reading any documentation"
+            ],
+            "correct_answer": "Practice with real projects and examples",
+            "explanation": "Hands-on practice is the most effective way to build proficiency in any technical skill."
+        },
+        {
+            "question": f"What is a common use case for {skill_title}?",
+            "options": [
+                f"Building or improving systems related to {skill_title}",
+                "Managing physical hardware directly",
+                "Replacing network protocols",
+                "None of the above"
+            ],
+            "correct_answer": f"Building or improving systems related to {skill_title}",
+            "explanation": f"{skill_title} is commonly applied in software development and related disciplines."
+        },
+        {
+            "question": f"Which resource type is most helpful when learning {skill_title}?",
+            "options": [
+                "Official documentation and guided tutorials",
+                "Unrelated blog posts",
+                "Marketing materials",
+                "Social media threads only"
+            ],
+            "correct_answer": "Official documentation and guided tutorials",
+            "explanation": "Official documentation provides accurate, up-to-date information for any technical topic."
+        },
+    ]
+
 
 async def get_or_generate_quiz(skill_id: str, db: Session) -> SkillQuiz:
     """
@@ -94,17 +161,30 @@ async def get_or_generate_quiz(skill_id: str, db: Session) -> SkillQuiz:
     if not course:
         raise HTTPException(status_code=404, detail="Skill (course) not found")
         
-    skill_title = course.title
-    skill_description = course.description or ""
+    skill_title = str(course.title)
+    skill_description = str(course.description or "")
     roadmap_id = course.roadmap_id
     roadmap_title = roadmap_id.replace('-', ' ').title() # simple fallback for roadmap title
     
     # Step 3: Trigger Generation
     if not GEMINI_API_KEY:
-        raise HTTPException(
-            status_code=404,
-            detail="Quiz not found and Gemini generation unavailable"
+        logger.warning(f"GEMINI_API_KEY not set — using fallback quiz for skill {skill_id}")
+        fallback_questions = generate_fallback_quiz(skill_title, skill_description)
+        fallback_quiz = SkillQuiz(
+            skill_id=skill_id,
+            questions=json.dumps(fallback_questions),
+            passing_score=75
         )
+        try:
+            db.add(fallback_quiz)
+            db.commit()
+            db.refresh(fallback_quiz)
+        except IntegrityError:
+            db.rollback()
+            fallback_quiz = db.query(SkillQuiz).filter(SkillQuiz.skill_id == skill_id).first()
+        if isinstance(fallback_quiz.questions, str):
+            fallback_quiz.questions = json.loads(fallback_quiz.questions)
+        return fallback_quiz
         
     prompt = f"""You are an expert technical instructor.
 
@@ -118,7 +198,7 @@ Roadmap context: {roadmap_title}
 
 Requirements:
 
-• Generate exactly 4 questions
+• Generate exactly 5 questions
 • Difficulty level: intermediate
 • Each question must test conceptual understanding, not trivia
 • Each question must have exactly 4 options
@@ -172,24 +252,29 @@ Required JSON format:
                 questions = quiz_data["questions"]
             except (KeyError, IndexError, json.JSONDecodeError) as e:
                 logger.error(f"Gemini response parsing failed: {e}, raw: {response.text}")
-                raise HTTPException(status_code=502, detail="Quiz generation failed. Please try again.")
-            
+                questions = None
+
     except (httpx.RequestError, httpx.HTTPStatusError) as e:
         logger.error(f"Gemini API request failed: {e}")
-        raise HTTPException(status_code=503, detail="Quiz generation temporarily unavailable")
-        
-    # Validate JSON schema and exact length
-    try:
-        questions = validate_quiz_json({"questions": questions})
-    except ValueError as e:
-        logger.error(f"Quiz validation failed: {e}")
-        raise HTTPException(status_code=502, detail="Quiz generation failed. Please try again.")
+        questions = None
+
+    # Validate JSON schema; fall back to static quiz on failure
+    if questions is not None:
+        try:
+            questions = validate_quiz_json({"questions": questions})
+        except ValueError as e:
+            logger.error(f"Quiz validation failed: {e}")
+            questions = None
+
+    if questions is None:
+        logger.warning(f"Falling back to static quiz for skill {skill_id}")
+        questions = generate_fallback_quiz(skill_title, skill_description)
         
     # Step 5: Safely persist with race-condition handling
     new_quiz = SkillQuiz(
         skill_id=skill_id,
         questions=json.dumps(questions),
-        passing_score=100  # Enforce 100% since there are only 4 questions
+        passing_score=75  # 4/5 correct needed to pass
     )
     
     try:

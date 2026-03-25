@@ -40,7 +40,6 @@ export default function ResourceViewerPage() {
     const [activeResource, setActiveResource] = useState<Resource | null>(null);
     const [loading, setLoading] = useState(true);
     const [iframeLoading, setIframeLoading] = useState(true);
-    const [iframeError, setIframeError] = useState(false);
 
     // Progress Engine
     const { markResourceInProgress, markResourceComplete, getResourceProgress } = useProgress();
@@ -67,7 +66,6 @@ export default function ResourceViewerPage() {
     }, [courseId]);
 
     useEffect(() => {
-        setIframeError(false); // Reset iframe error state when selecting a new resource
         setIframeLoading(true); // Reset iframe loading state
 
         if (courseId && resourceId && activeResource) {
@@ -194,13 +192,9 @@ export default function ResourceViewerPage() {
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-medium bg-[#16161f] text-[#64748b] border border-[#1e1e2e]">
                                     🟢 Embedded Video
                                 </span>
-                            ) : iframeError ? (
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-medium bg-[#16161f] text-[#64748b] border border-[#1e1e2e]">
-                                    🔗 Opens externally
-                                </span>
                             ) : (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-medium bg-[#16161f] text-[#64748b] border border-[#1e1e2e]">
-                                    🟢 Embedded Documentation
+                                    🔗 Opens externally
                                 </span>
                             )}
 
@@ -258,58 +252,29 @@ export default function ResourceViewerPage() {
                                 allowFullScreen
                                 frameBorder="0"
                                 onLoad={() => setIframeLoading(false)}
-                                onError={() => {
-                                    setIframeLoading(false);
-                                    setIframeError(true);
-                                }}
+                                onError={() => setIframeLoading(false)}
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             />
                         </div>
                     ) : (
-                        <div key={activeResource.id} className="relative w-full flex-1 rounded-xl shadow-lg border border-[#1e1e2e] bg-[#111118] flex flex-col overflow-hidden">
-                            {iframeError ? (
-                                <div className="flex flex-col items-center justify-center flex-1 bg-[#111118] p-12 text-center h-full">
-                                    <div className="w-16 h-16 bg-[#16161f] rounded-full flex items-center justify-center mb-6 text-2xl shadow-sm border border-[#1e1e2e] text-[#6366f1]">
-                                        🔗
-                                    </div>
-                                    <h3 className="text-xl font-semibold mb-3 text-[#f1f5f9]">
-                                        External Resource
-                                    </h3>
-                                    <p className="text-[#64748b] mb-8 max-w-md">
-                                        ⚠️ This resource cannot be displayed inside LearnPathAI due to external site restrictions.
-                                    </p>
-                                    <a
-                                        href={activeResource.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center justify-center gap-2 bg-[#6366f1] hover:bg-indigo-600 text-[#f1f5f9] font-medium py-3 px-8 rounded-lg transition-all shadow-sm hover:shadow"
-                                    >
-                                        Open in new tab <span className="text-lg leading-none">↗</span>
-                                    </a>
-                                </div>
-                            ) : (
-                                <>
-                                    {iframeLoading && (
-                                        <div className="absolute inset-0 flex items-center justify-center bg-[#111118] z-10">
-                                            <div className="flex flex-col items-center gap-4 text-[#64748b]">
-                                                <div className="w-8 h-8 rounded-full border-4 border-[#6366f1] border-t-transparent animate-spin"></div>
-                                                <p className="text-sm font-medium animate-pulse">Loading document...</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    <iframe
-                                        key={activeResource.url}
-                                        src={activeResource.url}
-                                        className={`w-full h-full min-h-[70vh] flex-1 transition-opacity duration-300 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`}
-                                        onLoad={() => setIframeLoading(false)}
-                                        onError={() => {
-                                            setIframeLoading(false);
-                                            setIframeError(true);
-                                        }}
-                                        sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
-                                    />
-                                </>
-                            )}
+                        <div key={activeResource.id} className="flex flex-col items-center justify-center flex-1 bg-[#111118] p-12 text-center h-full rounded-xl border border-[#1e1e2e]">
+                            <div className="w-16 h-16 bg-[#16161f] rounded-full flex items-center justify-center mb-6 text-2xl shadow-sm border border-[#1e1e2e] text-[#6366f1]">
+                                🔗
+                            </div>
+                            <h3 className="text-xl font-semibold mb-3 text-[#f1f5f9]">
+                                {activeResource.title}
+                            </h3>
+                            <p className="text-[#64748b] mb-8 max-w-md">
+                                This resource opens on an external site. Click below to open it in a new tab.
+                            </p>
+                            <a
+                                href={activeResource.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center gap-2 bg-[#6366f1] hover:bg-indigo-600 text-[#f1f5f9] font-medium py-3 px-8 rounded-lg transition-all shadow-sm hover:shadow"
+                            >
+                                Open in new tab <span className="text-lg leading-none">↗</span>
+                            </a>
                         </div>
                     )}
                 </div>

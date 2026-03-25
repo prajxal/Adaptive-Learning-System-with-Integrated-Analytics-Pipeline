@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text
 
 from db.database import get_db
 from models.course import Course
 from models.event import Event
+from models.quiz_attempt import QuizAttempt
 from models.user import User
 from models.user_skill import UserSkill
 from core.clerk_auth import get_current_user
@@ -22,14 +23,15 @@ def get_roadmap_course_progress(
 
     # 1) Fetch all courses for the roadmap in one query
     courses = db.query(Course).filter(Course.roadmap_id == roadmap_id).all()
-    course_slugs = [course.id for course in courses]
+    course_slugs = [str(course.id) for course in courses]
 
     if not course_slugs:
         return {"course_progress": {}}
 
-    # 2) Fetch completed progress rows for these courses in one query
-    completed_rows = (
-        db.query(Event.course_id)
+    # 2) Completed via event log
+    completed_via_event = {
+        course_id
+        for (course_id,) in db.query(Event.course_id)
         .filter(
             Event.user_id == user_id,
             Event.event_type == "course_completed",
@@ -37,13 +39,47 @@ def get_roadmap_course_progress(
         )
         .distinct()
         .all()
-    )
+    }
 
-    # Build default map (0 = not completed, 1 = completed)
-    progress_map = {course_slug: 0 for course_slug in course_slugs}
-    for (course_slug,) in completed_rows:
-        if course_slug in progress_map:
-            progress_map[course_slug] = 1
+    # 3) Completed via quiz attempt (passed=True) — catches missed events
+    completed_via_quiz = {
+        skill_id
+        for (skill_id,) in db.query(QuizAttempt.skill_id)
+        .filter(
+            QuizAttempt.user_id == user_id,
+            QuizAttempt.passed == True,
+            QuizAttempt.skill_id.in_(course_slugs),
+        )
+        .distinct()
+        .all()
+    }
+
+    # 4) Attempted but not passed (in-progress signal)
+    attempted_skill_ids = {
+        skill_id
+        for (skill_id,) in db.query(QuizAttempt.skill_id)
+        .filter(
+            QuizAttempt.user_id == user_id,
+            QuizAttempt.skill_id.in_(course_slugs),
+        )
+        .distinct()
+        .all()
+    }
+
+    completed_ids = completed_via_event | completed_via_quiz
+
+    # Build progress map:
+    # 1   = completed
+    # 0.5 = attempted quiz but not yet passed (in-progress)
+    # 0   = not started
+    progress_map: dict[str, float] = {}
+    for course_slug in course_slugs:
+        if course_slug in completed_ids:
+            progress_map[course_slug] = 1.0
+        elif course_slug in attempted_skill_ids:
+            progress_map[course_slug] = 0.5
+        else:
+            progress_map[course_slug] = 0.0
 
     return {"course_progress": progress_map}
 
@@ -59,17 +95,36 @@ def get_progress(roadmap_id: str, current_user: User = Depends(get_current_user)
     )
     total_courses = total_courses or 0
 
-    # completed courses
-    completed_courses = (
-        db.query(func.count(func.distinct(Event.course_id)))
+    # Completed via event log
+    event_completed_ids = {
+        course_id
+        for (course_id,) in db.query(Event.course_id)
         .filter(
             Event.user_id == user_id,
             Event.event_type == "course_completed",
             Event.roadmap_id == roadmap_id
         )
-        .scalar()
-    )
-    completed_courses = completed_courses or 0
+        .distinct()
+        .all()
+    }
+
+    # Completed via passed quiz attempt (catches missed events)
+    course_ids_in_roadmap = [
+        c.id for c in db.query(Course.id).filter(Course.roadmap_id == roadmap_id).all()
+    ]
+    quiz_completed_ids = {
+        skill_id
+        for (skill_id,) in db.query(QuizAttempt.skill_id)
+        .filter(
+            QuizAttempt.user_id == user_id,
+            QuizAttempt.passed == True,
+            QuizAttempt.skill_id.in_(course_ids_in_roadmap),
+        )
+        .distinct()
+        .all()
+    }
+
+    completed_courses = len(event_completed_ids | quiz_completed_ids)
 
     # skill data
     skill = (
@@ -100,3 +155,71 @@ def get_progress(roadmap_id: str, current_user: User = Depends(get_current_user)
         "trust_score": float(trust_score),
         "proficiency_level": float(proficiency_level)
     }
+
+
+@router.get("/all")
+def get_all_progress(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    user_id = str(current_user.id)
+
+    # 1. Total courses per roadmap (one query)
+    total_rows = (
+        db.query(Course.roadmap_id, func.count(Course.id).label("total"))
+        .group_by(Course.roadmap_id)
+        .all()
+    )
+    totals: dict[str, int] = {str(row.roadmap_id): int(row.total) for row in total_rows}
+
+    # 2. Completed per roadmap — UNION of Event + QuizAttempt, DISTINCT at DB level
+    # quiz_attempts uses skill_id (FK to courses.id), events uses course_id
+    completed_sql = text("""
+        SELECT roadmap_id, COUNT(DISTINCT course_id) AS completed
+        FROM (
+            SELECT roadmap_id, course_id
+            FROM events
+            WHERE user_id = :uid AND event_type = 'course_completed'
+            UNION
+            SELECT c.roadmap_id, qa.skill_id AS course_id
+            FROM quiz_attempts qa
+            JOIN courses c ON c.id = qa.skill_id
+            WHERE qa.user_id = :uid AND qa.passed = TRUE
+        ) combined
+        GROUP BY roadmap_id
+    """)
+    completed_rows = db.execute(completed_sql, {"uid": user_id}).fetchall()
+    completed: dict[str, int] = {str(row.roadmap_id): int(row.completed) for row in completed_rows}
+
+    # 3. UserSkill stats for all roadmaps this user has data for (one query)
+    skill_rows = (
+        db.query(UserSkill.skill_name, UserSkill.trust_score, UserSkill.proficiency_level)
+        .filter(UserSkill.user_id == user_id)
+        .all()
+    )
+    skills: dict[str, tuple[float, float]] = {
+        str(row.skill_name): (float(row.trust_score or 800.0), float(row.proficiency_level or 0.0))
+        for row in skill_rows
+    }
+
+    # 4. Union roadmap IDs from courses AND user_skills so roadmaps with skill data
+    # but no courses in DB are still represented (check 2)
+    all_roadmap_ids = set(totals.keys()) | set(skills.keys())
+
+    # 5. Build response
+    result = []
+    for rid in sorted(all_roadmap_ids):
+        total = totals.get(rid, 0)
+        done = completed.get(rid, 0)
+        trust_score, proficiency_level = skills.get(rid, (800.0, 0.0))
+        progress_percent = min(100.0, round((done / total) * 100, 2)) if total > 0 else 0.0
+        result.append({
+            "roadmap_id": rid,
+            "total_courses": total,
+            "completed_courses": done,
+            "progress_percent": progress_percent,
+            "trust_score": trust_score,
+            "proficiency_level": proficiency_level,
+        })
+
+    return {"roadmaps": result}

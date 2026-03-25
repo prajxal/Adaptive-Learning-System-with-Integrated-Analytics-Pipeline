@@ -43,9 +43,7 @@ export default function CourseDetailPage() {
         .then(setCourse)
         .catch(() => setCourse(null));
 
-      const userId = localStorage.getItem("user_id");
-
-      fetch(`${BACKEND_URL}/learning-path/${userId}/${courseId}`, { headers })
+      fetch(`${BACKEND_URL}/learning-path/${courseId}`, { headers })
         .then((res) => res.json())
         .then((data) => {
           setLearningPath(data.path || []);

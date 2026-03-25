@@ -10,7 +10,7 @@ def synthesize_skill_profile(user_id: str, skill_id: str, db: Session) -> SkillP
         SkillWeight.user_id == user_id,
         SkillWeight.skill_name == skill_id
     ).all()
-    
+
     print(f"[SkillSynth Debug] weights extracted count: {len(weights)} for user {user_id}, skill {skill_id}")
 
     if not weights:
@@ -27,7 +27,10 @@ def synthesize_skill_profile(user_id: str, skill_id: str, db: Session) -> SkillP
     numerator = 0.0
     denominator = 0.0
 
+    # Group weights by source for source-specific field population
+    by_source: dict = {}
     for w in weights:
+        by_source.setdefault(w.source, []).append(w)
         multiplier = SOURCE_MULTIPLIERS.get(w.source, 1.0)
         numerator += w.weight * w.confidence * multiplier
         denominator += w.confidence * multiplier
@@ -37,6 +40,16 @@ def synthesize_skill_profile(user_id: str, skill_id: str, db: Session) -> SkillP
 
     synthesized_weight = numerator / denominator
     aggregated_confidence = min(1.0, denominator / len(weights))
+
+    def _source_proficiency(source_weights) -> tuple:
+        """Return (proficiency, confidence) for a single source's weight list."""
+        if not source_weights:
+            return 0.0, 0.0
+        total_conf = sum(w.confidence for w in source_weights)
+        weighted_sum = sum(w.weight * w.confidence for w in source_weights)
+        prof = weighted_sum / total_conf if total_conf > 0 else 0.0
+        conf = min(1.0, total_conf / len(source_weights))
+        return prof, conf
 
     profile = db.query(SkillProfile).filter(
         SkillProfile.user_id == user_id,
@@ -62,6 +75,10 @@ def synthesize_skill_profile(user_id: str, skill_id: str, db: Session) -> SkillP
 
     profile.proficiency_level = synthesized_weight
     profile.confidence = aggregated_confidence
+
+    profile.resume_proficiency, profile.resume_confidence = _source_proficiency(by_source.get("resume", []))
+    profile.github_proficiency, profile.github_confidence = _source_proficiency(by_source.get("github", []))
+    profile.quiz_proficiency, profile.quiz_confidence = _source_proficiency(by_source.get("quiz", []))
 
     db.commit()
     db.refresh(profile)

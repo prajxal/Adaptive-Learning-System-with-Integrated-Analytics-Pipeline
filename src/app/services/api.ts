@@ -1,15 +1,24 @@
 import BACKEND_URL, { getClerkToken } from "../../services/api";
 
+export type RoadmapNode = {
+  id: string;
+  title: string;
+  difficulty: number;
+  roadmap_id: string;
+};
+
 export type RecommendationResponse = {
-  user_id: string;
-  recommended_course: string;
-  difficulty: string;
+  user_elo: number;
+  next_in_current_roadmap: RoadmapNode[];
+  suggested_new_roadmaps: string[];
 };
 
 export type UserResponse = {
-  user_id: string;
-  skill_level: string;
-  engagement_score: number;
+  id: string;
+  email: string;
+  global_elo_rating: number;
+  resume_status: string | null;
+  github_status: string | null;
 };
 
 export type EventPayload = {
@@ -44,12 +53,14 @@ async function requestJson<T>(url: string, options: RequestInit = {}): Promise<T
   }
 }
 
-export async function getRecommendation(userId: string): Promise<RecommendationResponse | null> {
-  return requestJson<RecommendationResponse>(`${BACKEND_URL}/recommend/${userId}`);
+export async function getRecommendation(currentRoadmapId: string): Promise<RecommendationResponse | null> {
+  return requestJson<RecommendationResponse>(
+    `${BACKEND_URL}/recommend/recommend?current_roadmap_id=${encodeURIComponent(currentRoadmapId)}`
+  );
 }
 
-export async function getUser(userId: string): Promise<UserResponse | null> {
-  return requestJson<UserResponse>(`${BACKEND_URL}/users/${userId}`);
+export async function getUser(): Promise<UserResponse | null> {
+  return requestJson<UserResponse>(`${BACKEND_URL}/users/me`);
 }
 
 export async function sendEvent(event: EventPayload): Promise<EventResponse | null> {

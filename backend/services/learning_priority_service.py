@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from models.course import Course
 from models.course_prerequisite import CoursePrerequisite
+from models.skill_profile import SkillProfile
 from services.skill_graph_service import (
     get_prerequisites,
     get_next_skills,
@@ -85,15 +86,40 @@ def compute_importance_score(course_id: str, db: Session) -> float:
     importance_score = (descendants_count * 3) + (out_degree * 2) + (10 - graph_depth)
     return float(importance_score)
 
+def compute_confidence_adjustment(user_id: str, course_id: str, db: Session) -> float:
+    """
+    Returns a score adjustment based on the user's existing skill confidence for this course.
+    Low confidence → positive boost (needs attention).
+    High confidence → negative adjustment (already strong, de-prioritise).
+    """
+    profile = db.query(SkillProfile).filter(
+        SkillProfile.user_id == user_id,
+        SkillProfile.skill_id == course_id
+    ).first()
+
+    if not profile:
+        return 0.0  # No data — no adjustment
+
+    confidence = profile.confidence or 0.0
+    if confidence < 0.4:
+        return 5.0   # Low confidence: needs attention, boost priority
+    elif confidence > 0.7:
+        return -3.0  # High confidence: already strong, de-prioritise
+    return 0.0
+
+
 def get_recommended_start_courses(user_id: str, roadmap_id: str, db: Session) -> dict:
     """
-    Returns the top recommended starting courses based on their topological importance.
+    Returns the top recommended starting courses based on topological importance
+    adjusted by the user's skill confidence.
     """
     unlocked_courses = get_unlocked_courses(user_id, roadmap_id, db)
-    
+
     course_scores = []
     for course in unlocked_courses:
-        score = compute_importance_score(course.id, db)
+        base_score = compute_importance_score(course.id, db)
+        confidence_adj = compute_confidence_adjustment(user_id, str(course.id), db)
+        score = base_score + confidence_adj
         course_scores.append((score, course))
         
     # Sort descending

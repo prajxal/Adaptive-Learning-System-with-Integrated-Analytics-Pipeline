@@ -24,6 +24,17 @@ export async function getProgress(roadmapId: string): Promise<Progress | null> {
     }
 }
 
+export async function getAllProgress(): Promise<Progress[]> {
+    try {
+        const res = await fetchWithAuth(`${BACKEND_URL}/progress/all`);
+        if (!res.ok) return [];
+        const data = await res.json();
+        return data?.roadmaps ?? [];
+    } catch {
+        return [];
+    }
+}
+
 export async function getRoadmapProgress(roadmapId: string): Promise<Record<string, number>> {
     try {
         const res = await fetchWithAuth(`${BACKEND_URL}/progress/roadmap/${roadmapId}`);

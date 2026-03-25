@@ -1,12 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useRoadmaps } from "../../hooks/useRoadmaps";
-import { useProgress } from "../../hooks/useProgress";
+import { getAllProgress, Progress } from "../../services/progressApi";
 import { usePostHog } from "@posthog/react";
 
-function RoadmapCard({ roadmap }: { roadmap: any }) {
-    const userId = localStorage.getItem("user_id") || "1";
-    const { progress } = useProgress(userId, roadmap.id);
+function RoadmapCard({ roadmap, progress }: { roadmap: any; progress: Progress | null }) {
     const posthog = usePostHog();
 
     const getAccentColor = (title: string) => {
@@ -113,6 +111,15 @@ function RoadmapCard({ roadmap }: { roadmap: any }) {
 export default function RoadmapCatalogPage() {
     console.log("[RoadmapCatalogPage] Rendering. Pathname:", window.location.pathname);
     const { roadmaps, loading, error } = useRoadmaps();
+    const [progressMap, setProgressMap] = useState<Record<string, Progress>>({});
+
+    useEffect(() => {
+        getAllProgress().then(items => {
+            const map: Record<string, Progress> = {};
+            for (const p of items) map[p.roadmap_id] = p;
+            setProgressMap(map);
+        });
+    }, []);
 
     return (
         <div className="roadmap-catalog-root">
@@ -229,7 +236,7 @@ export default function RoadmapCatalogPage() {
 
                         <div className="roadmap-grid">
                             {roadmaps.map((roadmap) => (
-                                <RoadmapCard key={roadmap.id} roadmap={roadmap} />
+                                <RoadmapCard key={roadmap.id} roadmap={roadmap} progress={progressMap[roadmap.id] ?? null} />
                             ))}
                         </div>
                     </>
