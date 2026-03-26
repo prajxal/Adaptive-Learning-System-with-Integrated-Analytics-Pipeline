@@ -1,0 +1,191 @@
+================================================================================
+CODEMAP UPDATE SUMMARY — 2026-03-26 Session
+================================================================================
+
+TIMESTAMP: 2026-03-26 11:45 UTC
+UPDATED CODEMAPS:
+  - docs/CODEMAPS/architecture.md
+  - docs/CODEMAPS/backend.md
+  - docs/CODEMAPS/frontend.md
+  - docs/CODEMAPS/data.md
+
+================================================================================
+MAJOR CHANGES TRACKED
+================================================================================
+
+[ARCHITECTURE] Dynamic Roadmap Introduction
+  - NEW: 5-state course model (completed | skippable | fast_tracked | unlocked | locked)
+  - NEW: Confidence thresholds drive state transitions (skip: 0.75, fast_track: 0.50)
+  - NEW: Per-course reason captions (e.g., "Skipped — high confidence (85%)")
+  - CHANGE: Skip/unskip feature replaces manual course completion workaround
+  - FLOW: compute_dynamic_roadmap() performs exactly 4 DB queries (no N+1)
+
+[BACKEND] Routes & Services
+  NEW ENDPOINT:
+    GET /skill-graph/{roadmap_id}/dynamic-status
+      Returns: { courses[], summary{}, thresholds{}, computed_in_ms }
+      Service: services/dynamic_roadmap_service.py::compute_dynamic_roadmap()
+
+  NEW SERVICE: services/dynamic_roadmap_service.py
+    - compute_dynamic_roadmap(user_id, roadmap_id, db) → full 5-state resolution
+    - _build_reason(status, course_id, profile, ...) → deterministic <=60-char reason
+    - get_skip_threshold() → reads SKIP_CONFIDENCE_THRESHOLD env var (default 0.75)
+    - get_fast_track_threshold() → reads FAST_TRACK_CONFIDENCE_THRESHOLD env var (default 0.50)
+
+  MODIFIED ENDPOINT:
+    POST /events
+      - NEW: Validates event_type as Literal["course_completed", "course_skipped", ...]
+      - NEW: course_skipped validation:
+        * Must have SkillProfile with confidence >= skip threshold
+        * All prerequisites must be satisfied
+        * Cannot duplicate completion/skip
+      - EXISTING: Trust score updates on course_completed/quiz_failed
+
+  NEW ENDPOINT:
+    DELETE /events/skip/{course_id}
+      - Reverses a skip by deleting the course_skipped Event
+
+  DEPRECATED ENDPOINT:
+    GET /skill-graph/{roadmap_id}/status
+      - Sunset: 2026-06-01
+      - Replacement: /dynamic-status
+      - HTTP headers: Deprecation: true, Sunset: 2026-06-01, Link: <...>
+
+  MODIFIED SERVICE: services/skill_graph_service.py
+    - is_skill_completed() now treats course_skipped events as satisfied
+    - get_roadmap_skill_status() now reflects skip state
+
+[FRONTEND] API & Components
+  NEW API MODULE: src/services/dynamicRoadmapApi.ts
+    - getDynamicRoadmapStatus(roadmapId) → fetches 5-state course map
+    - skipCourse(courseId) → POST /events {event_type: course_skipped}
+    - unskipCourse(courseId) → DELETE /events/skip/{courseId}
+
+    Exports:
+      - type CourseNodeStatus = 'completed' | 'skippable' | 'fast_tracked' | 'unlocked' | 'locked'
+      - interface DynamicCourseNode { skill_id, title, status, confidence, proficiency, difficulty_level, can_skip, can_fast_track, reason }
+      - interface DynamicRoadmapStatus { roadmap_id, courses[], summary{}, thresholds{}, computed_in_ms }
+
+  MODIFIED COMPONENT: src/app/pages/RoadmapDetailPage.tsx
+    - Single getDynamicRoadmapStatus() call replaces 3 prior queries
+    - 5-state rendering engine with status badges
+    - Per-course skip/unskip UI with loading + error handling
+    - Reason captions displayed inline
+    - Still fetches /courses for recommendation banner (separate concern)
+
+  MODIFIED COMPONENT: src/app/pages/CourseDetailPage.tsx
+    - Migrated from old /status endpoint to getDynamicRoadmapStatus()
+
+  MODIFIED COMPONENT: src/app/components/RoadmapNode.tsx
+    - Extended NodeStatus type: added 'skippable', 'fast_tracked'
+    - New props: isSkipLoading, onSkip, onFastTrack, reason
+    - Icon mapping: SkipForward for skippable, Zap for fast_tracked
+    - Renders reason caption inline
+
+  MODIFIED COMPONENT: src/app/components/RoadmapContainer.tsx
+    - Forwards new skip/fast-track props through to RoadmapNode
+
+  MODIFIED PAGE: src/app/pages/DashboardPage.tsx
+    - Added skip-suggestion messaging for recommended courses with high confidence
+
+  MODIFIED CONSTANTS: src/app/constants/routes.ts
+    - Added ROUTES.QUIZ(courseId) → /course/{courseId}/quiz
+
+[DATABASE] Schema Changes
+  NEW MIGRATION: versions/67604beb8fae_add_unique_constraint_on_user_skills_.py
+    - Adds named unique constraint on (user_id, skill_name)
+    - Constraint name: uq_user_skill_user_skill_name
+    - Prevents duplicate skill profiles per user
+
+  UPDATED MODELS:
+    - Event: event_type now validated as Literal (application-level enum)
+    - UserSkill: unique constraint formally named
+
+================================================================================
+CONFIGURATION CHANGES
+================================================================================
+
+Environment Variables (NEW):
+  SKIP_CONFIDENCE_THRESHOLD (default: 0.75)
+    → Minimum SkillProfile.confidence to enter skippable state
+  FAST_TRACK_CONFIDENCE_THRESHOLD (default: 0.50)
+    → Minimum SkillProfile.confidence to enter fast_tracked state
+
+================================================================================
+TESTING ADDITIONS
+================================================================================
+
+NEW TEST FILE: backend/tests/test_build_reason.py
+  - 44 unit tests for _build_reason() function
+  - Covers all 5 states with various profile/threshold combinations
+  - Tests edge cases: None profile, fractional confidence, prerequisite counts
+
+NEW TEST CONFIG: backend/tests/conftest.py
+  - pytest sys.path configuration
+
+================================================================================
+BACKWARD COMPATIBILITY NOTES
+================================================================================
+
+✓ SAFE: Old /status endpoint still works (deprecated but functional)
+✓ SAFE: RoadmapDetailPage dual fetches both /dynamic-status + /courses
+✓ SAFE: skip_threshold/fast_track_threshold are env vars (runtime-configurable)
+✗ BREAKING: event_type now validated as strict Literal (custom strings rejected)
+✗ BREAKING: course_skipped events require pre-existing SkillProfile with confidence
+
+================================================================================
+PERFORMANCE IMPACT
+================================================================================
+
+compute_dynamic_roadmap():
+  - Q1 (courses): ~0.1–1.0 ms
+  - Q2 (satisfied): ~0.1–2.0 ms (union_all of 3 subqueries)
+  - Q3 (prerequisites): ~0.1–1.0 ms
+  - Q4 (profiles): ~0.1–1.0 ms
+  - Resolution: <0.5 ms (in-memory)
+  - Total: ~1–5 ms for typical roadmaps (100–300 courses)
+
+Compared to old /status endpoint:
+  - Old: 1 query + N profile get-or-creates = O(N)
+  - New: 4 fixed queries = O(1) DB cost
+
+================================================================================
+NEXT ACTIONS
+================================================================================
+
+1. Deploy backend changes (env vars: SKIP_CONFIDENCE_THRESHOLD, FAST_TRACK_CONFIDENCE_THRESHOLD)
+2. Deploy frontend changes (new dynamicRoadmapApi import)
+3. Monitor /dynamic-status endpoint latencies (log to stdout for perf tracking)
+4. Set sunset reminder for 2026-06-01 to remove /status endpoint
+5. Consider adding unit tests for skip validation logic in events.py
+
+================================================================================
+FILES MODIFIED
+================================================================================
+
+Backend:
+  backend/services/dynamic_roadmap_service.py (NEW)
+  backend/routers/skill_graph.py (modified: +new endpoint, deprecation headers)
+  backend/routers/events.py (modified: +skip validation, +DELETE /skip, +Literal type)
+  backend/services/skill_graph_service.py (modified: is_skill_completed treats skip as satisfied)
+  backend/models/user_skill.py (modified: named unique constraint)
+  backend/migrations/versions/67604beb8fae_*.py (NEW)
+  backend/tests/test_build_reason.py (NEW)
+  backend/tests/conftest.py (NEW)
+
+Frontend:
+  src/services/dynamicRoadmapApi.ts (NEW)
+  src/app/pages/RoadmapDetailPage.tsx (modified: single API call, 5-state rendering)
+  src/app/pages/CourseDetailPage.tsx (modified: use getDynamicRoadmapStatus)
+  src/app/pages/DashboardPage.tsx (modified: skip suggestion messaging)
+  src/app/components/RoadmapNode.tsx (modified: extended NodeStatus, new props)
+  src/app/components/RoadmapContainer.tsx (modified: forward new props)
+  src/app/constants/routes.ts (modified: added ROUTES.QUIZ)
+
+Documentation:
+  docs/CODEMAPS/architecture.md (updated: dynamic roadmap flow)
+  docs/CODEMAPS/backend.md (updated: new routes, services, deprecations)
+  docs/CODEMAPS/frontend.md (updated: new API module, component changes, routes)
+  docs/CODEMAPS/data.md (updated: migrations, event type validation)
+
+================================================================================

@@ -1,63 +1,152 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { getGithubAnalysis, getGithubStatus, redirectToGithubConnect } from "../../services/githubApi";
-import { uploadResume, checkResumeStatus as getResumeStatus } from "../../services/resumeApi";
+import { Link, useNavigate } from "react-router-dom";
+import { getGithubStatus } from "../../services/githubApi";
 import { getUserSkills } from "../../services/userApi";
+import { getRoadmaps, Roadmap } from "../../services/roadmapApi";
 import BACKEND_URL, { fetchWithAuth } from "../../services/api";
+import { getDynamicRoadmapStatus, DynamicCourseNode } from "../../services/dynamicRoadmapApi";
 import { useProgress } from "../hooks/useProgress";
-import { Check } from "lucide-react";
+import { BookOpen, Compass, ArrowRight, Map, Zap } from "lucide-react";
 import { usePostHog } from "@posthog/react";
-import SkillSnapshotCard from "../../components/dashboard/SkillSnapshotCard";
-import SkillProfileCard from "../../components/dashboard/SkillProfileCard";
-import GithubInsightsCard from "../../components/dashboard/GithubInsightsCard";
+import LearningInsightsCard from "../../components/dashboard/LearningInsightsCard";
+import SkillRadarChart from "../../components/dashboard/SkillRadarChart";
 
-interface DashboardGithubAnalysis {
-  connected?: boolean;
-  username?: string;
-  languages?: { skill: string; weight: number; confidence: number }[];
-  last_sync?: string | null;
-  repo_count?: number;
-  repositories?: unknown[];
+
+interface RecommendedCourse {
+  id: string;
+  title: string;
+  difficulty: number;
+  roadmap_id: string;
 }
+
+const CARD_STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap');
+
+  .dashboard-root {
+    --bg-primary: #0a0a0f;
+    --bg-card: #111118;
+    --bg-card-hover: #16161f;
+    --accent-primary: #6366f1;
+    --accent-secondary: #818cf8;
+    --text-primary: #f1f5f9;
+    --text-muted: #64748b;
+    --border: #1e1e2e;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    position: relative;
+  }
+  .dashboard-bg {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.06) 0%, transparent 60%);
+    pointer-events: none; z-index: 0;
+  }
+  .dashboard-content {
+    position: relative; z-index: 1;
+    max-width: 1000px; margin: 0 auto; padding: 3rem 1.5rem;
+  }
+  .title-font { font-family: 'Sora', sans-serif; }
+  .dark-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+  }
+  .upload-zone {
+    border: 1px dashed var(--border);
+    transition: border-color 0.2s ease;
+  }
+  .upload-zone:hover { border-color: var(--accent-primary); cursor: pointer; }
+  .upload-btn {
+    background-color: #16161f;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    transition: border-color 0.2s ease;
+  }
+  .upload-btn:hover { border-color: var(--accent-primary); }
+  .path-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    transition: all 0.2s ease;
+    display: flex; flex-direction: column;
+    text-decoration: none;
+  }
+  .path-card:hover {
+    background-color: var(--bg-card-hover);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 24px rgba(99,102,241,0.12);
+  }
+  .section-label {
+    display: flex; align-items: center; gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .hero-card {
+    border-radius: 1rem;
+    background: linear-gradient(135deg, #3730a3 0%, #4f46e5 40%, #6366f1 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-card::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    pointer-events: none;
+  }
+  .hero-card::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -5%;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+    pointer-events: none;
+  }
+`;
+
+const getAccentColor = (title: string) => {
+  const t = title.toLowerCase();
+  if (t.includes("ai") || t.includes("machine learning")) return "#6366f1";
+  if (t.includes("backend") || t.includes("back-end")) return "#3b82f6";
+  if (t.includes("frontend") || t.includes("front-end")) return "#ec4899";
+  if (t.includes("devops") || t.includes("cloud")) return "#10b981";
+  if (t.includes("data")) return "#f59e0b";
+  if (t.includes("mobile")) return "#06b6d4";
+  return "#6366f1";
+};
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const posthog = usePostHog();
-  const [githubSuccess, setGithubSuccess] = useState(false);
-  const [githubAnalysis, setGithubAnalysis] = useState<DashboardGithubAnalysis | null>(null);
 
-  // Consolidating skills state
   const [skills, setSkills] = useState<any[]>([]);
+  const [roadmaps, setRoadmaps] = useState<Roadmap[]>([]);
+  const [recommendation, setRecommendation] = useState<{
+    user_elo: number;
+    next_in_current_roadmap: RecommendedCourse[];
+    suggested_new_roadmaps: string[];
+  } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Onboarding UI hooks
   const [githubConnected, setGithubConnected] = useState(false);
-  const [githubUsername, setGithubUsername] = useState("");
-  const [resumeUploading, setResumeUploading] = useState(false);
-  const [githubActionLoading, setGithubActionLoading] = useState(false);
+  const [recommendedCourseStatus, setRecommendedCourseStatus] = useState<DynamicCourseNode | null>(null);
   const hasFetchedInitialDataRef = React.useRef(false);
 
   const { getLastAccessed } = useProgress();
   const lastAccessed = getLastAccessed();
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get("github") === "connected") {
-      setGithubSuccess(true);
-      // Clean up URL without refreshing
-      window.history.replaceState({}, document.title, location.pathname);
-      setTimeout(() => setGithubSuccess(false), 5000);
-    }
-  }, [location]);
-
   const fetchGithubStatus = async () => {
-    const data = await getGithubStatus();
-    setGithubConnected(data.connected);
-    setGithubUsername(data.username || "");
-    if (data.sync_status === "syncing") {
-      startGithubPolling();
+    try {
+      const data = await getGithubStatus();
+      setGithubConnected(data.connected);
+    } catch {
+      // non-critical
     }
   };
 
@@ -65,535 +154,526 @@ export default function DashboardPage() {
     try {
       const data = await getUserSkills();
       setSkills(data.skills || []);
-    } catch (e: any) {
-      console.error("Skill load error:", e);
+      return data.skills || [];
+    } catch {
       setSkills([]);
-      setError(null);
+      return [];
     }
   };
 
-  const fetchGithubAnalysisData = async () => {
+  const fetchRecommendation = async (skillsList: any[]) => {
     try {
-      const data = await getGithubAnalysis();
-      setGithubAnalysis(data);
-    } catch (e: any) {
-      console.error("GitHub analysis load error:", e);
-      setGithubAnalysis(null);
-    }
-  };
+      const inProgress = skillsList
+        .filter((s) => (s.progress_percent || 0) > 0 && (s.progress_percent || 0) < 100)
+        .sort((a, b) => (b.progress_percent || 0) - (a.progress_percent || 0));
+      const roadmapId = inProgress[0]?.roadmap_id || skillsList[0]?.roadmap_id;
+      if (!roadmapId) return;
+      const res = await fetchWithAuth(
+        `${BACKEND_URL}/recommend/recommend?current_roadmap_id=${encodeURIComponent(roadmapId)}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setRecommendation(data);
 
-  const refreshGithubAnalysis = async () => {
-    await Promise.all([
-      fetchGithubStatus(),
-      fetchGithubAnalysisData(),
-      fetchSkills(),
-    ]);
-  };
-
-  const handleSyncGithub = async () => {
-    try {
-      setGithubActionLoading(true);
-
-      const response = await fetchWithAuth(`${BACKEND_URL}/github/sync`, {
-        method: "POST"
-      });
-      if (!response.ok) {
-        throw new Error(await response.text());
+        // Fetch dynamic status for the recommended course to show contextual messaging
+        const topCourse = data?.next_in_current_roadmap?.[0];
+        if (topCourse?.id && topCourse?.roadmap_id) {
+          try {
+            const dynamicStatus = await getDynamicRoadmapStatus(topCourse.roadmap_id);
+            const match = dynamicStatus.courses.find((c) => c.skill_id === topCourse.id);
+            setRecommendedCourseStatus(match ?? null);
+          } catch {
+            // non-critical; dynamic status is best-effort
+          }
+        }
       }
-
-      await refreshGithubAnalysis();
-    } catch (err) {
-      console.error("GitHub sync failed", err);
-      posthog?.capture("github_manual_sync_failed");
-      alert("GitHub sync failed. Please try again.");
-    } finally {
-      setGithubActionLoading(false);
-    }
-  };
-
-  const handleDisconnectGithub = async () => {
-    try {
-      setGithubActionLoading(true);
-
-      const response = await fetchWithAuth(`${BACKEND_URL}/github/disconnect`, {
-        method: "DELETE"
-      });
-      if (!response.ok) {
-        throw new Error(await response.text());
-      }
-
-      setGithubConnected(false);
-      setGithubUsername("");
-      setGithubAnalysis(null);
-    } catch (err) {
-      console.error("GitHub disconnect failed", err);
-      posthog?.capture("github_disconnect_failed");
-      alert("GitHub disconnect failed. Please try again.");
-    } finally {
-      setGithubActionLoading(false);
+    } catch {
+      // non-critical; silently fail
     }
   };
 
   useEffect(() => {
     if (hasFetchedInitialDataRef.current) return;
     hasFetchedInitialDataRef.current = true;
-
     const fetchDashboardData = async () => {
       try {
-        await Promise.all([
-          fetchGithubStatus(),
+        const [skillsResult, roadmapsResult] = await Promise.all([
           fetchSkills(),
-          fetchGithubAnalysisData(),
+          getRoadmaps().catch(() => [] as Roadmap[]),
+          fetchGithubStatus(),
         ]);
-      } catch (err) {
-        console.error("Dashboard data load error:", err);
+        setRoadmaps(roadmapsResult);
+        await fetchRecommendation(skillsResult);
       } finally {
         setLoading(false);
       }
     };
-
     fetchDashboardData();
   }, []);
 
-  async function pollResumeStatus() {
-    const maxAttempts = 20;
-    const interval = 3000;
+  // ── Derived data ──────────────────────────────────────────────────
+  const startedSkillIds = new Set(skills.map((s) => s.roadmap_id));
+  const continueLearning = skills.filter(
+    (s) => (s.progress_percent || 0) > 0 && (s.progress_percent || 0) < 100
+  );
+  const completedPaths = skills.filter((s) => (s.progress_percent || 0) >= 100);
+  const explorePaths = roadmaps.filter((r) => !startedSkillIds.has(r.id));
+  const recommendedCourse = recommendation?.next_in_current_roadmap?.[0] ?? null;
+  const suggestedNewRoadmaps = recommendation?.suggested_new_roadmaps ?? [];
+  const explorePathIds = new Set(explorePaths.map((r) => r.id));
+  const extraSuggested = suggestedNewRoadmaps.filter(
+    (id) => !explorePathIds.has(id) && !startedSkillIds.has(id)
+  );
 
-    try {
-      for (let i = 0; i < maxAttempts; i++) {
-        const response = await getResumeStatus();
-        const status = response?.status;
-
-        if (status === "completed") {
-          await Promise.all([fetchSkills(), fetchGithubAnalysisData()]);
-          return;
-        }
-
-        if (status === "failed") {
-          posthog?.capture('resume_processing_failed');
-          alert("Resume processing failed. Please try again.");
-          return;
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, interval));
-      }
-
-      posthog?.capture('resume_processing_failed');
-      alert("Resume processing failed. Please try again.");
-    } catch (err: any) {
-      console.error("Resume status polling error:", err);
-      posthog?.captureException(err);
-      alert("Resume processing failed. Please try again.");
-    } finally {
-      setResumeUploading(false);
-    }
-  }
-
-  const githubPollingRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (githubPollingRef.current) clearInterval(githubPollingRef.current);
-    };
-  }, []);
-
-  const startGithubPolling = () => {
-    if (githubPollingRef.current) return;
-    githubPollingRef.current = setInterval(async () => {
-      try {
-        const res = await getGithubStatus();
-        if (res.sync_status === "completed" || res.sync_status === "failed") {
-          if (githubPollingRef.current) {
-            clearInterval(githubPollingRef.current);
-            githubPollingRef.current = null;
-          }
-          if (res.sync_status === "completed") {
-            const updatedSkills = await getUserSkills();
-            setSkills(updatedSkills.skills || []);
-            const analysis = await getGithubAnalysis();
-            setGithubAnalysis(analysis);
-            setGithubSuccess(true);
-            posthog?.capture('github_synced', { repo_count: analysis?.repo_count, language_count: analysis?.languages?.length });
-            setTimeout(() => setGithubSuccess(false), 5000);
-          } else {
-            posthog?.capture('github_sync_failed');
-            alert("GitHub processing failed.");
-          }
-        }
-      } catch (err) {
-        console.error("GitHub Polling error", err);
-        posthog?.captureException(err);
-      }
-    }, 5000);
-  };
-
-  async function handleResumeUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!e.target.files?.length) return;
-
-    const file = e.target.files[0];
-    setResumeUploading(true);
-
-    try {
-      await uploadResume(file);
-      posthog?.capture('resume_uploaded', { file_name: file.name, file_size: file.size });
-      await pollResumeStatus();
-    } catch (err: any) {
-      console.error(err);
-      posthog?.captureException(err);
-      alert("Resume upload failed");
-      setResumeUploading(false);
-    }
-  }
-
-  const getAccentColor = (title: string) => {
-    const t = title.toLowerCase();
-    if (t.includes('ai') || t.includes('machine learning')) return '#6366f1'; // indigo
-    if (t.includes('backend') || t.includes('back-end')) return '#3b82f6'; // blue
-    if (t.includes('frontend') || t.includes('front-end')) return '#ec4899'; // pink
-    if (t.includes('devops') || t.includes('cloud')) return '#10b981'; // emerald
-    if (t.includes('data')) return '#f59e0b'; // amber
-    if (t.includes('mobile')) return '#06b6d4'; // cyan
-    return 'var(--accent-primary)';
-  };
+  // Hero: derive progress for the last-accessed roadmap
+  const heroRoadmapId = lastAccessed?.courseId?.split(":")?.[0] ?? null;
+  const heroSkill = heroRoadmapId ? skills.find((s) => s.roadmap_id === heroRoadmapId) : null;
+  const heroProgress = heroSkill?.progress_percent ?? 0;
+  const heroHasSession = !!(lastAccessed?.courseId && lastAccessed?.resourceId);
 
   return (
     <div className="dashboard-root">
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap');
-        
-        .dashboard-root {
-          --bg-primary: #0a0a0f;
-          --bg-card: #111118;
-          --bg-card-hover: #16161f;
-          --accent-primary: #6366f1;
-          --accent-secondary: #818cf8;
-          --text-primary: #f1f5f9;
-          --text-muted: #64748b;
-          --border: #1e1e2e;
-          
-          background-color: var(--bg-primary);
-          color: var(--text-primary);
-          font-family: 'DM Sans', sans-serif;
-          
-          min-height: 100vh;
-          position: relative;
-        }
-
-        .dashboard-bg {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.06) 0%, transparent 60%);
-          pointer-events: none;
-          z-index: 0;
-        }
-
-        .dashboard-content {
-          position: relative;
-          z-index: 1;
-          max-width: 1000px;
-          margin: 0 auto;
-          padding: 3rem 1.5rem;
-        }
-
-        .title-font {
-          font-family: 'Sora', sans-serif;
-        }
-
-        .dark-card {
-          background-color: var(--bg-card);
-          border: 1px solid var(--border);
-          border-radius: 0.75rem;
-        }
-        
-        /* Specific components styled per prompt */
-        .upload-zone {
-          border: 1px dashed var(--border);
-          transition: border-color 0.2s ease;
-        }
-        .upload-zone:hover {
-          border-color: var(--accent-primary);
-          cursor: pointer;
-        }
-        .upload-btn {
-          background-color: #16161f;
-          border: 1px solid var(--border);
-          color: var(--text-primary);
-          transition: border-color 0.2s ease;
-        }
-        .upload-btn:hover {
-          border-color: var(--accent-primary);
-        }
-
-        .roadmap-card {
-          background-color: var(--bg-card);
-          border: 1px solid var(--border);
-          transition: all 0.2s ease;
-          display: flex;
-          flex-direction: column;
-          text-decoration: none;
-        }
-        .roadmap-card:hover {
-          background-color: var(--bg-card-hover);
-          border-color: var(--accent-primary);
-          box-shadow: 0 0 24px rgba(99,102,241,0.15);
-        }
-      `}</style>
-
-      <div className="dashboard-bg"></div>
+      <style>{CARD_STYLES}</style>
+      <div className="dashboard-bg" />
 
       <div className="dashboard-content">
-        <div className="mb-10">
+
+        {/* ── Page Header ── */}
+        <div className="mb-8">
           <h1 className="title-font text-4xl md:text-5xl font-bold tracking-tight mb-2">
             Dashboard
           </h1>
-          <p className="text-lg" style={{ color: 'var(--text-muted)' }}>
+          <p className="text-lg" style={{ color: "var(--text-muted)" }}>
             Your learning command center.
           </p>
         </div>
 
-        <div className="space-y-6 mb-8 mt-10">
-          {/* Account Setup Card */}
-          <div className="dark-card p-6 flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="title-font text-xl font-semibold">Account Setup</h2>
-              {githubSuccess && (
-                <span className="text-sm font-medium text-green-400 bg-green-400/10 px-3 py-1 rounded-full">
-                  GitHub Linked Successfully!
-                </span>
-              )}
-            </div>
-
-            <div className="mb-6">
-              {githubConnected ? (
-                <div className="space-y-3">
-                  <div
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium"
-                    style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', border: '1px solid rgba(34, 197, 94, 0.2)' }}
+        {/* ── 1. CONTINUE LEARNING HERO ── */}
+        <div className="mb-10">
+          {loading ? (
+            <div className="hero-card p-8 h-[160px] animate-pulse opacity-50" />
+          ) : heroHasSession ? (
+            /* Active session hero */
+            <div className="hero-card p-7 sm:p-8">
+              <div className="relative z-10 flex flex-col sm:flex-row gap-6 justify-between">
+                <div className="flex-1 min-w-0">
+                  <p
+                    className="text-[11px] font-bold tracking-[0.1em] uppercase mb-3"
+                    style={{ color: "rgba(255,255,255,0.5)" }}
                   >
-                    <Check className="w-4 h-4" />
-                    Connected to GitHub as {githubUsername}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      className="upload-btn px-4 py-2 text-sm rounded-md font-medium"
-                      onClick={handleSyncGithub}
-                      disabled={githubActionLoading}
+                    Continue Learning
+                  </p>
+                  <h2 className="title-font text-2xl sm:text-3xl font-bold text-white tracking-tight mb-1 truncate">
+                    {lastAccessed!.courseTitle || heroRoadmapId?.replace(/-/g, " ")}
+                  </h2>
+                  {lastAccessed!.resourceTitle && (
+                    <p className="text-sm mb-5 truncate" style={{ color: "rgba(255,255,255,0.55)" }}>
+                      Last visited: {lastAccessed!.resourceTitle}
+                    </p>
+                  )}
+
+                  {/* Progress bar */}
+                  <div className="flex items-center gap-3 max-w-xs">
+                    <div
+                      className="flex-1 h-[5px] rounded-full overflow-hidden"
+                      style={{ backgroundColor: "rgba(255,255,255,0.15)" }}
                     >
-                      {githubActionLoading ? "Syncing..." : "Sync GitHub Data"}
-                    </button>
-                    <button
-                      type="button"
-                      className="upload-btn px-4 py-2 text-sm rounded-md font-medium"
-                      onClick={handleDisconnectGithub}
-                      disabled={githubActionLoading}
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${heroProgress}%`,
+                          backgroundColor: "rgba(255,255,255,0.85)",
+                          transition: "width 0.6s ease",
+                        }}
+                      />
+                    </div>
+                    <span
+                      className="text-xs font-bold shrink-0"
+                      style={{ color: "rgba(255,255,255,0.7)" }}
                     >
-                      Disconnect
-                    </button>
+                      {Math.round(heroProgress)}%
+                    </span>
                   </div>
                 </div>
-              ) : (
-                <button
-                  onClick={() => { posthog?.capture('github_connect_clicked'); redirectToGithubConnect(); }}
-                  className="upload-btn px-4 py-2 text-sm rounded-md font-medium"
-                >
-                  Connect GitHub
-                </button>
-              )}
-            </div>
 
-            <div className="mt-auto">
-              <label className="block mb-2 font-medium text-sm" style={{ color: 'var(--text-muted)' }}>Upload Resume (PDF)</label>
-              <div className="upload-zone rounded-lg relative overflow-hidden flex items-center p-1">
-                <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleResumeUpload}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
-                <div className="flex w-full items-center">
-                  <div className="upload-btn px-4 py-2 rounded-md text-sm font-medium z-0 pointer-events-none">
-                    Choose file
-                  </div>
-                  <div className="flex-1 flex items-center px-4 text-sm z-0" style={{ color: 'var(--text-muted)' }}>
-                    {resumeUploading ? "Processing..." : "No file chosen"}
-                  </div>
+                <div className="flex sm:flex-col items-start sm:items-end justify-between sm:justify-center gap-3 shrink-0">
+                  <button
+                    onClick={() => {
+                      posthog?.capture("continue_learning_clicked", {
+                        course_title: lastAccessed!.courseTitle,
+                        course_id: lastAccessed!.courseId,
+                      });
+                      navigate(`/course/${lastAccessed!.courseId}/resource/${lastAccessed!.resourceId}`);
+                    }}
+                    className="bg-white font-bold py-2.5 px-6 rounded-xl text-sm transition-all shadow-md whitespace-nowrap"
+                    style={{ color: "#4f46e5" }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.9)";
+                      e.currentTarget.style.transform = "translateY(-1px)";
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.backgroundColor = "white";
+                      e.currentTarget.style.transform = "translateY(0)";
+                    }}
+                  >
+                    Resume Learning →
+                  </button>
+                  {heroSkill && (
+                    <span
+                      className="text-xs font-medium"
+                      style={{ color: "rgba(255,255,255,0.45)" }}
+                    >
+                      {heroSkill.completed_courses || 0} / {heroSkill.total_courses || 0} topics done
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
-
-          <SkillSnapshotCard
-            skills={skills}
-            githubAnalysis={githubAnalysis}
-          />
-          <SkillProfileCard skills={skills} loading={loading} />
-          <GithubInsightsCard githubAnalysis={githubAnalysis} loading={loading} />
-        </div>
-
-        <div className="mb-8 mt-12">
-          <h2 className="title-font text-2xl font-semibold mb-6">Learning Tracks Progress</h2>
-
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2].map(i => (
-                <div key={i} className="dark-card h-[160px] animate-pulse" />
-              ))}
-            </div>
-          ) : error ? (
-            <div className="p-6 text-center text-red-400 border border-red-900 rounded-xl" style={{ backgroundColor: 'rgba(239,68,68,0.05)' }}>
-              {error}
-            </div>
-          ) : skills.length === 0 ? (
-            <div className="dark-card p-10 flex flex-col items-center justify-center text-center">
-              <p className="mb-4" style={{ color: 'var(--text-muted)' }}>No tracks started yet.</p>
+          ) : (
+            /* No active session — Start Your Journey hero */
+            <div
+              className="hero-card p-7 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6"
+              style={{ background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #3730a3 100%)" }}
+            >
+              <div className="relative z-10">
+                <p
+                  className="text-[11px] font-bold tracking-[0.1em] uppercase mb-3"
+                  style={{ color: "rgba(255,255,255,0.45)" }}
+                >
+                  Get Started
+                </p>
+                <h2 className="title-font text-2xl sm:text-3xl font-bold text-white tracking-tight mb-1">
+                  Start your learning journey
+                </h2>
+                <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  Pick a roadmap and we'll guide you step by step.
+                </p>
+              </div>
               <button
-                onClick={() => navigate('/roadmaps')}
-                className="px-5 py-2.5 rounded-md font-medium transition-colors text-sm"
-                style={{
-                  backgroundColor: 'transparent',
-                  border: '1px solid var(--accent-primary)',
-                  color: 'var(--accent-primary)'
+                onClick={() => {
+                  posthog?.capture("start_journey_clicked");
+                  navigate("/roadmaps");
                 }}
+                className="relative z-10 bg-white font-bold py-2.5 px-6 rounded-xl text-sm transition-all shadow-md whitespace-nowrap shrink-0"
+                style={{ color: "#3730a3" }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(99,102,241,0.1)';
+                  e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.9)";
+                  e.currentTarget.style.transform = "translateY(-1px)";
                 }}
                 onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.backgroundColor = "white";
+                  e.currentTarget.style.transform = "translateY(0)";
                 }}
               >
-                Browse Roadmaps
+                Browse Learning Paths →
               </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {skills.map((skill) => {
-                const score = Math.round(skill.trust_score || 0);
-
-                return (
-                  <Link
-                    key={skill.roadmap_id}
-                    to={`/roadmap/${skill.roadmap_id}`}
-                    className="roadmap-card rounded-xl p-6 group cursor-pointer relative"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center gap-2.5">
-                        <div
-                          className="w-2.5 h-2.5 rounded-full"
-                          style={{ backgroundColor: getAccentColor(skill.roadmap_id) }}
-                        />
-                        <h3 className="title-font text-xl font-bold capitalize" style={{ color: 'var(--text-primary)' }}>
-                          {skill.roadmap_id.replace(/-/g, ' ')}
-                        </h3>
-                      </div>
-
-                      <div
-                        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                        style={{ color: 'var(--text-muted)' }}
-                      >
-                        <span className="text-xl leading-none">→</span>
-                      </div>
-                    </div>
-
-                    <div className="text-sm mb-8" style={{ color: 'var(--text-muted)' }}>
-                      {skill.total_courses || 0} topics
-                    </div>
-
-                    <div className="mt-auto flex flex-col gap-3">
-                      <div className="flex items-center justify-between">
-                        {score !== 800 ? (
-                          <div
-                            className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border"
-                            style={{
-                              backgroundColor: 'rgba(99,102,241,0.1)',
-                              color: 'var(--accent-primary)',
-                              borderColor: 'rgba(99,102,241,0.2)'
-                            }}
-                          >
-                            Score: {score}
-                          </div>
-                        ) : (
-                          <div
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border"
-                            style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-muted)', borderColor: 'var(--border)' }}
-                          >
-                            <span style={{ fontSize: '8px' }}>●</span> Not Started
-                          </div>
-                        )}
-
-                        <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
-                          {skill.completed_courses || 0} / {skill.total_courses || 0}
-                        </span>
-                      </div>
-
-                      <div className="w-full h-[3px] rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            backgroundColor: 'var(--accent-primary)',
-                            width: `${skill.progress_percent || 0}%`,
-                            transition: 'width 0.5s ease-in-out'
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
             </div>
           )}
         </div>
 
-        {/* Continue Learning Feature */}
+        {/* ── 2. RECOMMENDED NEXT STEP ── */}
         <div className="mb-10">
-          <div
-            className="rounded-xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center relative overflow-hidden"
-            style={{ backgroundImage: 'linear-gradient(135deg, #4f46e5, #6366f1)' }}
-          >
-            {lastAccessed && lastAccessed.courseId && lastAccessed.resourceId ? (
-              <>
-                <div className="z-10 relative mb-4 sm:mb-0">
+          <div className="section-label">
+            <TrendingUpIcon className="w-4 h-4" color="#10b981" />
+            <h3 className="title-font text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
+              Recommended Next Step
+            </h3>
+          </div>
+
+          {loading ? (
+            <div className="dark-card h-[96px] animate-pulse" />
+          ) : recommendedCourse ? (
+            <div className="space-y-3">
+              <Link
+                to={`/course/${recommendedCourse.id}`}
+                className="path-card p-5 flex items-center justify-between group"
+                onClick={() =>
+                  posthog?.capture("recommended_course_clicked", { course_id: recommendedCourse.id })
+                }
+              >
+                <div>
                   <p
-                    className="text-[11px] font-bold tracking-[0.08em] uppercase mb-2"
-                    style={{ color: 'rgba(255,255,255,0.6)' }}
+                    className="text-xs font-semibold mb-1 uppercase tracking-widest"
+                    style={{ color: "#10b981" }}
                   >
-                    ACTIVE COURSE MODULE
+                    Next Up · {recommendedCourse.roadmap_id.replace(/-/g, " ")}
                   </p>
-                  <h3 className="title-font text-2xl font-bold text-white tracking-tight">
-                    {lastAccessed.courseTitle}
-                  </h3>
+                  <h4 className="title-font font-bold" style={{ color: "var(--text-primary)" }}>
+                    {recommendedCourse.title}
+                  </h4>
+                  {recommendedCourseStatus?.status === "skippable" && (
+                    <p className="flex items-center gap-1 mt-1.5 text-xs font-medium" style={{ color: "#f59e0b" }}>
+                      <Zap className="w-3 h-3 shrink-0" />
+                      You might already know this — skip it or verify with a quiz.
+                    </p>
+                  )}
+                  {recommendedCourseStatus?.status === "fast_tracked" && (
+                    <p className="flex items-center gap-1 mt-1.5 text-xs font-medium" style={{ color: "#60a5fa" }}>
+                      <Zap className="w-3 h-3 shrink-0" />
+                      Your profile suggests some familiarity — jump straight to the quiz.
+                    </p>
+                  )}
                 </div>
-                <button
-                  onClick={() => {
-                    posthog?.capture('continue_learning_clicked', { course_title: lastAccessed.courseTitle, course_id: lastAccessed.courseId });
-                    navigate(`/course/${lastAccessed.courseId}/resource/${lastAccessed.resourceId}`);
+                <span
+                  className="shrink-0 ml-4 text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap"
+                  style={{
+                    backgroundColor: "rgba(16,185,129,0.1)",
+                    color: "#10b981",
+                    borderColor: "rgba(16,185,129,0.25)",
                   }}
-                  className="z-10 relative bg-white text-[#6366f1] hover:bg-[#6366f1] hover:text-white border border-transparent hover:border-white font-bold py-2.5 px-6 rounded-lg transition-all shadow-sm whitespace-nowrap"
                 >
-                  Resume ↗
-                </button>
-              </>
-            ) : (
-              <div className="z-10 relative w-full flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                <div className="mb-4 sm:mb-0">
-                  <p
-                    className="text-[11px] font-bold tracking-[0.08em] uppercase mb-2"
-                    style={{ color: 'rgba(255,255,255,0.6)' }}
+                  Start →
+                </span>
+              </Link>
+
+              {(recommendation?.next_in_current_roadmap?.slice(1, 3) ?? []).map((alt) => (
+                <Link
+                  key={alt.id}
+                  to={`/course/${alt.id}`}
+                  className="path-card p-4 flex items-center justify-between group"
+                  onClick={() =>
+                    posthog?.capture("alternative_course_clicked", { course_id: alt.id })
+                  }
+                >
+                  <div>
+                    <p className="text-xs mb-0.5" style={{ color: "var(--text-muted)" }}>
+                      Alternative · {alt.roadmap_id.replace(/-/g, " ")}
+                    </p>
+                    <h4 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                      {alt.title}
+                    </h4>
+                  </div>
+                  <ArrowRight
+                    className="w-4 h-4 shrink-0 ml-3 opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ color: "var(--text-muted)" }}
+                  />
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="dark-card p-6 text-center" style={{ borderStyle: "dashed" }}>
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                Start a roadmap to get a personalised recommendation.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* ── 3. LEARNING PATHS ── */}
+        <div className="mb-10">
+          <h2 className="title-font text-2xl font-semibold mb-1">Learning Paths</h2>
+          <p className="text-sm mb-7" style={{ color: "var(--text-muted)" }}>
+            Pick up where you left off or discover something new.
+          </p>
+
+          {/* In Progress sub-section */}
+          {(loading || continueLearning.length > 0) && (
+            <div className="mb-8">
+              <div className="section-label">
+                <BookOpen className="w-4 h-4" style={{ color: "#6366f1" }} />
+                <h3
+                  className="title-font text-base font-semibold"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  In Progress
+                </h3>
+                {completedPaths.length > 0 && (
+                  <span
+                    className="text-xs font-medium px-2 py-0.5 rounded-full ml-1"
+                    style={{ backgroundColor: "rgba(16,185,129,0.1)", color: "#10b981" }}
                   >
-                    CONTINUE LEARNING
-                  </p>
-                  <h3 className="title-font text-2xl font-bold text-white tracking-tight">
-                    Start a roadmap to begin learning
-                  </h3>
+                    {completedPaths.length} completed
+                  </span>
+                )}
+              </div>
+
+              {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="dark-card h-[130px] animate-pulse" />
+                  ))}
                 </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {continueLearning.map((skill) => (
+                    <Link
+                      key={skill.roadmap_id}
+                      to={`/roadmap/${skill.roadmap_id}`}
+                      className="path-card p-5 group cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2.5 mb-1">
+                        <div
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: getAccentColor(skill.roadmap_id) }}
+                        />
+                        <h4
+                          className="title-font font-bold capitalize"
+                          style={{ color: "var(--text-primary)" }}
+                        >
+                          {skill.roadmap_id.replace(/-/g, " ")}
+                        </h4>
+                      </div>
+                      <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>
+                        {skill.completed_courses || 0} / {skill.total_courses || 0} topics
+                      </p>
+                      <div className="mt-auto">
+                        <div className="flex justify-between items-center mb-1.5">
+                          <span
+                            className="text-xs font-semibold"
+                            style={{ color: "var(--accent-primary)" }}
+                          >
+                            {Math.round(skill.progress_percent || 0)}%
+                          </span>
+                          <ArrowRight
+                            className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                            style={{ color: "var(--text-muted)" }}
+                          />
+                        </div>
+                        <div
+                          className="w-full h-[3px] rounded-full overflow-hidden"
+                          style={{ backgroundColor: "var(--border)" }}
+                        >
+                          <div
+                            className="h-full rounded-full"
+                            style={{
+                              backgroundColor: "var(--accent-primary)",
+                              width: `${skill.progress_percent || 0}%`,
+                              transition: "width 0.5s ease",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Explore sub-section */}
+          <div>
+            <div className="section-label">
+              <Compass className="w-4 h-4" style={{ color: "#f59e0b" }} />
+              <h3
+                className="title-font text-base font-semibold"
+                style={{ color: "var(--text-primary)" }}
+              >
+                Explore
+              </h3>
+            </div>
+
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="dark-card h-[100px] animate-pulse" />
+                ))}
+              </div>
+            ) : explorePaths.length === 0 && extraSuggested.length === 0 ? (
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                You've explored all available roadmaps!
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {explorePaths.slice(0, 6).map((roadmap) => (
+                  <Link
+                    key={roadmap.id}
+                    to={`/roadmap/${roadmap.id}`}
+                    className="path-card p-5 group"
+                    onClick={() =>
+                      posthog?.capture("explore_path_clicked", { roadmap_id: roadmap.id })
+                    }
+                  >
+                    <div className="flex items-center gap-2.5 mb-1">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: getAccentColor(roadmap.id) }}
+                      />
+                      <h4
+                        className="title-font font-bold capitalize"
+                        style={{ color: "var(--text-primary)" }}
+                      >
+                        {roadmap.id.replace(/-/g, " ")}
+                      </h4>
+                    </div>
+                    <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>
+                      {roadmap.topic_count} topics
+                    </p>
+                    <div
+                      className="text-xs font-medium px-2.5 py-1 rounded-full inline-block"
+                      style={{ backgroundColor: "rgba(245,158,11,0.1)", color: "#f59e0b" }}
+                    >
+                      Not Started
+                    </div>
+                  </Link>
+                ))}
+                {extraSuggested.slice(0, 3).map((id) => (
+                  <Link
+                    key={id}
+                    to={`/roadmap/${id}`}
+                    className="path-card p-5 group"
+                    onClick={() =>
+                      posthog?.capture("suggested_path_clicked", { roadmap_id: id })
+                    }
+                  >
+                    <div className="flex items-center gap-2.5 mb-1">
+                      <div
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: getAccentColor(id) }}
+                      />
+                      <h4
+                        className="title-font font-bold capitalize"
+                        style={{ color: "var(--text-primary)" }}
+                      >
+                        {id.replace(/-/g, " ")}
+                      </h4>
+                    </div>
+                    <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>
+                      AI suggested
+                    </p>
+                    <div
+                      className="text-xs font-medium px-2.5 py-1 rounded-full inline-block"
+                      style={{ backgroundColor: "rgba(99,102,241,0.1)", color: "#6366f1" }}
+                    >
+                      Suggested
+                    </div>
+                  </Link>
+                ))}
               </div>
             )}
           </div>
         </div>
+
+        {/* ── 4. LEARNING INSIGHTS ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <LearningInsightsCard
+            skills={skills}
+            githubConnected={githubConnected}
+            recommendedCourse={recommendedCourse}
+            loading={loading}
+          />
+          <SkillRadarChart skills={skills} loading={loading} />
+        </div>
+
+
       </div>
     </div>
+  );
+}
+
+function TrendingUpIcon({ className, color }: { className?: string; color?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color || "currentColor"}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+      <polyline points="16 7 22 7 22 13" />
+    </svg>
   );
 }

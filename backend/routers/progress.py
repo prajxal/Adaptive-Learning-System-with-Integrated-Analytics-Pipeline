@@ -1,3 +1,5 @@
+import time
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func, text
@@ -162,6 +164,7 @@ def get_all_progress(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    _t0 = time.perf_counter()
     user_id = str(current_user.id)
 
     # 1. Total courses per roadmap (one query)
@@ -222,4 +225,5 @@ def get_all_progress(
             "proficiency_level": proficiency_level,
         })
 
+    print(f"[PERF] GET /progress/all took {(time.perf_counter() - _t0) * 1000:.0f}ms")
     return {"roadmaps": result}

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useRoadmaps } from "../../hooks/useRoadmaps";
 import { getAllProgress, Progress } from "../../services/progressApi";
 import { usePostHog } from "@posthog/react";
+import AppBreadcrumb from "../components/AppBreadcrumb";
 
 function RoadmapCard({ roadmap, progress }: { roadmap: any; progress: Progress | null }) {
     const posthog = usePostHog();
@@ -224,6 +225,10 @@ export default function RoadmapCatalogPage() {
                     </div>
                 ) : (
                     <>
+                        <AppBreadcrumb segments={[
+                            { label: "Home", href: "/dashboard" },
+                            { label: "Learning Paths" },
+                        ]} />
                         <div className="mb-12">
                             <h1 className="roadmap-title text-4xl md:text-5xl font-bold mb-4 tracking-tight">
                                 Engineering Roadmaps

@@ -10,6 +10,10 @@ export interface RoadmapTopic {
   stage: number;
   mastery?: number;
   confidence?: number;
+  isSkipLoading?: boolean;
+  reason?: string;
+  onSkip?: () => void;
+  onFastTrack?: () => void;
 }
 
 interface RoadmapContainerProps {
@@ -53,6 +57,10 @@ export function RoadmapContainer({ topics, onTopicClick }: RoadmapContainerProps
                 difficulty={topic.difficulty}
                 mastery={topic.mastery}
                 confidence={topic.confidence}
+                isSkipLoading={topic.isSkipLoading}
+                reason={topic.reason}
+                onSkip={topic.onSkip}
+                onFastTrack={topic.onFastTrack}
                 onClick={() => onTopicClick(topic)}
               />
             ))}

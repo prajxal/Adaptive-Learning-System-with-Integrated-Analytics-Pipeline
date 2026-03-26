@@ -30,46 +30,50 @@ def get_next_ready_nodes(
     user_id: str,
     roadmap_id: str,
     db: Session,
-    limit: int = 5
+    limit: int = 5,
+    completed_ids: set[str] | None = None,
+    user_elo: float | None = None,
 ):
-    user = db.query(User).filter(User.id == user_id).first()
+    if user_elo is None:
+        user = db.query(User).filter(User.id == user_id).first()
+        user_elo = (user.global_elo_rating or 1000.0) if user else 1000.0
 
-    if user.global_elo_rating is None:
-        user.global_elo_rating = 1000.0
+    if completed_ids is None:
+        completed_ids = get_completed_course_ids(user_id, db)
 
-    elo = user.global_elo_rating
-
-    completed_ids = get_completed_course_ids(user_id, db)
+    elo = user_elo
 
     courses = db.query(Course).filter(
         Course.roadmap_id == roadmap_id
     ).all()
 
-    ready_nodes = []
+    # Filter by elo band and not-completed before touching the prereq table
+    candidates = [
+        c for c in courses
+        if c.id not in completed_ids
+        and (elo - 150 <= (c.difficulty_level or 1000.0) <= elo + 150)
+    ]
 
-    for course in courses:
+    if not candidates:
+        return []
 
-        if course.id in completed_ids:
-            continue
+    # Batch-load all prerequisites for candidate courses in one query
+    candidate_ids = [c.id for c in candidates]
+    all_prereqs = db.query(
+        CoursePrerequisite.course_id,
+        CoursePrerequisite.prerequisite_id,
+    ).filter(CoursePrerequisite.course_id.in_(candidate_ids)).all()
 
-        difficulty = course.difficulty_level or 1000.0
+    prereq_map: dict[str, set[str]] = {c_id: set() for c_id in candidate_ids}
+    for p in all_prereqs:
+        prereq_map[p.course_id].add(p.prerequisite_id)
 
-        # Expanded safe readiness band
-        if not (elo - 150 <= difficulty <= elo + 150):
-            continue
+    ready_nodes = [
+        c for c in candidates
+        if prereq_map[c.id].issubset(completed_ids)
+    ]
 
-        prereqs = db.query(CoursePrerequisite.prerequisite_id).filter(
-            CoursePrerequisite.course_id == course.id
-        ).all()
-
-        prereq_ids = {p.prerequisite_id for p in prereqs}
-
-        if prereq_ids.issubset(completed_ids):
-            ready_nodes.append(course)
-
-    ready_nodes.sort(
-        key=lambda c: abs((c.difficulty_level or 1000.0) - elo)
-    )
+    ready_nodes.sort(key=lambda c: abs((c.difficulty_level or 1000.0) - elo))
 
     return ready_nodes[:limit]
 

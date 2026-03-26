@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Map, User, GraduationCap, X, LogOut } from 'lucide-react';
+import { Home, Map, GraduationCap, X, LogOut, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useClerk } from '@clerk/clerk-react';
 
@@ -11,8 +11,8 @@ interface AppSidebarProps {
 
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/dashboard' },
-  { id: 'roadmap', label: 'Learning Path', icon: Map, path: '/roadmaps' },
-  { id: 'progress', label: 'My Progress', icon: User, path: '/progress' },
+  { id: 'roadmap', label: 'Learning Paths', icon: Map, path: '/roadmaps' },
+  { id: 'profile', label: 'My Profile', icon: User, path: '/profile' },
 ];
 
 export function AppSidebar({ currentPage, isOpen = true, onClose }: AppSidebarProps) {

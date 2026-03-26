@@ -1,3 +1,5 @@
+<!-- Generated: 2026-03-26 | Session: dynamic-roadmap + reason-metadata + bug-fixes -->
+
 # Backend Codemap
 
 ## Entry Point
@@ -15,7 +17,7 @@
 ### Users — `backend/routers/users.py` (prefix: `/users`)
 - `GET  /users/me` — user details (id, email, elo, statuses)
 - `GET  /users/me/profile` — completed courses, top skills
-- `GET  /users/me/skills` — all skill profiles with progress per roadmap
+- `GET  /users/me/skills` — all skill profiles with progress per roadmap. **Performance:** uses 2 GROUP BY queries (total courses + completed courses across all roadmaps) instead of 2×N per-roadmap COUNT queries.
 - `POST /users/me/skills/rebuild` — calls `synthesize_all_skills_for_user()`
 - `GET  /users/me/github-analysis` — GitHub language weights + top skills
 
@@ -29,12 +31,16 @@
 
 ### Learning Path — `backend/routers/learning_path.py` (prefix: `/learning-path`)
 - `GET  /learning-path/{course_id}` — prerequisite chain + ELO-based status per node
+- **`get_next_ready_nodes(user_id, roadmap_id, db, limit, completed_ids?, user_elo?)`** — shared helper; accepts pre-fetched `completed_ids` and `user_elo` to avoid redundant DB hits; batch-loads prerequisites for all elo-band candidates in one `IN` query.
+- **`get_completed_course_ids(user_id, db)`** — returns `set[str]`; imported by `recommend.py`.
 
 ### Recommend — `backend/routers/recommend.py` (prefix: `/recommend`)
 - `GET  /recommend/recommend` — next courses in current roadmap + suggested new roadmaps
+- **Performance:** 4 queries total (completed_ids, all courses, all prereqs for elo-band candidates, skill profiles). All roadmap iteration and scoring done in Python — no per-roadmap DB calls. Was 5,086 queries; now 4. Latency: 33,652ms → 398ms.
 
 ### Events — `backend/routers/events.py` (prefix: `/events`)
-- `POST /events` — logs events; updates trust_score on `course_completed` / `quiz_failed`
+- `POST /events` — logs events (payload type validated as `Literal` union); validates `course_skipped` (confidence ≥ threshold, all prereqs satisfied, no duplicate completion); updates trust_score on `course_completed` / `quiz_failed`
+- `DELETE /events/skip/{course_id}` — reverses a skip by deleting the `course_skipped` event
 
 ### Progress — `backend/routers/progress.py` (prefix: `/progress`)
 - `GET  /progress/roadmap/{roadmap_id}` — per-course completion map
@@ -48,15 +54,16 @@
 - `POST /quiz/{skill_id}/submit` — evaluate answers, update profile, emit events
 
 ### Skill Graph — `backend/routers/skill_graph.py` (prefix: `/skill-graph`)
-- `GET  /skill-graph/{roadmap_id}/status` — unlock status for all skills in roadmap
+- `GET  /skill-graph/{roadmap_id}/dynamic-status` — 5-state course status map for roadmap (new primary endpoint)
+- `GET  /skill-graph/{roadmap_id}/status` — unlock status for all skills in roadmap (**DEPRECATED**: Sunset 2026-06-01; use `/dynamic-status` instead)
 
 ### Skill Profile — `backend/routers/skill_profile.py` (prefix: `/skill-profile`)
 - `GET  /skill-profile/{skill_id}` — get or create profile with cold-start init
 
 ### GitHub Auth — `backend/routers/github_auth.py` (prefix: `/github`)
 - `GET  /github/connect` — initiate OAuth flow
-- `GET  /github/callback` — exchange code, extract skills in background
-- `GET  /github/status` — connection status
+- `GET  /github/callback` — exchange code, extract skills in background; redirects to `FRONTEND_URL/profile?github=connected`
+- `GET  /github/status` — connection status `{ connected, username, sync_status }`
 - `POST /github/sync` — re-sync GitHub data
 - `DELETE /github/disconnect` — remove GitHub connection
 
@@ -68,8 +75,9 @@
 
 | Service | File | Key Functions |
 |---------|------|---------------|
+| Dynamic Roadmap | `services/dynamic_roadmap_service.py` | `compute_dynamic_roadmap(user_id, roadmap_id, db)`, `_build_reason()`, `get_skip_threshold()`, `get_fast_track_threshold()` |
 | Recommendation | `services/learning_priority_service.py` | `get_unlocked_courses()`, `compute_importance_score()`, `get_recommended_start_courses()` |
-| Skill Graph | `services/skill_graph_service.py` | `is_skill_unlocked()`, `is_skill_completed()`, `get_roadmap_skill_status()` |
+| Skill Graph | `services/skill_graph_service.py` | `is_skill_unlocked()`, `is_skill_completed()` (now treats `course_skipped` as satisfied), `get_roadmap_skill_status()` |
 | Quiz Scoring | `services/quiz_service.py` | `evaluate_quiz_attempt()` |
 | Quiz Generation | `services/quiz_generation_service.py` | `get_or_generate_quiz()` (calls Gemini) |
 | Skill Synthesis | `services/skill_synthesizer.py` | `get_skill_profile()` |
@@ -78,6 +86,10 @@
 | Resume Parser | `services/resume_parser.py` | `ingest_resume()` |
 | GitHub Service | `services/github_service.py` | GitHub API helpers |
 | Video Content | `services/video_content_service.py` | YouTube/video helpers |
+
+## Performance Instrumentation
+
+All dashboard-related endpoints emit `[PERF] GET /path took Xms` to stdout on every request. Endpoints instrumented: `/users/me/skills`, `/users/me/github-analysis`, `/roadmaps`, `/progress/all`, `/recommend/recommend`, `/courses`.
 
 ## Core Modules
 

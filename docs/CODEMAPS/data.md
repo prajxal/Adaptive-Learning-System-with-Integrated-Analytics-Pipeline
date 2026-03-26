@@ -1,3 +1,5 @@
+<!-- Generated: 2026-03-26 | Session: dynamic-roadmap + reason-metadata + bug-fixes -->
+
 # Data Codemap
 
 ## Database
@@ -14,7 +16,7 @@ Relationships: `user_skills` → UserSkill, `events` → Event.
 ### UserSkill — `backend/models/user_skill.py`
 Table: `user_skills`. Per-roadmap skill rating.
 Columns: `id` (PK), `user_id` (FK→users), `skill_name`, `proficiency_level`, `elo_rating`, `trust_score`, `last_updated`.
-Unique: (`user_id`, `skill_name`).
+Unique: (`user_id`, `skill_name`) — constraint name: `uq_user_skill_user_skill_name`.
 
 ### Course — `backend/models/course.py`
 Table: `courses`. Represents a topic node from roadmap.sh.
@@ -32,6 +34,7 @@ Columns: `id` (PK), `course_id` (FK→courses), `resource_type`, `title`, `url`,
 ### Event — `backend/models/event.py`
 Table: `events`. Analytics event log.
 Columns: `id` (PK), `user_id` (FK→users), `event_type`, `course_id`, `roadmap_id`, `payload` (JSON), `created_at`.
+Enum: `event_type` is validated at application level via `Literal["course_completed", "course_skipped", "quiz_started", "quiz_failed", "resource_viewed"]`.
 
 ### SkillWeight — `backend/models/skill_weight.py`
 Table: `skill_weights`. Raw ingestion weights from github/resume/quiz.
@@ -78,9 +81,10 @@ Course
 
 Location: `backend/migrations/` (Alembic config: `backend/alembic.ini`).
 
-| Migration | File |
-|-----------|------|
-| Baseline schema | `versions/789321a178d7_baseline_schema.py` |
-| Fix skill_weight PK | `versions/a1b2c3d4e5f6_fix_skill_weight_pk.py` |
-| Drop skill_profile FK | `versions/b2c3d4e5f6a7_drop_skill_profile_fk.py` |
-| Add clerk_user_id | `versions/75c7fce60b46_add_clerk_user_id_to_users.py` |
+| Migration | File | Changes |
+|-----------|------|---------|
+| Baseline schema | `versions/789321a178d7_baseline_schema.py` | |
+| Fix skill_weight PK | `versions/a1b2c3d4e5f6_fix_skill_weight_pk.py` | |
+| Drop skill_profile FK | `versions/b2c3d4e5f6a7_drop_skill_profile_fk.py` | |
+| Add clerk_user_id | `versions/75c7fce60b46_add_clerk_user_id_to_users.py` | |
+| Add unique constraint on user_skills | `versions/67604beb8fae_add_unique_constraint_on_user_skills_.py` | Named constraint `uq_user_skill_user_skill_name` on (`user_id`, `skill_name`) |

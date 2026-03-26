@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
 import { getQuiz, submitQuizAttempt, getSkillProfile, Quiz, SkillProfile } from "../services/quizApi";
 import { usePostHog } from "@posthog/react";
+import AppBreadcrumb from "../components/AppBreadcrumb";
 
 export default function QuizPage() {
     const { courseId } = useParams();
@@ -371,7 +372,13 @@ export default function QuizPage() {
 
             <div className="quiz-bg"></div>
 
-            <div className="max-w-3xl mx-auto pt-16 px-4 relative z-10 pb-20">
+            <div className="max-w-3xl mx-auto pt-8 px-4 relative z-10 pb-20">
+                <AppBreadcrumb segments={[
+                    { label: "Home", href: "/dashboard" },
+                    { label: (courseId?.split(":")[0] ?? "").replace(/-/g, " ") || "Roadmap", href: `/roadmap/${courseId?.split(":")[0]}` },
+                    { label: quiz.title || courseId?.replace(/-/g, " ") || "Course", href: ROUTES.COURSE(courseId!) },
+                    { label: "Quiz" },
+                ]} />
                 <div className="flex items-end justify-between mb-2">
                     <h1 className="title-font text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
                         {quiz.title || courseId?.replace(/-/g, ' ')}

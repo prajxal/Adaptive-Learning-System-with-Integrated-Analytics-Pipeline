@@ -1,3 +1,5 @@
+import time
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -18,8 +20,9 @@ def list_courses(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    _t0 = time.perf_counter()
     query = db.query(Course)
-    
+
     if roadmap_id:
         query = query.filter(Course.roadmap_id == roadmap_id)
     
@@ -46,6 +49,7 @@ def list_courses(
         recommended_start = recommended.get("recommended")
         alternative_starts = recommended.get("alternatives", [])
 
+    print(f"[PERF] GET /courses took {(time.perf_counter() - _t0) * 1000:.0f}ms (roadmap_id={roadmap_id})")
     return {
         "courses": courses_list,
         "recommended_start": recommended_start,

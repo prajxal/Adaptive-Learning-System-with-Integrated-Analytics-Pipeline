@@ -1,13 +1,17 @@
+import time
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from db.database import get_db
 from models.user import User
 from models.course import Course
+from models.course_prerequisite import CoursePrerequisite
 from models.skill_profile import SkillProfile
 from core.clerk_auth import get_current_user
-from routers.learning_path import get_next_ready_nodes
+from routers.learning_path import get_completed_course_ids
 
 router = APIRouter()
+
 
 @router.get("/recommend")
 def recommend(
@@ -15,28 +19,57 @@ def recommend(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    _t0 = time.perf_counter()
     user_id = current_user.id
+    user_elo = current_user.global_elo_rating or 1000.0
 
-    # Stage 1 — Continue current roadmap
-    next_nodes = get_next_ready_nodes(
-        user_id,
-        current_roadmap_id,
-        db,
-        limit=5
-    )
+    # Query 1 — completed course IDs for this user
+    completed_ids = get_completed_course_ids(str(user_id), db)
 
-    # Cold start fallback
+    # Query 2 — all courses across all roadmaps
+    all_courses = db.query(Course).all()
+
+    # Group by roadmap and identify candidates (elo band + not completed)
+    courses_by_roadmap: dict[str, list[Course]] = {}
+    candidate_ids: list[str] = []
+    for c in all_courses:
+        courses_by_roadmap.setdefault(c.roadmap_id, []).append(c)
+        if (
+            c.id not in completed_ids
+            and (user_elo - 150 <= (c.difficulty_level or 1000.0) <= user_elo + 150)
+        ):
+            candidate_ids.append(c.id)
+
+    # Query 3 — prerequisites for ALL candidates in one shot
+    all_prereqs = db.query(
+        CoursePrerequisite.course_id,
+        CoursePrerequisite.prerequisite_id,
+    ).filter(CoursePrerequisite.course_id.in_(candidate_ids)).all()
+
+    prereq_map: dict[str, set[str]] = {c_id: set() for c_id in candidate_ids}
+    for p in all_prereqs:
+        prereq_map[p.course_id].add(p.prerequisite_id)
+
+    def get_ready_for_roadmap(roadmap_id: str, limit: int) -> list[Course]:
+        """Pure Python — no DB calls."""
+        ready = [
+            c for c in courses_by_roadmap.get(roadmap_id, [])
+            if c.id in prereq_map and prereq_map[c.id].issubset(completed_ids)
+        ]
+        ready.sort(key=lambda c: abs((c.difficulty_level or 1000.0) - user_elo))
+        return ready[:limit]
+
+    # Stage 1 — next steps in the current roadmap
+    next_nodes = get_ready_for_roadmap(current_roadmap_id, 5)
+
+    # Cold start fallback: no ready nodes → return easiest courses
     if not next_nodes:
-        next_nodes = db.query(Course).filter(
-            Course.roadmap_id == current_roadmap_id
-        ).order_by(
-            Course.difficulty_level.asc()
-        ).limit(5).all()
+        next_nodes = sorted(
+            courses_by_roadmap.get(current_roadmap_id, []),
+            key=lambda c: c.difficulty_level or 0,
+        )[:5]
 
-    # Stage 2 — Suggest new roadmaps, weighted by user skill confidence
-    roadmap_ids = db.query(Course.roadmap_id).distinct().all()
-
-    # Build a map of roadmap_id → sum of skill confidence from SkillProfile
+    # Query 4 — skill profile confidence for roadmap suggestions
     skill_profiles = db.query(SkillProfile).filter(
         SkillProfile.user_id == str(user_id)
     ).all()
@@ -45,27 +78,19 @@ def recommend(
         rid_key = str(sp.roadmap_id)
         confidence_by_roadmap[rid_key] = confidence_by_roadmap.get(rid_key, 0.0) + float(sp.confidence or 0.0)
 
+    # Stage 2 — suggest other roadmaps (pure Python, no more DB calls)
     roadmap_scores = []
-
-    for (rid,) in roadmap_ids:
-        rid_str = str(rid)
-        if rid_str == current_roadmap_id:
+    for rid in courses_by_roadmap:
+        if rid == current_roadmap_id:
             continue
-
-        ready = get_next_ready_nodes(user_id, rid_str, db, limit=3)
-        unlocked_count = len(ready)
-
-        # Skill-confidence boost: roadmaps where user has relevant confidence rank higher
-        skill_boost = confidence_by_roadmap.get(rid_str, 0.0)
-
-        # Combined score: unlocked node count + skill affinity signal
-        combined_score = unlocked_count + (skill_boost * 2.0)
-        roadmap_scores.append((rid_str, combined_score))
+        unlocked_count = len(get_ready_for_roadmap(rid, 3))
+        skill_boost = confidence_by_roadmap.get(rid, 0.0)
+        roadmap_scores.append((rid, unlocked_count + (skill_boost * 2.0)))
 
     roadmap_scores.sort(key=lambda x: x[1], reverse=True)
-
     suggested_roadmaps = [r[0] for r in roadmap_scores[:3]]
 
+    print(f"[PERF] GET /recommend/recommend took {(time.perf_counter() - _t0) * 1000:.0f}ms (roadmaps checked: {len(courses_by_roadmap)})")
     return {
         "user_elo": current_user.global_elo_rating,
         "next_in_current_roadmap": [
@@ -73,9 +98,9 @@ def recommend(
                 "id": c.id,
                 "title": c.title,
                 "difficulty": c.difficulty_level,
-                "roadmap_id": c.roadmap_id
+                "roadmap_id": c.roadmap_id,
             }
             for c in next_nodes
         ],
-        "suggested_new_roadmaps": suggested_roadmaps
+        "suggested_new_roadmaps": suggested_roadmaps,
     }

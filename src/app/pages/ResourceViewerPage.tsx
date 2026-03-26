@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useProgress } from "../hooks/useProgress";
 import BACKEND_URL, { getClerkToken } from "../../services/api";
 import { usePostHog } from "@posthog/react";
+import AppBreadcrumb from "../components/AppBreadcrumb";
 
 type Resource = {
     id: string;
@@ -175,6 +176,13 @@ export default function ResourceViewerPage() {
                 </div>
 
                 <div className="p-4">
+                    <div className="mb-4">
+                        <AppBreadcrumb segments={[
+                            { label: "Home", href: "/dashboard" },
+                            { label: (courseId?.split(":")[0] ?? "").replace(/-/g, " ") || "Roadmap", href: `/roadmap/${courseId?.split(":")[0]}` },
+                            { label: activeResource?.title ?? "Resource" },
+                        ]} />
+                    </div>
                     {renderSidebarSection('video', 'Videos', '🎥')}
                     {renderSidebarSection('documentation', 'Documentation', '📖')}
                     {renderSidebarSection('article', 'Articles', '📰')}

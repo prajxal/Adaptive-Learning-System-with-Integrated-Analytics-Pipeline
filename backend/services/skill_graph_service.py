@@ -66,10 +66,10 @@ def get_next_skills(skill_id: str, db: Session):
 def is_skill_completed(user_id: str, skill_id: str, db: Session) -> bool:
     """
     Checks if a given skill is completed by the user
-    by finding if they have a 'course_completed' event.
+    by finding if they have a 'course_completed' or 'course_skipped' event.
     """
     event = db.query(Event).filter(
-        Event.event_type == "course_completed",
+        Event.event_type.in_(["course_completed", "course_skipped"]),
         Event.user_id == user_id,
         Event.course_id == skill_id
     ).first()
@@ -116,13 +116,13 @@ def get_roadmap_skill_status(user_id: str, roadmap_id: str, db: Session) -> dict
         
     course_ids = [c[0] for c in courses]
     
-    # 2. Fetch all completed courses for this user in this roadmap
+    # 2. Fetch all completed/skipped courses for this user in this roadmap
     completed_events = db.query(Event.course_id).filter(
         Event.user_id == user_id,
         Event.roadmap_id == roadmap_id,
-        Event.event_type == "course_completed"
+        Event.event_type.in_(["course_completed", "course_skipped"])
     ).all()
-    
+
     completed_set = {e[0] for e in completed_events}
     
     # 3. Fetch all skill edges for this roadmap to reconstruct prerequisite map

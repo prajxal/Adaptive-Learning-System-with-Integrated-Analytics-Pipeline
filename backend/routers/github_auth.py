@@ -108,7 +108,7 @@ async def github_callback(
     )
 
     FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5174")
-    return RedirectResponse(url=f"{FRONTEND_URL}/dashboard?github=connected")
+    return RedirectResponse(url=f"{FRONTEND_URL}/profile?github=connected")
 
 @router.get("/status")
 def github_status(current_user: User = Depends(get_current_user)):

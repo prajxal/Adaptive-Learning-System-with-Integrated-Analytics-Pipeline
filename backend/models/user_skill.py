@@ -8,7 +8,7 @@ from db.database import Base
 
 class UserSkill(Base):
     __tablename__ = "user_skills"
-    __table_args__ = (UniqueConstraint("user_id", "skill_name"),)
+    __table_args__ = (UniqueConstraint("user_id", "skill_name", name="uq_user_skill_user_skill_name"),)
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)

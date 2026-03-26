@@ -11,8 +11,8 @@ import RoadmapCatalogPage from './pages/RoadmapCatalogPage';
 import RoadmapDetailPage from './pages/RoadmapDetailPage';
 import DashboardPage from './pages/DashboardPage';
 import ResourceViewerPage from './pages/ResourceViewerPage';
-import MyProgressPage from './pages/MyProgressPage';
 import QuizPage from './pages/QuizPage';
+import MyProfilePage from './pages/MyProfilePage';
 
 import { useEffect as UseEffectAlias } from 'react';
 
@@ -24,7 +24,6 @@ function AppLayout() {
   let currentPage = 'roadmap';
   if (location.pathname.startsWith('/dashboard')) currentPage = 'dashboard';
   else if (location.pathname.startsWith('/profile')) currentPage = 'profile';
-  else if (location.pathname.startsWith('/progress')) currentPage = 'progress';
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#0a0a0f]">
@@ -71,7 +70,8 @@ export default function App() {
             <Route path="/course/:courseId" element={<CourseDetailPage />} />
             <Route path="/course/:courseId/resource/:resourceId" element={<ResourceViewerPage />} />
             <Route path="/course/:courseId/quiz" element={<QuizPage />} />
-            <Route path="/progress" element={<MyProgressPage />} />
+            <Route path="/profile" element={<MyProfilePage />} />
+            <Route path="/progress" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Routes>

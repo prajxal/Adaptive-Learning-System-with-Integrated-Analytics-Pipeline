@@ -1,8 +1,8 @@
 import React from 'react';
-import { Lock, Check, Circle, ArrowRight, PlayCircle } from 'lucide-react';
+import { Lock, Check, Circle, ArrowRight, PlayCircle, Zap, SkipForward } from 'lucide-react';
 import { LemonCard } from './LemonCard';
 
-export type NodeStatus = 'locked' | 'unlocked' | 'completed';
+export type NodeStatus = 'locked' | 'unlocked' | 'completed' | 'skippable' | 'fast_tracked';
 
 interface RoadmapNodeProps {
   id: string;
@@ -12,23 +12,33 @@ interface RoadmapNodeProps {
   difficulty?: string;
   mastery?: number;
   confidence?: number;
+  isSkipLoading?: boolean;
+  reason?: string;
   onClick?: () => void;
+  onSkip?: () => void;
+  onFastTrack?: () => void;
 }
 
 import { useProgress } from '../hooks/useProgress';
 
-export function RoadmapNode({ id, title, description, status, difficulty, mastery, confidence, onClick }: RoadmapNodeProps) {
+export function RoadmapNode({ id, title, description, status, difficulty, mastery, confidence, isSkipLoading, reason, onClick, onSkip, onFastTrack }: RoadmapNodeProps) {
   const isLocked = status === 'locked';
   const isCompleted = status === 'completed';
   const isUnlocked = status === 'unlocked';
+  const isSkippable = status === 'skippable';
+  const isFastTracked = status === 'fast_tracked';
 
   const { getCourseProgress } = useProgress();
-  // Assume ~5 resources if we haven't tracked it strictly, or zero if none tracked yet.
-  // Real implementation would pass actual totalResources from backend. We use 5 as a placeholder visual.
   const courseProgress = getCourseProgress(id, 5);
   const percent = isCompleted ? 100 : Math.min(courseProgress.percentage, 99);
 
-  const statusConfig = {
+  const statusConfig: Record<NodeStatus, {
+    icon: React.ComponentType<{ className?: string }>;
+    bgColor: string;
+    textColor: string;
+    borderColor: string;
+    iconColor: string;
+  }> = {
     locked: {
       icon: Lock,
       bgColor: 'bg-muted',
@@ -50,10 +60,64 @@ export function RoadmapNode({ id, title, description, status, difficulty, master
       borderColor: 'border-[#388600]',
       iconColor: 'text-[#388600]',
     },
+    skippable: {
+      icon: SkipForward,
+      bgColor: 'bg-card',
+      textColor: 'text-foreground',
+      borderColor: 'border-amber-400',
+      iconColor: 'text-amber-500',
+    },
+    fast_tracked: {
+      icon: Zap,
+      bgColor: 'bg-card',
+      textColor: 'text-foreground',
+      borderColor: 'border-blue-400',
+      iconColor: 'text-blue-500',
+    },
   };
 
   const config = statusConfig[status];
   const Icon = config.icon;
+
+  const iconBgClass = isCompleted
+    ? 'bg-green-100'
+    : isUnlocked
+    ? 'bg-blue-100'
+    : isSkippable
+    ? 'bg-amber-100'
+    : isFastTracked
+    ? 'bg-blue-100'
+    : 'bg-gray-200';
+
+  const iconColorClass = isCompleted
+    ? 'text-green-600'
+    : isUnlocked
+    ? 'text-blue-600'
+    : isSkippable
+    ? 'text-amber-500'
+    : isFastTracked
+    ? 'text-blue-600'
+    : 'text-gray-500';
+
+  const statusLabel = isCompleted
+    ? '✓ Completed'
+    : isUnlocked
+    ? '● In Progress'
+    : isSkippable
+    ? '⟩ Skip Available'
+    : isFastTracked
+    ? '⚡ Fast Track'
+    : '○ Locked';
+
+  const statusLabelColor = isCompleted
+    ? 'text-green-600'
+    : isUnlocked
+    ? 'text-blue-600'
+    : isSkippable
+    ? 'text-amber-500'
+    : isFastTracked
+    ? 'text-blue-500'
+    : 'text-gray-500';
 
   return (
     <div
@@ -66,8 +130,8 @@ export function RoadmapNode({ id, title, description, status, difficulty, master
       onClick={!isLocked ? onClick : undefined}
     >
       <div className="flex items-start gap-4 mb-4">
-        <div className={`flex-shrink-0 w-12 h-12 rounded-full ${isCompleted ? 'bg-green-100' : isUnlocked ? 'bg-blue-100' : 'bg-gray-200'} flex items-center justify-center`}>
-          <Icon className={`w-6 h-6 ${isCompleted ? 'text-green-600' : isUnlocked ? 'text-blue-600' : 'text-gray-500'}`} />
+        <div className={`flex-shrink-0 w-12 h-12 rounded-full ${iconBgClass} flex items-center justify-center`}>
+          <Icon className={`w-6 h-6 ${iconColorClass}`} />
         </div>
 
         <div className="flex-1 min-w-0 pt-1">
@@ -120,17 +184,44 @@ export function RoadmapNode({ id, title, description, status, difficulty, master
           <div className="w-px h-8 bg-gray-200"></div>
           <div className="flex flex-col gap-1 items-end">
             <span className="text-gray-500 uppercase tracking-wider text-[10px]">Status</span>
-            <span className={`${isCompleted ? 'text-green-600' : isUnlocked ? 'text-blue-600' : 'text-gray-500'} flex items-center gap-1`}>
-              {isCompleted ? '✓ Completed' : isUnlocked ? '● In Progress' : '○ Locked'}
+            <span className={`${statusLabelColor} flex items-center gap-1`}>
+              {statusLabel}
             </span>
           </div>
         </div>
 
         {!isLocked && (
-          <button className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-colors ${isCompleted ? 'bg-green-50 text-green-700 hover:bg-green-100' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
-            {isCompleted ? 'Review Content' : 'Start Learning'}
-            {isCompleted ? <ArrowRight className="w-4 h-4" /> : <PlayCircle className="w-4 h-4" />}
-          </button>
+          <div className="flex flex-col gap-2">
+            {isSkippable && onSkip && (
+              <button
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-colors bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSkipLoading}
+                onClick={(e) => { e.stopPropagation(); onSkip(); }}
+              >
+                {isSkipLoading ? 'Skipping…' : 'Skip'}
+                {!isSkipLoading && <SkipForward className="w-4 h-4" />}
+              </button>
+            )}
+            {isFastTracked && onFastTrack && (
+              <button
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700"
+                onClick={(e) => { e.stopPropagation(); onFastTrack(); }}
+              >
+                → Quiz
+                <Zap className="w-4 h-4" />
+              </button>
+            )}
+            {!isSkippable && !isFastTracked && (
+              <button className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-colors ${isCompleted ? 'bg-green-50 text-green-700 hover:bg-green-100' : 'bg-blue-600 text-white hover:bg-blue-700'}`}>
+                {isCompleted ? 'Review Content' : 'Start Learning'}
+                {isCompleted ? <ArrowRight className="w-4 h-4" /> : <PlayCircle className="w-4 h-4" />}
+              </button>
+            )}
+          </div>
+        )}
+
+        {reason && (
+          <p className="text-xs italic opacity-60 mt-1 truncate" title={reason}>{reason}</p>
         )}
       </div>
 

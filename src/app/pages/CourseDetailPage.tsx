@@ -1,11 +1,13 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
 import { useEffect, useState } from "react";
+import AppBreadcrumb from "../components/AppBreadcrumb";
 
 import { getClerkToken } from "../../services/api";
 import { useProgress } from "../hooks/useProgress";
 import { getSkillProfile, SkillProfile } from "../services/quizApi";
 import BACKEND_URL from "../../services/api";
+import { getDynamicRoadmapStatus } from "../../services/dynamicRoadmapApi";
 import { PlayCircle, FileText, BookOpen } from "lucide-react";
 import { usePostHog } from "@posthog/react";
 
@@ -54,15 +56,18 @@ export default function CourseDetailPage() {
       const roadmapId = courseId.split(":")[0];
 
       // Fetch Skill Graph Status
-      fetch(`${BACKEND_URL}/skill-graph/${roadmapId}/status`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      })
-        .then((res) => res.json())
+      getDynamicRoadmapStatus(roadmapId)
         .then((data) => {
-          const skillArray = Array.isArray(data) ? data : data.skills || [];
-          const currentSkill = skillArray.find((item: any) => item.skill_id === courseId);
+          const currentSkill = data.courses.find((c) => c.skill_id === courseId);
           if (currentSkill) {
-            setSkillStatus(currentSkill.status);
+            const rawStatus = currentSkill.status;
+            const mapped =
+              rawStatus === "completed"
+                ? "completed"
+                : rawStatus === "locked"
+                ? "locked"
+                : "unlocked"; // covers unlocked, skippable, fast_tracked
+            setSkillStatus(mapped);
           }
         })
         .catch(() => setSkillStatus("locked"));
@@ -210,12 +215,12 @@ export default function CourseDetailPage() {
       <div className="course-detail-bg"></div>
 
       <div className="course-detail-content space-y-10">
-        <button
-          onClick={() => navigate(ROUTES.ROADMAP(course.roadmap_id))}
-          className="back-btn inline-flex items-center gap-2 font-medium text-sm mb-2"
-        >
-          <span>←</span> Back
-        </button>
+        <AppBreadcrumb segments={[
+          { label: "Home", href: "/dashboard" },
+          { label: "Learning Paths", href: "/roadmaps" },
+          { label: course.roadmap_id.replace(/-/g, " "), href: ROUTES.ROADMAP(course.roadmap_id) },
+          { label: course.title },
+        ]} />
 
         {/* Page Header */}
         <div>
