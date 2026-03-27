@@ -16,16 +16,41 @@ type Resource = {
     resource_type: string;
 };
 
-function convertToEmbedUrl(url: string) {
-    if (!url) return url;
+/**
+ * Converts a YouTube watch/short/share URL to an embeddable URL.
+ * Returns null if the URL is a YouTube search results page, channel page,
+ * or any other YouTube URL that cannot be embedded.
+ * Returns the original URL unchanged for non-YouTube URLs.
+ */
+function convertToEmbedUrl(url: string): string | null {
+    if (!url) return null;
+
+    // YouTube search results and other non-embeddable YouTube pages
+    if (
+        url.includes("youtube.com/results") ||
+        url.includes("youtube.com/channel") ||
+        url.includes("youtube.com/c/") ||
+        url.includes("youtube.com/@") ||
+        url.includes("youtube.com/playlist")
+    ) {
+        return null;
+    }
 
     if (url.includes("youtube.com/watch?v=")) {
         const videoId = url.split("watch?v=")[1].split("&")[0];
+        if (!videoId) return null;
         return `https://www.youtube.com/embed/${videoId}`;
     }
 
     if (url.includes("youtu.be/")) {
         const videoId = url.split("youtu.be/")[1].split("?")[0];
+        if (!videoId) return null;
+        return `https://www.youtube.com/embed/${videoId}`;
+    }
+
+    if (url.includes("youtube.com/shorts/")) {
+        const videoId = url.split("youtube.com/shorts/")[1].split("?")[0];
+        if (!videoId) return null;
         return `https://www.youtube.com/embed/${videoId}`;
     }
 
@@ -196,7 +221,7 @@ export default function ResourceViewerPage() {
                     <div className="flex items-start justify-between mb-1">
                         <h2 className="text-xl font-bold pr-4 text-[#f1f5f9]">{activeResource.title}</h2>
                         <div className="flex items-center gap-2 shrink-0">
-                            {activeResource.resource_type === "video" ? (
+                            {activeResource.resource_type === "video" && convertToEmbedUrl(activeResource.url) !== null ? (
                                 <span className="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-medium bg-[#16161f] text-[#64748b] border border-[#1e1e2e]">
                                     🟢 Embedded Video
                                 </span>
@@ -246,7 +271,7 @@ export default function ResourceViewerPage() {
                 </div>
 
                 <div className="flex-1 p-6 overflow-y-auto w-full h-full flex flex-col relative bg-[#0a0a0f]">
-                    {activeResource.resource_type === "video" ? (
+                    {activeResource.resource_type === "video" && convertToEmbedUrl(activeResource.url) !== null ? (
                         <div key={activeResource.id} className="relative aspect-video w-full rounded-xl shadow-lg border border-[#1e1e2e] bg-[#111118] mt-4 max-w-5xl mx-auto overflow-hidden">
                             {iframeLoading && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-[#111118] animate-pulse">
@@ -255,7 +280,7 @@ export default function ResourceViewerPage() {
                             )}
                             <iframe
                                 key={activeResource.url}
-                                src={convertToEmbedUrl(activeResource.url)}
+                                src={convertToEmbedUrl(activeResource.url) as string}
                                 className={`w-full h-full transition-opacity duration-300 ${iframeLoading ? 'opacity-0' : 'opacity-100'}`}
                                 allowFullScreen
                                 frameBorder="0"
@@ -263,6 +288,26 @@ export default function ResourceViewerPage() {
                                 onError={() => setIframeLoading(false)}
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             />
+                        </div>
+                    ) : activeResource.resource_type === "video" ? (
+                        <div key={activeResource.id} className="flex flex-col items-center justify-center flex-1 bg-[#111118] p-12 text-center h-full rounded-xl border border-[#1e1e2e]">
+                            <div className="w-16 h-16 bg-[#16161f] rounded-full flex items-center justify-center mb-6 text-2xl shadow-sm border border-[#1e1e2e] text-[#6366f1]">
+                                ▶
+                            </div>
+                            <h3 className="text-xl font-semibold mb-3 text-[#f1f5f9]">
+                                {activeResource.title}
+                            </h3>
+                            <p className="text-[#64748b] mb-8 max-w-md">
+                                This video cannot be embedded. Open it on YouTube to watch.
+                            </p>
+                            <a
+                                href={activeResource.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center gap-2 bg-[#ff0000] hover:bg-red-700 text-white font-medium py-3 px-8 rounded-lg transition-all shadow-sm hover:shadow"
+                            >
+                                Open on YouTube <span className="text-lg leading-none">↗</span>
+                            </a>
                         </div>
                     ) : (
                         <div key={activeResource.id} className="flex flex-col items-center justify-center flex-1 bg-[#111118] p-12 text-center h-full rounded-xl border border-[#1e1e2e]">

@@ -153,9 +153,9 @@ async def get_or_generate_quiz(skill_id: str, db: Session) -> SkillQuiz:
         except json.JSONDecodeError:
             pass
 
-    if quiz and quiz.questions and len(quiz.questions) == 4:
+    if quiz and quiz.questions and len(quiz.questions) > 0:
         return quiz
-        
+
     # Step 2: Fetch required context
     course = db.query(Course).filter(Course.id == skill_id).first()
     if not course:
@@ -299,7 +299,7 @@ Required JSON format:
             except json.JSONDecodeError:
                 pass
 
-        if quiz and quiz.questions and len(quiz.questions) == 4:
+        if quiz and quiz.questions and len(quiz.questions) > 0:
             return quiz
         else:
             # Should theoretically never happen unless deleted immediately after insertion

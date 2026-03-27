@@ -90,14 +90,15 @@ def seed():
                 
             y_url = f"https://www.youtube.com/results?search_query={urllib.parse.quote(f'{course.roadmap_id} {course.title} tutorial')}"
             m_url = f"https://medium.com/search?q={urllib.parse.quote(f'{course.title} guide')}"
-            
+
             existing_count = db.query(CourseResource).filter(CourseResource.course_id == course.id).count()
             if existing_count == 0:
+                # Search result URLs cannot be embedded — store as article so they open externally
                 db.add(CourseResource(
                     course_id=course.id,
-                    title=f"{course.title} Video Lecture",
+                    title=f"Search: {course.title} tutorials on YouTube",
                     url=y_url,
-                    resource_type="video"
+                    resource_type="article"
                 ))
                 db.add(CourseResource(
                     course_id=course.id,
