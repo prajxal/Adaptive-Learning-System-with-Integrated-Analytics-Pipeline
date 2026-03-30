@@ -6,7 +6,8 @@ export interface RoadmapTopic {
   title: string;
   description: string;
   status: NodeStatus;
-  difficulty: string;
+  /** Numeric difficulty on the ELO scale (800–2000). Optional to avoid breaking callers without the field. */
+  difficultyLevel?: number | null;
   stage: number;
   mastery?: number;
   confidence?: number;
@@ -54,7 +55,7 @@ export function RoadmapContainer({ topics, onTopicClick }: RoadmapContainerProps
                 title={topic.title}
                 description={topic.description}
                 status={topic.status}
-                difficulty={topic.difficulty}
+                difficultyLevel={topic.difficultyLevel}
                 mastery={topic.mastery}
                 confidence={topic.confidence}
                 isSkipLoading={topic.isSkipLoading}

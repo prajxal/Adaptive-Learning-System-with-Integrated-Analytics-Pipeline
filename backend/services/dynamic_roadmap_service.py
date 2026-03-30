@@ -296,6 +296,19 @@ def compute_dynamic_roadmap(user_id: str, roadmap_id: str, db: Session) -> dict[
             is_force_unlocked=False,
         )
 
+        # Build structured prerequisite list from already-loaded in-memory data.
+        # Skip cross-roadmap prerequisites (prereq_id not in course_map) — they
+        # cannot be navigated to from the current roadmap.
+        prereq_list = [
+            {
+                "id": pid,
+                "title": course_map[pid].title,
+                "completed": pid in satisfied_ids,
+            }
+            for pid in sorted(prereqs)
+            if pid in course_map
+        ]
+
         resolved_courses.append({
             "skill_id": course_id,
             "title": course.title,
@@ -306,6 +319,7 @@ def compute_dynamic_roadmap(user_id: str, roadmap_id: str, db: Session) -> dict[
             "difficulty_level": int(course.difficulty_level) if course.difficulty_level is not None else 0,
             "can_skip": status == STATE_SKIPPABLE,
             "can_fast_track": status == STATE_FAST_TRACKED,
+            "prerequisites": prereq_list,
         })
 
     # ------------------------------------------------------------------

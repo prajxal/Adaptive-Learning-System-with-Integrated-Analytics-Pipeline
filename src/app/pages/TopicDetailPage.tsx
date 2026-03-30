@@ -3,6 +3,7 @@ import { ArrowLeft, ExternalLink, CheckCircle, Book, Video, FileText } from 'luc
 import { LemonButton } from '../components/LemonButton';
 import { LemonCard } from '../components/LemonCard';
 import { RoadmapTopic } from '../components/RoadmapContainer';
+import { CourseDifficultyBadge } from '../components/CourseDifficultyBadge';
 
 interface Resource {
   id: string;
@@ -82,7 +83,7 @@ export function TopicDetailPage({ topic, onBack, onMarkComplete }: TopicDetailPa
             <p className="text-muted-foreground">{topic.description}</p>
           </div>
           <span className="text-sm px-3 py-1.5 bg-muted text-muted-foreground rounded-[6px] whitespace-nowrap">
-            {topic.difficulty}
+            <CourseDifficultyBadge difficultyLevel={topic.difficultyLevel} />
           </span>
         </div>
       </div>

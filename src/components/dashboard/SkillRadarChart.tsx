@@ -7,6 +7,7 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
+import { eloToXP } from "../../lib/xpUtils";
 
 interface Skill {
   roadmap_id: string;
@@ -34,6 +35,8 @@ const normalizeScore = (score: number): number => {
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
+    // trust_score is a Backend field — displayed as XP
+    const xpValue = eloToXP(payload[0]?.payload?.rawTrustScore ?? 1000);
     return (
       <div
         className="rounded-md px-3 py-2 text-xs"
@@ -44,7 +47,7 @@ const CustomTooltip = ({ active, payload }: any) => {
         }}
       >
         <p className="font-semibold">{payload[0]?.payload?.subject}</p>
-        <p style={{ color: "#6366f1" }}>Score: {payload[0]?.value}</p>
+        <p style={{ color: "#6366f1" }}>XP: {xpValue}</p>
       </div>
     );
   }
@@ -59,6 +62,8 @@ export default function SkillRadarChart({ skills, loading = false }: SkillRadarC
       .map((s) => ({
         subject: formatLabel(s.roadmap_id),
         score: normalizeScore(s.trust_score || 800),
+        // rawTrustScore is a Backend field — used to compute XP for the tooltip
+        rawTrustScore: s.trust_score || 800,
         fullMark: 100,
       }));
   }, [skills]);
@@ -69,7 +74,7 @@ export default function SkillRadarChart({ skills, loading = false }: SkillRadarC
     <div className="dark-card p-6 flex flex-col">
       <h2 className="title-font text-xl font-semibold mb-1">Skill Distribution</h2>
       <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>
-        Top roadmaps by Elo rating (0–100 normalized)
+        Top roadmaps by skill level (0–100 normalized)
       </p>
 
       {loading ? (

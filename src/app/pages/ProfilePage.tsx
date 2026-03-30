@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Trophy, Target, Flame, Award, Github, FileText, Activity, Check, Brain } from 'lucide-react';
 import { getUserProfile } from '../../services/userApi';
 import { useNavigate } from 'react-router-dom';
+import { eloToLevel, eloToXP } from '../../lib/xpUtils';
 
 export function ProfilePage() {
   const [profile, setProfile] = useState<any>(null);
@@ -64,8 +65,12 @@ export function ProfilePage() {
           <div className="w-16 h-16 rounded-full bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center mb-4">
             <Trophy className="w-8 h-8 text-indigo-400" />
           </div>
-          <h3 className="text-3xl font-bold text-white mb-1">{Math.round(profile.global_elo_rating || 1000)}</h3>
-          <p className="text-sm text-gray-400 font-mono">Global Elo Rating</p>
+          {/* global_elo_rating is a Backend field — displayed as XP/Level */}
+          <h3 className="text-3xl font-bold text-white mb-1">
+            Level {eloToLevel(profile.global_elo_rating || 1000).level}
+          </h3>
+          <p className="text-sm text-[#00FFB2] font-mono">{eloToXP(profile.global_elo_rating || 1000)} XP</p>
+          <p className="text-xs text-gray-500 font-mono mt-0.5">Global Skill Level</p>
         </div>
 
         <div className="dark-card p-6 flex flex-col items-center justify-center text-center transition-all hover:border-[#00FFB2]/50 hover:shadow-[0_0_15px_rgba(0,255,178,0.1)]">

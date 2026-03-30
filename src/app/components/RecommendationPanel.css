@@ -1,3 +1,6 @@
+/* Accent font for Level/XP display */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&display=swap');
+
 .recommendation-panel {
     position: relative;
     background-color: #0A0A0F;
@@ -32,10 +35,7 @@
     border-color: rgba(0, 255, 178, 0.5);
 }
 
-/* Accent font for Elo */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;700&display=swap');
-
-.elo-font {
+.level-font {
     font-family: 'IBM Plex Mono', monospace;
     text-shadow: 0 0 10px rgba(0, 255, 178, 0.4);
 }
@@ -55,6 +55,6 @@
     }
 }
 
-.elo-badge {
+.level-badge {
     animation: slowPulse 3s infinite alternate;
 }

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
 import AppBreadcrumb from "../components/AppBreadcrumb";
@@ -12,6 +12,12 @@ import {
   CourseNodeStatus,
 } from "../../services/dynamicRoadmapApi";
 import BACKEND_URL, { fetchWithAuth } from "../../services/api";
+import DataLoadingState from "../components/DataLoadingState";
+import RoadmapDetailSkeleton from "../components/skeletons/RoadmapDetailSkeleton";
+import { CourseDifficultyBadge } from "../components/CourseDifficultyBadge";
+import { eloToLevel, getCourseDifficultyInfo } from "../../lib/xpUtils";
+import { sortDynamicCourses } from "../../lib/roadmapUtils";
+import { getUserProfile } from "../../services/userApi";
 
 // Minimal shape from /courses?roadmap_id= used only for the recommendation banner
 interface RecommendedCourse {
@@ -68,6 +74,12 @@ export default function RoadmapDetailPage() {
   const [alternativeStarts, setAlternativeStarts] = useState<RecommendedCourse[]>([]);
   const [skipStates, setSkipStates] = useState<Record<string, SkipState>>({});
   const [unskipLoading, setUnskipLoading] = useState<Record<string, boolean>>({});
+  const [userLevel, setUserLevel] = useState<number | undefined>(undefined);
+
+  const sortedCourses = useMemo(
+    () => sortDynamicCourses(dynamicCourses, recommendedStart?.id ?? null),
+    [dynamicCourses, recommendedStart]
+  );
 
   const loadDynamicStatus = useCallback(async () => {
     if (!roadmapId) return;
@@ -85,11 +97,16 @@ export default function RoadmapDetailPage() {
       setCoursesLoading(true);
       try {
         // Fetch dynamic status (primary data source — single request)
-        const [, coursesRes] = await Promise.all([
+        const [, coursesRes, profileData] = await Promise.all([
           loadDynamicStatus(),
           // Keep the /courses call only for recommendation panel data (recommended_start / alternative_starts)
           fetchWithAuth(`${BACKEND_URL}/courses?roadmap_id=${roadmapId}`),
+          getUserProfile().catch(() => null),
         ]);
+
+        if (profileData?.global_elo_rating != null) {
+          setUserLevel(eloToLevel(profileData.global_elo_rating).level);
+        }
 
         if (coursesRes && coursesRes.ok) {
           const data = await coursesRes.json();
@@ -200,6 +217,7 @@ export default function RoadmapDetailPage() {
         roadmap_id: roadmapId,
         course_title: course.title,
         difficulty_level: course.difficulty_level,
+        difficulty_label: getCourseDifficultyInfo(course.difficulty_level).label,
         status: course.status,
       });
       navigate(ROUTES.COURSE(course.skill_id));
@@ -209,17 +227,10 @@ export default function RoadmapDetailPage() {
 
   if (coursesLoading) {
     return (
-      <div className="roadmap-detail-root flex items-center justify-center min-h-[50vh]">
-        <style>{`
-          .roadmap-detail-root {
-            --bg-primary: #0a0a0f;
-            --text-muted: #64748b;
-            background-color: var(--bg-primary);
-          }
-        `}</style>
-        <div style={{ color: "var(--text-muted)" }}>
-          Loading roadmap tracks...
-        </div>
+      <div className="roadmap-detail-root" style={{ backgroundColor: "#0a0a0f", minHeight: "100vh" }}>
+        <DataLoadingState>
+          <RoadmapDetailSkeleton />
+        </DataLoadingState>
       </div>
     );
   }
@@ -379,12 +390,12 @@ export default function RoadmapDetailPage() {
               {roadmapId?.replace(/-/g, " ")}
             </h1>
             <p className="text-lg" style={{ color: "var(--text-muted)" }}>
-              {dynamicCourses.length} topics in this track
+              {sortedCourses.length} topics in this track
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {dynamicCourses.length === 0 ? (
+            {sortedCourses.length === 0 ? (
               <div
                 className="col-span-1 md:col-span-2 py-12 text-center"
                 style={{ color: "var(--text-muted)" }}
@@ -392,7 +403,7 @@ export default function RoadmapDetailPage() {
                 No topics found for this roadmap
               </div>
             ) : (
-              dynamicCourses.map((course) => {
+              sortedCourses.map((course) => {
                 const badgeCfg = BADGE_CONFIG[course.status];
                 const isLocked = course.status === "locked";
                 const isSkippable = course.status === "skippable";
@@ -450,16 +461,79 @@ export default function RoadmapDetailPage() {
                       </div>
                     </div>
 
-                    {/* Reason caption */}
-                    {course.reason && (
+                    {/* Lock reason block — prominent amber callout for locked courses */}
+                    {isLocked && course.reason && (
+                      <div
+                        className="flex items-start gap-2 rounded-md px-3 py-2 mt-1 mb-3 text-xs font-medium"
+                        style={{
+                          backgroundColor: 'rgba(245,158,11,0.08)',
+                          border: '1px solid rgba(245,158,11,0.25)',
+                          color: '#d97706',
+                        }}
+                      >
+                        <span style={{ flexShrink: 0, marginTop: '1px' }}>⏳</span>
+                        <span>{course.reason}</span>
+                      </div>
+                    )}
+
+                    {/* Reason caption for non-locked statuses */}
+                    {!isLocked && course.reason && (
                       <p className="text-xs italic text-muted-foreground mt-1">{course.reason}</p>
                     )}
 
+                    {/* Prerequisite list — shown on locked cards when prereqs exist */}
+                    {isLocked && course.prerequisites?.length > 0 && (
+                      <div className="mb-4">
+                        <p
+                          className="text-xs font-semibold uppercase tracking-wide mb-2"
+                          style={{ color: 'rgba(255,255,255,0.35)' }}
+                        >
+                          Prerequisites
+                        </p>
+                        <ul className="flex flex-col gap-1.5">
+                          {course.prerequisites.map((prereq) => (
+                            <li
+                              key={prereq.id}
+                              className="flex items-center justify-between gap-3 text-sm"
+                            >
+                              {prereq.completed ? (
+                                <span
+                                  className="flex items-center gap-1.5"
+                                  style={{ color: 'rgba(255,255,255,0.35)' }}
+                                >
+                                  <span style={{ color: '#4ade80' }}>✓</span>
+                                  <span className="line-through">{prereq.title}</span>
+                                </span>
+                              ) : (
+                                <>
+                                  <span style={{ color: 'rgba(255,255,255,0.7)' }}>
+                                    {prereq.title}
+                                  </span>
+                                  <button
+                                    className="shrink-0 text-xs font-semibold"
+                                    style={{ color: '#818cf8' }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate(ROUTES.COURSE(prereq.id));
+                                    }}
+                                  >
+                                    Start Learning →
+                                  </button>
+                                </>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
                     {/* Difficulty */}
-                    <div className="mb-6" style={{ color: "var(--text-muted)" }}>
-                      <span className="text-sm font-medium">
-                        Difficulty Level {course.difficulty_level}
-                      </span>
+                    <div className="mb-6">
+                      <CourseDifficultyBadge
+                        difficultyLevel={course.difficulty_level}
+                        isLocked={isLocked}
+                        userLevel={userLevel}
+                      />
                     </div>
 
                     {/* Undo skip for completed cards */}

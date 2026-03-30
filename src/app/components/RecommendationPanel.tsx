@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { fetchWithAuth } from '../../services/api';
 import BACKEND_URL from '../../services/api';
 import './RecommendationPanel.css';
-import { Play, TrendingUp, Compass, Award, AlertCircle, Star } from 'lucide-react';
+import { Play, TrendingUp, Compass, AlertCircle, Star } from 'lucide-react';
+import { XPLevelBadge } from './XPLevelBadge';
 import { LemonButton } from './LemonButton';
 import { usePostHog } from '@posthog/react';
 import { ROUTES } from '../constants/routes';
+import { getCourseDifficultyInfo } from '../../lib/xpUtils';
 
 // Types
 interface RoadmapNode {
@@ -28,9 +30,9 @@ interface RecommendationPanelProps {
     alternativeStarts?: { id: string; title: string }[];
 }
 
-// Utility to normalize difficulty
-const normalizeDifficulty = (difficulty: number) => {
-    return Math.min(Math.max((difficulty - 800) / 1200, 0), 1);
+// Returns the level (1–6) for a difficulty_level on the ELO scale (800–2000).
+const normalizeDifficulty = (difficulty: number): number => {
+    return getCourseDifficultyInfo(difficulty).level;
 };
 
 // Animated Number Component
@@ -66,19 +68,18 @@ const AnimatedNumber: React.FC<{ value: number }> = ({ value }) => {
     return <span>{Math.round(displayValue)}</span>;
 };
 
-// Difficulty Pips Component
+// Difficulty Pips Component — renders level (1–6) filled pips out of 6 total.
 const DifficultyPips: React.FC<{ difficulty: number }> = ({ difficulty }) => {
-    const normalized = normalizeDifficulty(difficulty);
-    const totalPips = 5;
-    const activePips = Math.ceil(normalized * totalPips) || 1; // At least 1 pip
+    const level = normalizeDifficulty(difficulty);
+    const totalPips = 6;
+    const activePips = Math.min(Math.max(level, 1), totalPips);
 
     return (
         <div className="flex space-x-1 mt-1">
             {Array.from({ length: totalPips }).map((_, i) => (
                 <div
                     key={i}
-                    className={`h-1.5 w-4 rounded-sm transition-colors ${i < activePips ? 'bg-[#00FFB2]' : 'bg-gray-700'
-                        }`}
+                    className={`h-1.5 w-4 rounded-sm transition-colors ${i < activePips ? 'bg-[#00FFB2]' : 'bg-gray-700'}`}
                 />
             ))}
         </div>
@@ -185,19 +186,10 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({ curren
     return (
         <div className="recommendation-panel rounded-xl p-4 space-y-6 text-white flex flex-col shadow-2xl relative z-0">
 
-            {/* ZONE 1: User Elo Badge */}
-            <div className="relative z-10 space-y-3 pb-6 border-b border-gray-800">
-                <div className="flex items-center gap-4">
-                    <div className="elo-badge bg-black/50 border border-[#00FFB2]/50 p-4 rounded-full shadow-lg flex items-center justify-center">
-                        <Award className="w-8 h-8 text-[#00FFB2]" />
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="text-xs tracking-widest text-white/40 uppercase">Skill Rating</span>
-                        <div className="elo-font text-4xl text-[#00FFB2] tracking-tight">
-                            <AnimatedNumber value={data.user_elo} />
-                        </div>
-                    </div>
-                </div>
+            {/* ZONE 1: User Level / XP Badge */}
+            <div className="relative z-10 pb-6 border-b border-gray-800">
+                {/* user_elo is a Backend field — displayed as XP/Level */}
+                <XPLevelBadge elo={data.user_elo} showProgress={true} />
             </div>
 
             {/* ZONE 2: Recommended Start */}

@@ -1,6 +1,7 @@
 import React from "react";
 import { BookOpen, AlertTriangle, TrendingUp, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
+import { eloToXP } from "../../lib/xpUtils";
 
 interface Skill {
   roadmap_id: string;
@@ -56,7 +57,7 @@ export default function LearningInsightsCard({
     (s) => (s.progress_percent || 0) > 0 && (s.progress_percent || 0) < 100
   ).length;
   if (inProgressCount > 0)
-    prescriptiveActions.push("Take a quiz on an active course to update your Elo rating.");
+    prescriptiveActions.push("Take a quiz on an active course to update your skill level.");
   if (prescriptiveActions.length === 0)
     prescriptiveActions.push("Keep learning — you're making great progress!");
 
@@ -116,7 +117,8 @@ export default function LearningInsightsCard({
                   {formatRoadmapName(s.roadmap_id)}
                 </span>
                 <span className="font-medium" style={{ color: "#f59e0b" }}>
-                  Elo {Math.round(s.trust_score || 800)}
+                  {/* trust_score is a Backend field — displayed as XP */}
+                  {eloToXP(Math.round(s.trust_score || 800))} XP
                 </span>
               </div>
             ))}

@@ -464,7 +464,7 @@ export default function MyProfilePage() {
               <h2 className="title-font text-xl font-semibold mb-1">Skill Profile</h2>
               <p className="text-sm" style={{ color: "var(--text-muted)" }}>
                 Re-synthesize your skill profile from your GitHub and resume data.
-                Use this after syncing new data to update your Elo ratings.
+                Use this after syncing new data to update your skill levels.
               </p>
             </div>
             <div className="flex flex-col items-end gap-2 shrink-0">

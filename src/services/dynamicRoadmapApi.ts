@@ -2,6 +2,12 @@ import BACKEND_URL, { fetchWithAuth } from "./api";
 
 export type CourseNodeStatus = 'completed' | 'skippable' | 'fast_tracked' | 'unlocked' | 'locked';
 
+export interface CoursePrerequisiteRef {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 export interface DynamicCourseNode {
   skill_id: string;
   title: string;
@@ -12,6 +18,7 @@ export interface DynamicCourseNode {
   can_skip: boolean;
   can_fast_track: boolean;
   reason: string;
+  prerequisites: CoursePrerequisiteRef[];
 }
 
 export interface DynamicRoadmapStatus {

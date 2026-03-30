@@ -4,6 +4,8 @@ import { useProgress } from "../hooks/useProgress";
 import BACKEND_URL, { getClerkToken } from "../../services/api";
 import { usePostHog } from "@posthog/react";
 import AppBreadcrumb from "../components/AppBreadcrumb";
+import DataLoadingState from "../components/DataLoadingState";
+import ResourceViewerSkeleton from "../components/skeletons/ResourceViewerSkeleton";
 
 type Resource = {
     id: string;
@@ -128,7 +130,11 @@ export default function ResourceViewerPage() {
     }, [resourceId, resources]);
 
     if (loading) {
-        return <div className="p-8 text-muted-foreground flex items-center justify-center">Loading viewer...</div>;
+        return (
+            <DataLoadingState>
+                <ResourceViewerSkeleton />
+            </DataLoadingState>
+        );
     }
 
     if (allResources.length === 0) {

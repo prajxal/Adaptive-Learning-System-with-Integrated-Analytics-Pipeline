@@ -1,6 +1,7 @@
 import React from 'react';
 import { Lock, Check, Circle, ArrowRight, PlayCircle, Zap, SkipForward } from 'lucide-react';
 import { LemonCard } from './LemonCard';
+import { CourseDifficultyBadge } from './CourseDifficultyBadge';
 
 export type NodeStatus = 'locked' | 'unlocked' | 'completed' | 'skippable' | 'fast_tracked';
 
@@ -9,7 +10,7 @@ interface RoadmapNodeProps {
   title: string;
   description: string;
   status: NodeStatus;
-  difficulty?: string;
+  difficultyLevel?: number | null;
   mastery?: number;
   confidence?: number;
   isSkipLoading?: boolean;
@@ -21,7 +22,7 @@ interface RoadmapNodeProps {
 
 import { useProgress } from '../hooks/useProgress';
 
-export function RoadmapNode({ id, title, description, status, difficulty, mastery, confidence, isSkipLoading, reason, onClick, onSkip, onFastTrack }: RoadmapNodeProps) {
+export function RoadmapNode({ id, title, description, status, difficultyLevel, mastery, confidence, isSkipLoading, reason, onClick, onSkip, onFastTrack }: RoadmapNodeProps) {
   const isLocked = status === 'locked';
   const isCompleted = status === 'completed';
   const isUnlocked = status === 'unlocked';
@@ -179,7 +180,7 @@ export function RoadmapNode({ id, title, description, status, difficulty, master
         <div className="flex items-center justify-between text-xs font-medium bg-gray-50 rounded-lg p-3 border">
           <div className="flex flex-col gap-1">
             <span className="text-gray-500 uppercase tracking-wider text-[10px]">Difficulty</span>
-            <span className="text-gray-900">{difficulty || 'Standard'}</span>
+            <CourseDifficultyBadge difficultyLevel={difficultyLevel} />
           </div>
           <div className="w-px h-8 bg-gray-200"></div>
           <div className="flex flex-col gap-1 items-end">

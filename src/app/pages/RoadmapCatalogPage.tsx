@@ -4,6 +4,8 @@ import { useRoadmaps } from "../../hooks/useRoadmaps";
 import { getAllProgress, Progress } from "../../services/progressApi";
 import { usePostHog } from "@posthog/react";
 import AppBreadcrumb from "../components/AppBreadcrumb";
+import DataLoadingState from "../components/DataLoadingState";
+import RoadmapCatalogSkeleton from "../components/skeletons/RoadmapCatalogSkeleton";
 
 function RoadmapCard({ roadmap, progress }: { roadmap: any; progress: Progress | null }) {
     const posthog = usePostHog();
@@ -216,9 +218,9 @@ export default function RoadmapCatalogPage() {
 
             <div className="roadmap-catalog-content">
                 {loading ? (
-                    <div className="text-center py-20" style={{ color: 'var(--text-muted)' }}>
-                        Loading roadmaps...
-                    </div>
+                    <DataLoadingState>
+                        <RoadmapCatalogSkeleton />
+                    </DataLoadingState>
                 ) : error ? (
                     <div className="text-center py-20 text-red-500">
                         Error loading roadmaps

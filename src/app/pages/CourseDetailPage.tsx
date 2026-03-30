@@ -2,6 +2,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ROUTES } from "../constants/routes";
 import { useEffect, useState } from "react";
 import AppBreadcrumb from "../components/AppBreadcrumb";
+import DataLoadingState from "../components/DataLoadingState";
+import CourseDetailSkeleton from "../components/skeletons/CourseDetailSkeleton";
 
 import { getClerkToken } from "../../services/api";
 import { useProgress } from "../hooks/useProgress";
@@ -24,6 +26,7 @@ export default function CourseDetailPage() {
   const navigate = useNavigate();
   const posthog = usePostHog();
   const [course, setCourse] = useState<Course | null>(null);
+  const [courseLoading, setCourseLoading] = useState(true);
   const [learningPath, setLearningPath] = useState<any[]>([]);
   const [pathLoading, setPathLoading] = useState(true);
   const [resources, setResources] = useState<{ primary: any, additional: any[] }>({ primary: null, additional: [] });
@@ -42,8 +45,8 @@ export default function CourseDetailPage() {
 
       fetch(`${BACKEND_URL}/courses/${courseId}`, { headers })
         .then((res) => res.json())
-        .then(setCourse)
-        .catch(() => setCourse(null));
+        .then((data) => { setCourse(data); setCourseLoading(false); })
+        .catch(() => { setCourse(null); setCourseLoading(false); });
 
       fetch(`${BACKEND_URL}/learning-path/${courseId}`, { headers })
         .then((res) => res.json())
@@ -91,17 +94,23 @@ export default function CourseDetailPage() {
     return <BookOpen className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />;
   };
 
-  if (!course) {
+  if (courseLoading) {
     return (
-      <div className="course-detail-root flex items-center justify-center min-h-[50vh]">
-        <style>{`
-                .course-detail-root {
-                    --bg-primary: #0a0a0f;
-                    --text-muted: #64748b;
-                    background-color: var(--bg-primary);
-                }
-            `}</style>
-        <div style={{ color: 'var(--text-muted)' }}>Loading course...</div>
+      <div className="course-detail-root" style={{ backgroundColor: "#0a0a0f", minHeight: "100vh", position: "relative" }}>
+        <DataLoadingState>
+          <CourseDetailSkeleton />
+        </DataLoadingState>
+      </div>
+    );
+  }
+
+  if (!course && !courseLoading) {
+    return (
+      <div
+        className="flex items-center justify-center min-h-[50vh]"
+        style={{ backgroundColor: "#0a0a0f", color: "#64748b" }}
+      >
+        Course not found.
       </div>
     );
   }

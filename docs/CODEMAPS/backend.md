@@ -1,4 +1,4 @@
-<!-- Generated: 2026-03-26 | Session: dynamic-roadmap + reason-metadata + bug-fixes -->
+<!-- Generated: 2026-03-30 | Session: dynamic-roadmap prerequisites + CoursePrerequisiteRef in responses -->
 
 # Backend Codemap
 
@@ -54,7 +54,7 @@
 - `POST /quiz/{skill_id}/submit` — evaluate answers, update profile, emit events
 
 ### Skill Graph — `backend/routers/skill_graph.py` (prefix: `/skill-graph`)
-- `GET  /skill-graph/{roadmap_id}/dynamic-status` — 5-state course status map for roadmap (new primary endpoint)
+- `GET  /skill-graph/{roadmap_id}/dynamic-status` — 5-state course status map for roadmap. Each `DynamicCourseNode` includes `prerequisites: [{id, title, completed}]` (built from in-memory prerequisite data; cross-roadmap IDs skipped)
 - `GET  /skill-graph/{roadmap_id}/status` — unlock status for all skills in roadmap (**DEPRECATED**: Sunset 2026-06-01; use `/dynamic-status` instead)
 
 ### Skill Profile — `backend/routers/skill_profile.py` (prefix: `/skill-profile`)
@@ -75,7 +75,7 @@
 
 | Service | File | Key Functions |
 |---------|------|---------------|
-| Dynamic Roadmap | `services/dynamic_roadmap_service.py` | `compute_dynamic_roadmap(user_id, roadmap_id, db)`, `_build_reason()`, `get_skip_threshold()`, `get_fast_track_threshold()` |
+| Dynamic Roadmap | `services/dynamic_roadmap_service.py` | `compute_dynamic_roadmap(user_id, roadmap_id, db)` (returns courses with `prerequisites` field), `_build_reason()`, `get_skip_threshold()`, `get_fast_track_threshold()` |
 | Recommendation | `services/learning_priority_service.py` | `get_unlocked_courses()`, `compute_importance_score()`, `get_recommended_start_courses()` |
 | Skill Graph | `services/skill_graph_service.py` | `is_skill_unlocked()`, `is_skill_completed()` (now treats `course_skipped` as satisfied), `get_roadmap_skill_status()` |
 | Quiz Scoring | `services/quiz_service.py` | `evaluate_quiz_attempt()` |
