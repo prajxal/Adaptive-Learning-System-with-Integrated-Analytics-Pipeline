@@ -12,3 +12,6 @@ class Course(Base):
     description = Column(String, nullable=True)
     difficulty_level = Column(Float, nullable=False, default=1000.0)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    # XP / Level system (added in migration 20260330_add_xp_level_columns)
+    required_level = Column(Integer, default=1, nullable=False)

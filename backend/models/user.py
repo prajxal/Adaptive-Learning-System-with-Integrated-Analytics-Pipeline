@@ -31,5 +31,12 @@ class User(Base):
     google_connected = Column(Boolean, default=False)
     avatar_url = Column(String, nullable=True)
 
+    # XP / Level system (added in migration 20260330_add_xp_level_columns)
+    total_xp = Column(Integer, default=0, nullable=False)
+    current_level = Column(Integer, default=1, nullable=False)
+
+    # Onboarding (added in migration 20260331_add_onboarding_completed)
+    onboarding_completed = Column(Boolean, default=False, nullable=False)
+
     user_skills = relationship("UserSkill", back_populates="user", cascade="all, delete-orphan")
     events = relationship("Event", back_populates="user", cascade="all, delete-orphan")

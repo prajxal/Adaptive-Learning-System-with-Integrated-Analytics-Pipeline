@@ -1,30 +1,18 @@
 /**
  * XP and Level utility functions for LearnPathAI.
  *
- * ELO ratings from the backend (range 800–2000) are converted to XP (0–1000)
- * and mapped to Levels 1–6 for user-facing display.
- *
- * Backend ELO fields (e.g. global_elo_rating, elo_rating, trust_score) are
- * preserved as-is in API interface types — only converted at render time.
+ * The backend now returns XP (0–1000) and level (1–6) values directly.
+ * No ELO conversion is performed here.
  */
 
 /** XP thresholds for each level boundary. Index = level - 1. */
 export const LEVEL_THRESHOLDS: number[] = [0, 150, 400, 650, 850, 1000];
-// Level 1:  0 XP  (ELO 1000)
-// Level 2: 150 XP (ELO 1150)
-// Level 3: 400 XP (ELO 1400)
-// Level 4: 650 XP (ELO 1650)
-// Level 5: 850 XP (ELO 1850)
-// Level 6: 1000 XP (ELO 2000, max)
-
-/**
- * Convert a backend ELO rating to XP.
- * ELO 1000 = 0 XP (baseline). ELO 2000 = 1000 XP (max).
- * Values below 1000 are clamped to 0; values above 2000 are clamped to 1000.
- */
-export function eloToXP(elo: number): number {
-  return Math.min(1000, Math.max(0, elo - 1000));
-}
+// Level 1:    0 XP
+// Level 2:  150 XP
+// Level 3:  400 XP
+// Level 4:  650 XP
+// Level 5:  850 XP
+// Level 6: 1000 XP (max)
 
 export interface LevelInfo {
   /** Current level, 1–6 */
@@ -79,10 +67,11 @@ export function getLevelFromXP(xp: number): LevelInfo {
 }
 
 /**
- * Convenience wrapper: convert ELO directly to full level info.
+ * Alias for getLevelFromXP — explicit named export for callers that prefer
+ * the `xpToLevel` name.
  */
-export function eloToLevel(elo: number): LevelInfo {
-  return getLevelFromXP(eloToXP(elo));
+export function xpToLevel(xp: number): LevelInfo {
+  return getLevelFromXP(xp);
 }
 
 /** Human-readable label for each level 1–6. */
@@ -109,16 +98,16 @@ export const LEVEL_COLORS: Record<number, { accent: string; glow: string; bg: st
 };
 
 /**
- * Derive display info for a course difficulty_level value (800–2000 ELO scale).
- * Returns level (1–6), label, and accent color for badge rendering.
+ * Derive display info for a course required_level value (integer 1–6).
+ * Returns level, label, and accent color for badge rendering.
  */
 export function getCourseDifficultyInfo(
-  difficultyLevel: number | null | undefined
+  requiredLevel: number | null | undefined
 ): { level: number; label: string; color: string } {
-  if (difficultyLevel == null || isNaN(difficultyLevel)) {
+  if (requiredLevel == null || isNaN(requiredLevel) || requiredLevel === 0) {
     return { level: 1, label: 'Unknown', color: '#666' };
   }
-  const { level } = eloToLevel(difficultyLevel);
+  const level = Math.min(6, Math.max(1, Math.round(requiredLevel)));
   return {
     level,
     label: LEVEL_LABELS[level] ?? 'Master',

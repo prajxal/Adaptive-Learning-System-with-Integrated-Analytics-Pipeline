@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { ROUTES } from "../constants/routes";
 import AppBreadcrumb from "../components/AppBreadcrumb";
 import { RecommendationPanel } from "../components/RecommendationPanel";
@@ -9,13 +10,14 @@ import {
   skipCourse,
   unskipCourse,
   DynamicCourseNode,
+  DynamicRoadmapStatus,
   CourseNodeStatus,
 } from "../../services/dynamicRoadmapApi";
 import BACKEND_URL, { fetchWithAuth } from "../../services/api";
 import DataLoadingState from "../components/DataLoadingState";
 import RoadmapDetailSkeleton from "../components/skeletons/RoadmapDetailSkeleton";
 import { CourseDifficultyBadge } from "../components/CourseDifficultyBadge";
-import { eloToLevel, getCourseDifficultyInfo } from "../../lib/xpUtils";
+import { getLevelFromXP, getCourseDifficultyInfo } from "../../lib/xpUtils";
 import { sortDynamicCourses } from "../../lib/roadmapUtils";
 import { getUserProfile } from "../../services/userApi";
 
@@ -69,23 +71,39 @@ export default function RoadmapDetailPage() {
   const posthog = usePostHog();
 
   const [dynamicCourses, setDynamicCourses] = useState<DynamicCourseNode[]>([]);
+  const [roadmapSummary, setRoadmapSummary] = useState<DynamicRoadmapStatus["summary"] | null>(null);
   const [coursesLoading, setCoursesLoading] = useState(true);
   const [recommendedStart, setRecommendedStart] = useState<RecommendedCourse | null>(null);
   const [alternativeStarts, setAlternativeStarts] = useState<RecommendedCourse[]>([]);
   const [skipStates, setSkipStates] = useState<Record<string, SkipState>>({});
   const [unskipLoading, setUnskipLoading] = useState<Record<string, boolean>>({});
   const [userLevel, setUserLevel] = useState<number | undefined>(undefined);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<CourseNodeStatus | "all">("all");
 
   const sortedCourses = useMemo(
     () => sortDynamicCourses(dynamicCourses, recommendedStart?.id ?? null),
     [dynamicCourses, recommendedStart]
   );
 
+  const filteredCourses = useMemo(() => {
+    let result = sortedCourses;
+    if (statusFilter !== "all") {
+      result = result.filter(c => c.status === statusFilter);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(c => c.title.toLowerCase().includes(q));
+    }
+    return result;
+  }, [sortedCourses, statusFilter, searchQuery]);
+
   const loadDynamicStatus = useCallback(async () => {
     if (!roadmapId) return;
     try {
       const status = await getDynamicRoadmapStatus(roadmapId);
       setDynamicCourses(status.courses);
+      setRoadmapSummary(status.summary);
     } catch (err) {
       console.error("Failed to load dynamic roadmap status:", err);
     }
@@ -104,8 +122,8 @@ export default function RoadmapDetailPage() {
           getUserProfile().catch(() => null),
         ]);
 
-        if (profileData?.global_elo_rating != null) {
-          setUserLevel(eloToLevel(profileData.global_elo_rating).level);
+        if (profileData?.total_xp != null) {
+          setUserLevel(getLevelFromXP(profileData.total_xp).level);
         }
 
         if (coursesRes && coursesRes.ok) {
@@ -146,6 +164,7 @@ export default function RoadmapDetailPage() {
           ...prev,
           [courseId]: { loading: false, error: null },
         }));
+        toast.success(`Skipped "${courseTitle}"`);
         // Refetch dynamic status so the UI reflects the skip
         await loadDynamicStatus();
       } catch (err) {
@@ -155,6 +174,7 @@ export default function RoadmapDetailPage() {
           ...prev,
           [courseId]: { loading: false, error: message },
         }));
+        toast.error(`Could not skip "${courseTitle}"`);
         posthog?.capture("course_skip_failed", {
           course_id: courseId,
           error: (err as Error).message,
@@ -173,6 +193,7 @@ export default function RoadmapDetailPage() {
           course_id: courseId,
           roadmap_id: roadmapId,
         });
+        toast.success("Skip undone");
         await loadDynamicStatus();
       } catch (err) {
         // Silently swallow 404 — course was completed normally, not skipped
@@ -182,6 +203,7 @@ export default function RoadmapDetailPage() {
             ...prev,
             [courseId]: { loading: false, error: message || "Failed to undo skip" },
           }));
+          toast.error("Failed to undo skip");
         }
       } finally {
         setUnskipLoading((prev) => ({ ...prev, [courseId]: false }));
@@ -216,8 +238,8 @@ export default function RoadmapDetailPage() {
         course_id: course.skill_id,
         roadmap_id: roadmapId,
         course_title: course.title,
-        difficulty_level: course.difficulty_level,
-        difficulty_label: getCourseDifficultyInfo(course.difficulty_level).label,
+        required_level: course.required_level,
+        difficulty_label: getCourseDifficultyInfo(course.required_level).label,
         status: course.status,
       });
       navigate(ROUTES.COURSE(course.skill_id));
@@ -394,16 +416,81 @@ export default function RoadmapDetailPage() {
             </p>
           </div>
 
+          {/* Progress summary bar */}
+          {roadmapSummary && roadmapSummary.total > 0 && (
+            <div
+              className="rounded-xl p-4 border flex flex-wrap items-center gap-4"
+              style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border)" }}
+            >
+              <div className="flex-1 min-w-[180px]">
+                <div className="flex justify-between text-xs mb-1.5" style={{ color: "var(--text-muted)" }}>
+                  <span>Progress</span>
+                  <span style={{ color: "var(--text-primary)" }}>
+                    {roadmapSummary.completed} / {roadmapSummary.total} completed
+                  </span>
+                </div>
+                <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: `${Math.round((roadmapSummary.completed / roadmapSummary.total) * 100)}%`,
+                      backgroundColor: "#6366f1",
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-4 text-xs shrink-0">
+                <span style={{ color: "#22c55e" }}>✓ {roadmapSummary.completed} done</span>
+                <span style={{ color: "#6366f1" }}>↑ {roadmapSummary.unlocked} unlocked</span>
+                <span style={{ color: "#64748b" }}>⦸ {roadmapSummary.locked} locked</span>
+              </div>
+            </div>
+          )}
+
+          {/* Search + filter bar */}
+          <div className="flex flex-wrap gap-3 items-center">
+            <input
+              type="text"
+              placeholder="Search topics..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="flex-1 min-w-[160px] max-w-xs px-4 py-2 rounded-lg text-sm outline-none border"
+              style={{
+                backgroundColor: "var(--bg-card)",
+                borderColor: "var(--border)",
+                color: "var(--text-primary)",
+              }}
+            />
+            <div className="flex gap-2 flex-wrap">
+              {(["all", "unlocked", "completed", "locked"] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => setStatusFilter(f)}
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors capitalize"
+                  style={{
+                    backgroundColor: statusFilter === f ? "#6366f1" : "var(--bg-card)",
+                    borderColor: statusFilter === f ? "#6366f1" : "var(--border)",
+                    color: statusFilter === f ? "#fff" : "var(--text-muted)",
+                  }}
+                >
+                  {f === "all" ? `All (${sortedCourses.length})` : f}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {sortedCourses.length === 0 ? (
+            {filteredCourses.length === 0 ? (
               <div
                 className="col-span-1 md:col-span-2 py-12 text-center"
                 style={{ color: "var(--text-muted)" }}
               >
-                No topics found for this roadmap
+                {searchQuery || statusFilter !== "all"
+                  ? "No topics match your filter"
+                  : "No topics found for this roadmap"}
               </div>
             ) : (
-              sortedCourses.map((course) => {
+              filteredCourses.map((course) => {
                 const badgeCfg = BADGE_CONFIG[course.status];
                 const isLocked = course.status === "locked";
                 const isSkippable = course.status === "skippable";
@@ -530,7 +617,7 @@ export default function RoadmapDetailPage() {
                     {/* Difficulty */}
                     <div className="mb-6">
                       <CourseDifficultyBadge
-                        difficultyLevel={course.difficulty_level}
+                        requiredLevel={course.required_level}
                         isLocked={isLocked}
                         userLevel={userLevel}
                       />

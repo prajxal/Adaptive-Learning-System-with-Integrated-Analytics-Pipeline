@@ -69,6 +69,9 @@ app.include_router(skill_graph.router, prefix="/skill-graph", tags=["skill-graph
 app.include_router(quiz.router, prefix="/quiz", tags=["quiz"])
 app.include_router(skill_profile.router, prefix="/skill-profile", tags=["skill-profile"])
 
+from routers.chat import router as chat_router
+app.include_router(chat_router)
+
 @app.get("/")
 def health_check():
     return {"status": "backend running"}

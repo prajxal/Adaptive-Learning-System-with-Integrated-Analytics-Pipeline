@@ -6,14 +6,23 @@ from sqlalchemy import pool
 from alembic import context
 
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-load_dotenv()
-database_url = os.getenv("DATABASE_URL")
+# Load backend/.env using an absolute path so this works regardless of
+# whether alembic is invoked from the project root or from backend/.
+# env.py lives at  backend/migrations/env.py  → two parents up = backend/
+_env_file = Path(__file__).resolve().parents[1] / ".env"
+load_dotenv(dotenv_path=_env_file)
+# Prefer DIRECT_DATABASE_URL for migrations — this bypasses pgbouncer
+# (port 5432 on Supabase) so SET / DDL statements land on the same backend
+# connection and session-level settings like statement_timeout are respected.
+# Falls back to DATABASE_URL if the direct URL is not set.
+database_url = os.getenv("DIRECT_DATABASE_URL") or os.getenv("DATABASE_URL")
 if database_url:
     config.set_main_option("sqlalchemy.url", database_url)
 

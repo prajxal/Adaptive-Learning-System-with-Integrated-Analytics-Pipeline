@@ -18,4 +18,8 @@ class UserSkill(Base):
     trust_score = Column(Float, default=0.0, nullable=False)
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
+    # XP / Level system (added in migration 20260330_add_xp_level_columns)
+    xp = Column(Integer, default=0, nullable=False)
+    level = Column(Integer, default=1, nullable=False)
+
     user = relationship("User", back_populates="user_skills")

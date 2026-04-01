@@ -1,5 +1,17 @@
 import { useState, useEffect } from 'react';
-import BACKEND_URL, { getClerkToken } from "../../services/api";
+import BACKEND_URL, { fetchWithAuth, getClerkToken } from "../../services/api";
+
+// Fire-and-forget — never blocks the UI for tracking failures
+const postResourceEvent = (
+    eventType: "resource_viewed" | "resource_completed",
+    courseId: string,
+) => {
+    fetchWithAuth(`${BACKEND_URL}/events`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_type: eventType, course_id: courseId }),
+    }).catch(err => console.warn("[useProgress] Failed to post resource event:", err));
+};
 
 /**
  * Progress structure:
@@ -89,6 +101,9 @@ export function useProgress() {
         };
 
         saveRawState(state);
+
+        // Persist to server (write-through; localStorage remains the fast read path)
+        postResourceEvent("resource_completed", courseId);
     };
 
     const markResourceInProgress = (courseId: string, resourceId: string, roadmapId?: string, courseTitle?: string, resourceTitle?: string) => {
@@ -115,6 +130,9 @@ export function useProgress() {
         if (roadmapId) state.lastAccessed[userId].roadmapId = roadmapId;
 
         saveRawState(state);
+
+        // Persist to server (write-through; localStorage remains the fast read path)
+        postResourceEvent("resource_viewed", courseId);
     };
 
     const getResourceProgress = (courseId: string, resourceId: string): "completed" | "in_progress" | "not_started" => {

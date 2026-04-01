@@ -5,12 +5,9 @@ from models.skill_weight import SkillWeight
 import logging
 from models.user import User
 from models.course import Course
+from services import xp_level_service
 
 logger = logging.getLogger(__name__)
-
-ELO_K_FACTOR = 32
-ELO_MIN = 800
-ELO_MAX = 2000
 
 def get_or_create_skill_profile(user_id: str, skill_id: str, roadmap_id: str, db: Session) -> SkillProfile:
     """
@@ -136,34 +133,20 @@ def update_skill_profile_from_quiz(user_id: str, skill_id: str, quiz_score: floa
     profile.proficiency_level = final_proficiency
     profile.confidence = final_confidence
     
-    # --- Proper Elo rating update ---
-    # Fetch user and course to perform the Elo calculation
-    user = db.query(User).filter(User.id == user_id).first()
-    course = db.query(Course).filter(Course.id == skill_id).first()
-    
-    if user and course:
-        if user.global_elo_rating is None:
-            user.global_elo_rating = 1000.0
-            
-        user_elo = user.global_elo_rating
-        course_elo = course.difficulty_level
-        
-        # Expected probability of success (logistic Elo formula)
-        expected_score = 1 / (1 + 10 ** ((course_elo - user_elo) / 400))
-        
-        # Actual score mapping
-        if quiz_score >= 80:
-            actual_score = 1.0
-        elif quiz_score >= 50:
-            actual_score = 0.5
-        else:
-            actual_score = 0.0
-            
-        # Elo delta
-        delta = ELO_K_FACTOR * (actual_score - expected_score)
-        
-        # Apply and clamp safely
-        new_elo = user_elo + delta
-        user.global_elo_rating = max(ELO_MIN, min(ELO_MAX, new_elo))
+    # --- XP award for quiz performance ---
+    # Extract roadmap_id from skill_id if not provided (format: roadmap_id:node_id)
+    resolved_roadmap_id = roadmap_id
+    if not resolved_roadmap_id and ":" in skill_id:
+        resolved_roadmap_id = skill_id.split(":")[0]
 
-    db.commit()
+    if resolved_roadmap_id:
+        # award_xp_for_quiz expects a 0–1 normalized score; quiz_score is 0–100
+        xp_level_service.award_xp_for_quiz(
+            user_id=int(user_id),
+            quiz_score=quiz_score / 100.0,
+            course_id=skill_id,
+            roadmap_id=resolved_roadmap_id,
+            db=db,
+        )
+    else:
+        db.commit()

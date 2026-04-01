@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './app/App'
 import './styles/index.css'
+import { Toaster } from './app/components/ui/sonner'
 import posthog from 'posthog-js'
 import { PostHogErrorBoundary, PostHogProvider } from '@posthog/react'
 import { ClerkProvider } from '@clerk/clerk-react'
@@ -27,6 +28,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <TokenSynchronizer />
           <PostHogIdentifier />
           <App />
+          <Toaster position="bottom-right" richColors />
         </PostHogErrorBoundary>
       </PostHogProvider>
     </ClerkProvider>

@@ -14,7 +14,7 @@ export interface DynamicCourseNode {
   status: CourseNodeStatus;
   confidence: number;
   proficiency: number;
-  difficulty_level: number;
+  required_level: number;
   can_skip: boolean;
   can_fast_track: boolean;
   reason: string;

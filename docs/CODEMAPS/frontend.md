@@ -1,14 +1,14 @@
-<!-- Generated: 2026-03-30 | Session: XP/Level system, course difficulty badges, enhanced loading UX -->
+<!-- Generated: 2026-04-01 | Sprint: 5 (AI Mentor feature) | /ai-mentor route, AIMentorPage component, sendChatMessage API, AppSidebar nav update -->
 
 # Frontend Codemap
 
 ## Entry Point
 
-`src/main.tsx` — Renders `<App />` wrapped in `ClerkProvider`, `PostHogProvider`, `PostHogErrorBoundary`, plus `TokenSynchronizer` and `PostHogIdentifier`.
+`src/main.tsx` — Renders `<App />` wrapped in `ClerkProvider`, `PostHogProvider`, `PostHogErrorBoundary`, plus `TokenSynchronizer`, `PostHogIdentifier`, and **`<Toaster position="bottom-right" richColors />`** (NEW: Sonner toast component, no longer using next-themes, hardcoded dark theme).
 
 ## App Shell
 
-`src/app/App.tsx` — `BrowserRouter` with route definitions. Protected routes render inside `AppLayout` (sidebar + navbar). Unauthenticated users redirect to `/signin`. `/progress` redirects to `/dashboard`.
+`src/app/App.tsx` — `BrowserRouter` with route definitions. Protected routes render inside `AppLayout` (sidebar + navbar) **wrapped in `<ErrorBoundary />`** (NEW: catches unhandled exceptions). Unauthenticated users redirect to `/signin`. `/progress` redirects to `/dashboard`.
 
 ## Routes
 
@@ -24,24 +24,27 @@
 | `/course/:courseId/resource/:resourceId` | ResourceViewerPage | `src/app/pages/ResourceViewerPage.tsx` |
 | `/course/:courseId/quiz` | QuizPage | `src/app/pages/QuizPage.tsx` |
 | `/profile` | MyProfilePage | `src/app/pages/MyProfilePage.tsx` |
+| `/ai-mentor` | AIMentorPage | `src/app/pages/AIMentorPage.tsx` | **NEW (Sprint 5)** |
 | `/progress` | → redirect `/dashboard` | (removed) |
 
-**Unused page files** (not mounted in routes): `ProfilePage.tsx`, `CourseCatalogPage.tsx`, `RoadmapPage.tsx`, `TopicDetailPage.tsx`
+**Unused page files:** `CourseCatalogPage.tsx`, `RoadmapPage.tsx`, `TopicDetailPage.tsx` (deleted: `ProfilePage.tsx` — merged into `MyProfilePage`)
 
 ## Shared Components
 
 | Component | File | Notes |
 |-----------|------|-------|
+| **OnboardingWizard** | **`src/app/components/OnboardingWizard.tsx`** | **NEW (Sprint 3):** Onboarding card for new users; 3 steps: import skills, pick roadmap, start learning. Shown when `onboarding_completed = False` AND user has no skills + no GitHub. Dismiss calls `POST /users/me/onboarding/complete` |
+| ErrorBoundary | `src/app/components/ErrorBoundary.tsx` | React class component catches unhandled exceptions; renders recovery UI with "Reload page" button |
 | AppNavbar | `src/app/components/AppNavbar.tsx` | |
-| AppSidebar | `src/app/components/AppSidebar.tsx` | menu: Dashboard, Learning Paths, My Profile |
-| AppBreadcrumb | `src/app/components/AppBreadcrumb.tsx` | wraps shadcn Breadcrumb; accepts `segments: {label, href?}[]` |
-| RecommendationPanel | `src/app/components/RecommendationPanel.tsx` | ELO badge + recommended/alternative starts + explore paths |
-| RoadmapNode | `src/app/components/RoadmapNode.tsx` | **Updated**: `NodeStatus` now includes `skippable`, `fast_tracked`; accepts `isSkipLoading`, `onSkip`, `onFastTrack`, `reason` props |
-| RoadmapContainer | `src/app/components/RoadmapContainer.tsx` | forwards new skip/fast-track props through to `RoadmapNode` |
-| **DataLoadingState** | **`src/app/components/DataLoadingState.tsx`** | **NEW**: Wraps skeleton content; shows staged messages: skeleton only (<3s), "Waking up our AI servers..." (5–14s), "Preparing your learning paths..." (15s+). Uses `fade-in` animation. |
+| AppSidebar | `src/app/components/AppSidebar.tsx` | menu: Dashboard, Learning Paths, **AI Mentor** (NEW), My Profile; compact XP/Level badge above Logout (fetches `getUserProfile()` on mount, shows level circle + label + XP count + progress bar) |
+| AppBreadcrumb | `src/app/components/AppBreadcrumb.tsx` | wraps shadcn Breadcrumb |
+| RecommendationPanel | `src/app/components/RecommendationPanel.tsx` | XP badge + recommended/alternative starts + explore paths |
+| RoadmapNode | `src/app/components/RoadmapNode.tsx` | `NodeStatus` includes `skippable`, `fast_tracked`; skip/unskip buttons fire toast notifications |
+| RoadmapContainer | `src/app/components/RoadmapContainer.tsx` | forwards skip/fast-track props to `RoadmapNode` |
+| DataLoadingState | `src/app/components/DataLoadingState.tsx` | Staged loading messages: skeleton only (<3s), "Waking up..." (5–14s), "Preparing..." (15s+) |
 | LoadingSkeleton | `src/app/components/LoadingSkeleton.tsx` | |
 | LemonButton/Card/Input/Modal/ProgressBar | `src/app/components/Lemon*.tsx` | |
-| shadcn/ui primitives | `src/app/components/ui/*.tsx` | includes breadcrumb, chart, tabs, badge, etc. |
+| shadcn/ui primitives | `src/app/components/ui/*.tsx` | breadcrumb, chart, tabs, badge, etc.; includes `sonner` Toaster |
 
 ### Skeleton Screens (`src/app/components/skeletons/`)
 
@@ -51,142 +54,172 @@
 | RoadmapDetailSkeleton | `src/app/components/skeletons/RoadmapDetailSkeleton.tsx` | RoadmapDetailPage |
 | CourseDetailSkeleton | `src/app/components/skeletons/CourseDetailSkeleton.tsx` | CourseDetailPage |
 | ResourceViewerSkeleton | `src/app/components/skeletons/ResourceViewerSkeleton.tsx` | ResourceViewerPage |
+| **QuizSkeleton** | **`src/app/components/skeletons/QuizSkeleton.tsx`** | **QuizPage (Sprint 4)** — Mirrors quiz question card: breadcrumb → title + counter → progress bar → 4-option question rows |
 
 ### Display Badges & Utilities
 
 | Component | File | Purpose |
 |-----------|------|---------|
-| **CourseDifficultyBadge** | **`src/app/components/CourseDifficultyBadge.tsx`** | Renders course difficulty_level (800–2000 ELO) as "Lvl N — Label"; accepts `userLevel?: number` prop to show "Requires Level N" only when user hasn't met requirement |
-| **XPLevelBadge** | **`src/app/components/XPLevelBadge.tsx`** | Displays user skill ELO as Level 1–6 badge with XP progress bar, monospace font, glow effect |
+| CourseDifficultyBadge | `src/app/components/CourseDifficultyBadge.tsx` | Renders course `required_level` (1–6) as "Lvl N — Label"; optional `userLevel` prop shows "Requires Level N" only when user hasn't met requirement |
+| XPLevelBadge | `src/app/components/XPLevelBadge.tsx` | Displays user `xp` (0–1000) + `level` (1–6) badge with progress bar, monospace font, glow. Props: `xp`, `level` |
 
 ## Page Details
 
 ### RoadmapDetailPage
-Migrated to single `getDynamicRoadmapStatus()` call (replaces 3 prior API calls). Fetches user's `global_elo_rating` via `getUserProfile()` in parallel; derives `userLevel` using `eloToLevel()` from xpUtils. Renders 5-state course map with:
+Fetches user `total_xp` + `current_level` from `getUserProfile()`. Calls `getDynamicRoadmapStatus()` once. Renders 5-state course map with:
 - Per-course status badge (Mastered, Skip Available, Fast Track, Unlocked, Locked)
-- Reason caption explaining state (e.g., "Skipped — high confidence (85%)", "Locked — 2 prerequisites remaining")
-- For locked cards: amber lock-reason callout, full prerequisite list (`prerequisites[]` from API with ✓ completed / "Start Learning →" for pending), `CourseDifficultyBadge` with `userLevel` prop
-- Skip/unskip buttons for `skippable` courses (with loading + error UI per course)
-- Recommendation banner showing next suggested course + alternatives
-- Breadcrumb: Home → Learning Paths → {roadmapId}
-- **Cold-start UX**: Wraps roadmap content in `<DataLoadingState><RoadmapDetailSkeleton/></DataLoadingState>` for loading state
+- Reason caption + full prerequisite list (`prerequisites[]` from API)
+- For locked: amber callout + prerequisite list + `CourseDifficultyBadge` with `userLevel` prop
+- Skip/unskip buttons for `skippable` courses; fires toast on success/error
+- **NEW:** Search input (case-insensitive title filtering)
+- **NEW:** Status filter chips (all | unlocked | completed | locked)
+- **NEW:** Progress summary bar ("X/Y completed, N unlocked, N locked")
+- Recommendation banner
+- **Cold-start UX**: Wraps in `<DataLoadingState><RoadmapDetailSkeleton/></DataLoadingState>`
 
 ### RoadmapCatalogPage
-- **Cold-start UX**: Wraps catalog in `<DataLoadingState><RoadmapCatalogSkeleton/></DataLoadingState>` for loading state
+- **Cold-start UX**: `<DataLoadingState><RoadmapCatalogSkeleton/></DataLoadingState>`
 
 ### CourseDetailPage
-Migrated from old `/status` to `getDynamicRoadmapStatus()`.
-- **NEW**: `courseLoading` boolean state
-- **Cold-start UX**: Wraps content in `<DataLoadingState><CourseDetailSkeleton/></DataLoadingState>` for loading state
+- Fetches `getDynamicRoadmapStatus()` + course data
+- **Cold-start UX**: `<DataLoadingState><CourseDetailSkeleton/></DataLoadingState>`
 
 ### Other Pages
-| Page | Breadcrumb Path | Cold-Start UX |
-|------|----------------|---------------|
-| ResourceViewerPage | Home → {roadmap} → {resource.title} (sidebar) | `<DataLoadingState><ResourceViewerSkeleton/></DataLoadingState>` |
-| QuizPage | Home → {roadmap} → {course title} → Quiz | — |
+| Page | Cold-Start UX |
+|------|---------------|
+| ResourceViewerPage | `<DataLoadingState><ResourceViewerSkeleton/></DataLoadingState>` |
+| **QuizPage** | **`<DataLoadingState><QuizSkeleton/></DataLoadingState>` (NEW Sprint 4)** |
 
 ## Dashboard Components (`src/components/dashboard/`)
 
-| Component | Props | Purpose |
-|-----------|-------|---------|
-| LearningInsightsCard | `skills[], githubConnected, recommendedCourse?, loading` | 4-panel analytics: Descriptive / Diagnostic / Predictive / Prescriptive |
-| SkillRadarChart | `skills[], loading` | recharts RadarChart — dynamic axes (top 8 roadmaps by Elo, normalized 0–100) |
-| GithubInsightsCard | `githubAnalysis, loading` | Developer Profile Insights — language pills (LANG_COLORS map), suggested learning focus (LANGUAGE_TO_FOCUS lookup), activity signal strength bar (Strong/Moderate/Getting Started). **Used in MyProfilePage, not Dashboard.** |
+| Component | Purpose |
+|-----------|---------|
+| **LearningInsightsCard** | **Updated (Sprint 3):** 4-panel analytics (Descriptive / Diagnostic / Predictive / Prescriptive); improved empty states with actionable Link buttons (→ /roadmaps, → /roadmaps for quizzes) |
+| **SkillRadarChart** | **Updated (Sprint 3):** recharts RadarChart — dynamic axes (top 8 roadmaps by level, normalized 0–100); empty state distinguishes zero-skills users (→ /profile) from low-roadmap users (→ /roadmaps) |
+| GithubInsightsCard | Developer Profile Insights — language pills, suggested focus, activity signal |
 
 **Deleted:** `SkillSnapshotCard.tsx`, `SkillProfileCard.tsx`
 
 ## Dashboard Page Layout (`DashboardPage.tsx`)
 
-Data fetched: `getUserSkills()`, `getRoadmaps()`, `getGithubStatus()` (connected boolean only), `/recommend/recommend?current_roadmap_id=X` (after skills load).
+Data fetched: `getCurrentUser()` (onboarding_completed flag), `getUserSkills()` (with `xp`, `level`), `getRoadmaps()`, `getGithubStatus()`, `/recommend/recommend?current_roadmap_id=X`.
 
-1. **Continue Learning hero** — resumes last-accessed course (or "Start journey" CTA); skip suggestion messaging for recommended courses with high confidence
-2. **Recommended Next Step** — `recommendation.next_in_current_roadmap[0]` + alternatives `[1-2]`
-3. **Learning Paths** section:
-   - *In Progress* — `skills where progress_percent > 0 && < 100`
-   - *Explore* — roadmaps not in `skills[]` + `suggested_new_roadmaps` from recommendation
-4. **Learning Insights** + **Skill Radar Chart** — side-by-side 2-col grid (lg), stacked mobile
+**New users** (`onboarding_completed = False` AND no skills AND no GitHub):
+- **OnboardingWizard card** (dismissible) — 3-step wizard: import skills, pick roadmap, start learning
+
+All users:
+1. **Continue Learning hero** — resumes last-accessed course
+2. **Recommended Next Step** — `recommendation.next_in_current_roadmap[0]` + alternatives (context-aware CTAs)
+3. **Learning Paths** section — In Progress / Explore (improved empty states with actionable Links)
+4. **Learning Insights** + **Skill Radar Chart** — 2-col grid (lg), stacked mobile (improved empty states distinguish zero-skills vs low-roadmap users)
 
 ## My Profile Page Layout (`MyProfilePage.tsx`)
 
-Route: `/profile`. Data fetched: `getGithubStatus()`, `getGithubAnalysis()`, `checkResumeStatus()`.
+Route: `/profile`. Data: `getGithubStatus()`, `getGithubAnalysis()`, `checkResumeStatus()`, `getUserProfile()`, `getUserSkills()`.
 
-1. **Account** — Clerk `useUser()` avatar, display name, email
-2. **Connected Accounts** — GitHub connect/sync/disconnect; polls `sync_status` every 5 s when syncing
-3. **Resume** — PDF upload + status indicator (`checkResumeStatus()` on load + after upload)
-4. **Developer Profile** — `GithubInsightsCard` (language pills, suggested focus, activity signal)
-5. **Skill Profile** — Rebuild button → `POST /users/me/skills/rebuild`
-
-OAuth callback (`GET /github/callback`) redirects to `/profile?github=connected`; the page handles the toast.
+1. **Account** — Clerk `useUser()`
+2. **Learning Progress** — **NEW (Sprint 4):** 4 stat tiles (Level, Total XP, Courses Completed, Active Paths); XP progress bar with next-level info; per-roadmap mini bars (top 4)
+3. **Connected Accounts** — GitHub connect/sync/disconnect
+4. **Resume** — PDF upload + status
+5. **Developer Profile** — `GithubInsightsCard`
+6. **Skill Profile** — Rebuild button
 
 ## API Service Layer
 
 ### Core API (`src/services/api.ts`)
-Exports `BACKEND_URL`, `getClerkToken()`, `fetchWithAuth()` — used by all other API modules.
+Exports `BACKEND_URL`, `getClerkToken()`, `fetchWithAuth()`. **UPDATED:** `fetchWithAuth()` now retries 3x on 502/503/504 with exponential backoff (600ms, 1200ms, 2400ms). Handles Render cold starts transparently.
 
 ### Granular API Modules (`src/services/`)
 
-| Module | File | Backend Endpoints Hit |
-|--------|------|-----------------------|
-| courseApi | `src/services/courseApi.ts` | `/courses` |
-| roadmapApi | `src/services/roadmapApi.ts` | `/roadmaps` — `getRoadmaps()` returns `{id, topic_count}[]` |
-| dynamicRoadmapApi | `src/services/dynamicRoadmapApi.ts` | `/skill-graph/{roadmapId}/dynamic-status` (returns `DynamicCourseNode[]` with `prerequisites: CoursePrerequisiteRef[]`), `/events`, `/events/skip/{courseId}` — `getDynamicRoadmapStatus()`, `skipCourse()`, `unskipCourse()` |
-| progressApi | `src/services/progressApi.ts` | `/progress/*`, `/progress/all` |
-| userApi | `src/services/userApi.ts` | `/users/me/*` — `getUserSkills()`, `getUserProfile()`, `getUserSkillProfile()` |
-| githubApi | `src/services/githubApi.ts` | `/github/*` |
-| resumeApi | `src/services/resumeApi.ts` | `/resume/*` |
+| Module | File | Returns |
+|--------|------|---------|
+| **chatApi** | **`src/services/chatApi.ts`** | **`sendChatMessage(message): Promise<string>` → POST /chat via fetchWithAuth (NEW Sprint 5)** |
+| courseApi | `src/services/courseApi.ts` | `{id, title, required_level}[]` (not `difficulty_level`) |
+| roadmapApi | `src/services/roadmapApi.ts` | `{id, topic_count}[]` |
+| dynamicRoadmapApi | `src/services/dynamicRoadmapApi.ts` | `DynamicCourseNode[]` with `prerequisites: CoursePrerequisiteRef[]` |
+| progressApi | `src/services/progressApi.ts` | `{xp, level}` per roadmap |
+| userApi | `src/services/userApi.ts` | **NEW (Sprint 3):** `getCurrentUser()` → `{onboarding_completed, ...}`, `completeOnboarding()` → `void`; plus `getUserProfile()`, `getUserSkills()` |
+| githubApi | `src/services/githubApi.ts` | GitHub connection status |
+| resumeApi | `src/services/resumeApi.ts` | Resume upload status |
 
 ### Page-Level API (`src/app/services/`)
 
 | Module | File |
 |--------|------|
-| api.ts | `src/app/services/api.ts` — `getRecommendation(roadmapId)`, `getUser()`, `sendEvent()` |
-| auth.ts | `src/app/services/auth.ts` — `signup()`, `login()` |
-| quizApi.ts | `src/app/services/quizApi.ts` — `getSkillProfile()`, `getQuiz()`, `submitQuizAttempt()` |
+| api.ts | `getRecommendation()`, `getUser()`, `sendEvent()` |
+| auth.ts | `signup()`, `login()` |
+| quizApi.ts | `getQuiz()`, `submitQuizAttempt()` |
 
 ## Custom Hooks
 
-| Hook | File | Description |
-|------|------|-------------|
-| useProgress | `src/app/hooks/useProgress.ts` | localStorage progress tracker; `markResourceComplete`, `markResourceInProgress`, `getResourceProgress`, `getCourseProgress`, `getRoadmapProgress`, `getLastAccessed` |
-| useCourses | `src/hooks/useCourses.ts` | Fetches courses from backend |
-| useRoadmaps | `src/hooks/useRoadmaps.ts` | Fetches roadmap list via `getRoadmaps()` |
-| useUserSkills | `src/hooks/useUserSkills.ts` | Fetches user skills |
-| useRecommendation | `src/app/hooks/useRecommendation.ts` | Fetches `/recommend/recommend` (requires roadmapId) |
+| Hook | File | Purpose |
+|------|------|---------|
+| useProgress | `src/app/hooks/useProgress.ts` | localStorage progress tracker; **UPDATED:** `markResourceComplete()` + `markResourceInProgress()` now fire server-side events (`resource_completed`, `resource_viewed`) via `POST /events` (write-through pattern) |
+| useCourses | `src/hooks/useCourses.ts` | Fetches courses |
+| useRoadmaps | `src/hooks/useRoadmaps.ts` | Fetches roadmap list |
+| useUserSkills | `src/hooks/useUserSkills.ts` | Fetches user skills with `xp`, `level` |
+| useRecommendation | `src/app/hooks/useRecommendation.ts` | Fetches `/recommend/recommend` |
 
 ## Utility Modules
 
-| Module | File | Exports | Purpose |
-|--------|------|---------|---------|
-| xpUtils | `src/lib/xpUtils.ts` | `LEVEL_THRESHOLDS`, `LEVEL_LABELS`, `LEVEL_COLORS`, `eloToXP()`, `eloToLevel()`, `getLevelFromXP()`, `getCourseDifficultyInfo()` | Converts ELO ratings (800–2000) to XP (0–1000) and Levels (1–6); `eloToXP()` clamps at max 1000 XP; used by XPLevelBadge and CourseDifficultyBadge |
-| **roadmapUtils** | **`src/lib/roadmapUtils.ts`** | **NEW**: `sortDynamicCourses(courses, recommendedId)` | Sorts flat course list by difficulty ascending → recommended first → status order (completed/fast_tracked/skippable/unlocked/locked) |
+| Module | Exports | Purpose |
+|--------|---------|---------|
+| xpUtils | `LEVEL_THRESHOLDS`, `LEVEL_LABELS`, `LEVEL_COLORS`, `getLevelFromXP()`, `xpToLevel()`, `getCourseDifficultyInfo()` | XP (0–1000) + Level (1–6) logic; **Removed:** `eloToXP()`, `eloToLevel()` (backend now returns XP directly) |
+| roadmapUtils | `sortDynamicCourses(courses, recommendedId)` | Sorts courses by difficulty → recommended → status order |
 
 ## Auth Utilities
 
 | File | Purpose |
 |------|---------|
-| `src/auth/TokenSynchronizer.tsx` | Clerk JWT synchronization |
-| `src/auth/PostHogIdentifier.tsx` | PostHog user identification |
+| `src/auth/TokenSynchronizer.tsx` | Clerk JWT sync |
+| `src/auth/PostHogIdentifier.tsx` | PostHog identification |
 
 ## Styling & Animations
 
-- **Tailwind CSS** — `src/styles/tailwind.css` defines `fade-in` keyframe (opacity + translateY, 0.4s ease-out) used by `DataLoadingState` staged message
-- **animate-fade-in** — applied to loading state message at ≥5s elapsed
+- **Tailwind CSS** — `src/styles/tailwind.css` defines `fade-in` keyframe used by `DataLoadingState`
+- **animate-fade-in** — applied at ≥5s elapsed
 
 ## Testing
 
-- **vitest** — pure logic unit testing (zero-dependency, node environment)
+- **vitest** — unit testing (zero-dependency, node environment)
 - Test files: `src/lib/__tests__/xpUtils.test.ts` (40 tests), `src/lib/__tests__/roadmapUtils.test.ts` (10 tests)
-- Config: `vitest.config.ts` (minimal, `environment: node`)
+- Config: `vitest.config.ts` (minimal)
+
+## AI Mentor Page (`AIMentorPage.tsx`) **NEW (Sprint 5)**
+
+Route: `/ai-mentor`. Displays chat interface:
+- **Header:** MessageSquare icon + "AI Mentor" title + "Powered by your real learning data" subtitle
+- **Message list:** Scrollable message bubbles (user: right-aligned indigo, assistant: left-aligned dark)
+- **Typing indicator:** 3 animated dots while assistant is composing
+- **Input area:** Textarea (Enter to send, Shift+Enter for newline) + Send button
+- **Data:** Calls `sendChatMessage(text)` via `src/services/chatApi.ts` → `POST /chat` with Clerk auth
+- **Behavior:** Maintains conversation state; appends user message → loading state → fetches reply → appends assistant message; auto-scrolls to bottom
+
+## Key Updates (Sprint 4)
+
+**QuizPage Result Screen:**
+- Passed: Green celebration card → "View Learning Path →" + "Go to Dashboard" + "Retake Quiz"
+- Failed: Score card → "Retake Quiz" + "Back to Course"
+- XP + level-up badges displayed on success
+
+**CourseDetailPage:**
+- Uses `fetchWithAuth()` with retry on 502/503/504
+- Shows course description
+- Progress bar header with `getCourseProgress()` hook
+
+**MyProfilePage:**
+- Added "Learning Progress" section (2nd card)
+- Stats: Level, Total XP, Courses Done, Active Paths
+- XP bar + mini roadmap progress bars
 
 ## Key Dependencies
 
-- **recharts** 2.15.2 — RadarChart used in SkillRadarChart
-- **lucide-react** 0.487.0 — icons
+- **recharts** 2.15.2 — RadarChart
+- **lucide-react** 0.487.0 — icons (includes MessageSquare, Bot, User, Send, etc.)
 - **react-router-dom** 7.13.0 — routing
 - **@clerk/clerk-react** — auth
 - **@posthog/react** — analytics
-- **shadcn/ui** via radix-ui primitives + tailwind
 
 ## Constants
 
-`src/app/constants/routes.ts` — `ROUTES.COURSE(id)`, `ROUTES.ROADMAP(id)`, `ROUTES.DASHBOARD`, `ROUTES.QUIZ(courseId)`, `ROUTES.RESOURCE(courseId, resourceId)`
+`src/app/constants/routes.ts` — route builders for dashboard, roadmaps, courses, quizzes

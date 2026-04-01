@@ -16,9 +16,9 @@ const STATUS_ORDER: Record<string, number> = {
  * Sort a flat list of DynamicCourseNode for display.
  *
  * Priority:
- *   1. difficulty_level ascending (lower = earlier in the learning path)
- *   2. recommended course first within its difficulty tier
- *   3. non-locked before locked within the same difficulty tier
+ *   1. required_level ascending (lower = earlier in the learning path)
+ *   2. recommended course first within its required_level tier
+ *   3. non-locked before locked within the same required_level tier
  *   4. original array order preserved otherwise (stable)
  */
 export function sortDynamicCourses(
@@ -26,9 +26,9 @@ export function sortDynamicCourses(
   recommendedId: string | null
 ): DynamicCourseNode[] {
   return courses.slice().sort((a, b) => {
-    // 1. difficulty ascending (treat missing/0 as lowest difficulty)
-    const diffA = a.difficulty_level || 0;
-    const diffB = b.difficulty_level || 0;
+    // 1. required_level ascending (treat missing/0 as lowest level)
+    const diffA = a.required_level || 0;
+    const diffB = b.required_level || 0;
     if (diffA !== diffB) return diffA - diffB;
 
     // 2. recommended course first within the same difficulty tier

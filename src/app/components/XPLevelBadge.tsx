@@ -1,9 +1,9 @@
 import React from 'react';
-import { eloToLevel, eloToXP, LEVEL_THRESHOLDS, LEVEL_LABELS, LEVEL_COLORS } from '../../lib/xpUtils';
+import { getLevelFromXP, LEVEL_THRESHOLDS, LEVEL_LABELS, LEVEL_COLORS } from '../../lib/xpUtils';
 
 interface XPLevelBadgeProps {
-  /** Backend ELO value — displayed as XP/Level */
-  elo: number;
+  /** XP value (0–1000) returned directly from the API */
+  xp: number;
   /** Show the full progress bar with XP details. Defaults to true. */
   showProgress?: boolean;
   /** Optional extra className on the root wrapper */
@@ -13,12 +13,12 @@ interface XPLevelBadgeProps {
 // LEVEL_LABELS and LEVEL_COLORS are imported from xpUtils — no local redefinition needed.
 
 export const XPLevelBadge: React.FC<XPLevelBadgeProps> = ({
-  elo,
+  xp,
   showProgress = true,
   className = '',
 }) => {
-  const { level, currentXP, nextLevelXP, progressPercent } = eloToLevel(elo);
-  const totalXP = eloToXP(elo);
+  const { level, currentXP, nextLevelXP, progressPercent } = getLevelFromXP(xp);
+  const totalXP = xp;
   const colors = LEVEL_COLORS[level] ?? LEVEL_COLORS[1];
   const label = LEVEL_LABELS[level] ?? 'Master';
   const isMaxLevel = nextLevelXP === null;

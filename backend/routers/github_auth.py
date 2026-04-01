@@ -1,5 +1,8 @@
+import logging
 import os
 import secrets
+from datetime import datetime, timedelta
+
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from fastapi.responses import RedirectResponse
@@ -8,30 +11,46 @@ from dotenv import load_dotenv
 
 from core.clerk_auth import get_current_user
 from db.database import get_db
+from models.oauth_state import OAuthState
 from models.user import User
 from models.skill_weight import SkillWeight
 from services.github_skill_extractor import extract_github_skills
 from core.rate_limit import RateLimiter
 
 load_dotenv()
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/github", tags=["github-auth"])
 rate_limiter = RateLimiter(calls=5, period=60)
 
-# In-memory state store (production should use Redis)
-oauth_state_store = {}
+_STATE_TTL_MINUTES = 10
+
+
+def _purge_expired_states(db: Session) -> None:
+    """Delete expired OAuth state rows (best-effort, called on connect)."""
+    try:
+        db.query(OAuthState).filter(OAuthState.expires_at < datetime.utcnow()).delete()
+        db.commit()
+    except Exception as exc:
+        logger.warning("Failed to purge expired OAuth states: %s", exc)
+        db.rollback()
+
 
 @router.get("/connect", dependencies=[Depends(rate_limiter)])
-def github_connect(current_user: User = Depends(get_current_user)):
+def github_connect(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     CLIENT_ID = os.getenv("GITHUB_CLIENT_ID")
     REDIRECT_URI = os.getenv("GITHUB_REDIRECT_URI")
-    
+
     if not CLIENT_ID or not REDIRECT_URI:
         raise HTTPException(status_code=500, detail="GitHub OAuth not configured properly.")
 
+    _purge_expired_states(db)
+
     state = secrets.token_urlsafe(32)
-    oauth_state_store[state] = str(current_user.id)
-    
+    expires_at = datetime.utcnow() + timedelta(minutes=_STATE_TTL_MINUTES)
+    db.add(OAuthState(state=state, user_id=str(current_user.id), expires_at=expires_at))
+    db.commit()
+
     github_auth_url = (
         f"https://github.com/login/oauth/authorize?"
         f"client_id={CLIENT_ID}&"
@@ -41,16 +60,26 @@ def github_connect(current_user: User = Depends(get_current_user)):
     )
     return {"url": github_auth_url}
 
+
 @router.get("/callback")
 async def github_callback(
     code: str,
     state: str,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    user_id = oauth_state_store.pop(state, None)
-    if not user_id:
+    state_row = (
+        db.query(OAuthState)
+        .filter(OAuthState.state == state, OAuthState.expires_at > datetime.utcnow())
+        .first()
+    )
+    if not state_row:
         raise HTTPException(status_code=400, detail="Invalid or expired state")
+
+    user_id = state_row.user_id
+    # Consume (delete) the state — single-use
+    db.delete(state_row)
+    db.commit()
 
     user = db.query(User).filter(User.id == user_id).first()
     if not user:

@@ -11,7 +11,14 @@ class RateLimiter:
         self.history = {}
 
     async def __call__(self, request: Request):
-        client_ip = request.client.host if request.client else "unknown"
+        forwarded_for = request.headers.get("x-forwarded-for", "")
+        # On Render (and most single-hop proxies), the real client IP is appended
+        # as the last entry in X-Forwarded-For. Using the first entry is spoofable.
+        client_ip = (
+            forwarded_for.split(",")[-1].strip()
+            if forwarded_for
+            else (request.client.host if request.client else "unknown")
+        )
         now = time.time()
         
         if client_ip not in self.history:

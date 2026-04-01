@@ -10,6 +10,8 @@ import { BookOpen, Compass, ArrowRight, Map, Zap } from "lucide-react";
 import { usePostHog } from "@posthog/react";
 import LearningInsightsCard from "../../components/dashboard/LearningInsightsCard";
 import SkillRadarChart from "../../components/dashboard/SkillRadarChart";
+import { OnboardingWizard } from "../components/OnboardingWizard";
+import { getCurrentUser, completeOnboarding } from "../../services/userApi";
 
 
 interface RecommendedCourse {
@@ -129,13 +131,15 @@ export default function DashboardPage() {
   const [skills, setSkills] = useState<any[]>([]);
   const [roadmaps, setRoadmaps] = useState<Roadmap[]>([]);
   const [recommendation, setRecommendation] = useState<{
-    user_elo: number;
+    user_xp: number;
+    user_level: number;
     next_in_current_roadmap: RecommendedCourse[];
     suggested_new_roadmaps: string[];
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [githubConnected, setGithubConnected] = useState(false);
   const [recommendedCourseStatus, setRecommendedCourseStatus] = useState<DynamicCourseNode | null>(null);
+  const [onboardingCompleted, setOnboardingCompleted] = useState(true); // default true to avoid flash
   const hasFetchedInitialDataRef = React.useRef(false);
 
   const { getLastAccessed } = useProgress();
@@ -197,12 +201,14 @@ export default function DashboardPage() {
     hasFetchedInitialDataRef.current = true;
     const fetchDashboardData = async () => {
       try {
-        const [skillsResult, roadmapsResult] = await Promise.all([
+        const [skillsResult, roadmapsResult, , userMe] = await Promise.all([
           fetchSkills(),
           getRoadmaps().catch(() => [] as Roadmap[]),
           fetchGithubStatus(),
+          getCurrentUser().catch(() => ({ onboarding_completed: true })),
         ]);
         setRoadmaps(roadmapsResult);
+        setOnboardingCompleted(Boolean((userMe as any).onboarding_completed));
         await fetchRecommendation(skillsResult);
       } finally {
         setLoading(false);
@@ -211,7 +217,17 @@ export default function DashboardPage() {
     fetchDashboardData();
   }, []);
 
+  const handleDismissOnboarding = async () => {
+    setOnboardingCompleted(true);
+    try {
+      await completeOnboarding();
+    } catch {
+      // non-critical; UI already updated
+    }
+  };
+
   // ── Derived data ──────────────────────────────────────────────────
+  const isNewUser = !loading && !onboardingCompleted && skills.length === 0 && !githubConnected;
   const startedSkillIds = new Set(skills.map((s) => s.roadmap_id));
   const continueLearning = skills.filter(
     (s) => (s.progress_percent || 0) > 0 && (s.progress_percent || 0) < 100
@@ -247,6 +263,15 @@ export default function DashboardPage() {
             Your learning command center.
           </p>
         </div>
+
+        {/* ── ONBOARDING WIZARD (new users only) ── */}
+        {isNewUser && (
+          <OnboardingWizard
+            githubConnected={githubConnected}
+            hasSkills={skills.length > 0}
+            onDismiss={handleDismissOnboarding}
+          />
+        )}
 
         {/* ── 1. CONTINUE LEARNING HERO ── */}
         <div className="mb-10">
@@ -451,10 +476,26 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="dark-card p-6 text-center" style={{ borderStyle: "dashed" }}>
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                Start a roadmap to get a personalised recommendation.
-              </p>
+            <div className="dark-card p-6 flex flex-col sm:flex-row items-center justify-between gap-4" style={{ borderStyle: "dashed" }}>
+              <div>
+                <p className="text-sm font-medium mb-1" style={{ color: "var(--text-primary)" }}>
+                  No recommendations yet
+                </p>
+                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  {skills.length === 0 && !githubConnected
+                    ? "Connect GitHub or upload your resume, then pick a roadmap to get personalised suggestions."
+                    : "Start a learning path and your next recommended course will appear here."}
+                </p>
+              </div>
+              <button
+                onClick={() => navigate(skills.length === 0 && !githubConnected ? "/profile" : "/roadmaps")}
+                className="shrink-0 text-xs font-semibold px-4 py-2 rounded-lg transition-all whitespace-nowrap"
+                style={{ background: "rgba(99,102,241,0.12)", color: "#818cf8", border: "1px solid rgba(99,102,241,0.2)" }}
+                onMouseOver={(e) => { e.currentTarget.style.background = "rgba(99,102,241,0.2)"; }}
+                onMouseOut={(e) => { e.currentTarget.style.background = "rgba(99,102,241,0.12)"; }}
+              >
+                {skills.length === 0 && !githubConnected ? "Import Skills →" : "Browse Paths →"}
+              </button>
             </div>
           )}
         </div>
@@ -569,9 +610,17 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : explorePaths.length === 0 && extraSuggested.length === 0 ? (
-              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                You've explored all available roadmaps!
-              </p>
+              <div className="dark-card p-5 flex items-center gap-4" style={{ borderStyle: "dashed" }}>
+                <span className="text-xl shrink-0">🎉</span>
+                <div>
+                  <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
+                    You've explored all available roadmaps!
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>
+                    Check back soon — new learning paths are added regularly.
+                  </p>
+                </div>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {explorePaths.slice(0, 6).map((roadmap) => (

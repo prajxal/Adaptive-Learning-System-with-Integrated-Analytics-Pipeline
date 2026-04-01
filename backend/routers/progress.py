@@ -138,14 +138,17 @@ def get_progress(roadmap_id: str, current_user: User = Depends(get_current_user)
         .first()
     )
 
-    trust_score = skill.trust_score if skill and skill.trust_score is not None else 800.0
+    xp = getattr(skill, "xp", None) if skill else None
+    xp = int(xp) if xp is not None else 0
+    level = getattr(skill, "level", None) if skill else None
+    level = int(level) if level is not None else 1
     proficiency_level = skill.proficiency_level if skill and skill.proficiency_level is not None else 0.0
 
     progress_percent = (
         (completed_courses / total_courses) * 100
         if total_courses > 0 else 0.0
     )
-    
+
     # Clamp progress_percent to 100%
     progress_percent = min(100.0, progress_percent)
 
@@ -154,7 +157,8 @@ def get_progress(roadmap_id: str, current_user: User = Depends(get_current_user)
         "total_courses": total_courses,
         "completed_courses": completed_courses,
         "progress_percent": round(progress_percent, 2),
-        "trust_score": float(trust_score),
+        "xp": xp,
+        "level": level,
         "proficiency_level": float(proficiency_level)
     }
 
@@ -196,12 +200,16 @@ def get_all_progress(
 
     # 3. UserSkill stats for all roadmaps this user has data for (one query)
     skill_rows = (
-        db.query(UserSkill.skill_name, UserSkill.trust_score, UserSkill.proficiency_level)
+        db.query(UserSkill.skill_name, UserSkill.xp, UserSkill.level, UserSkill.proficiency_level)
         .filter(UserSkill.user_id == user_id)
         .all()
     )
-    skills: dict[str, tuple[float, float]] = {
-        str(row.skill_name): (float(row.trust_score or 800.0), float(row.proficiency_level or 0.0))
+    skills: dict[str, tuple[int, int, float]] = {
+        str(row.skill_name): (
+            int(row.xp or 0),
+            int(row.level or 1),
+            float(row.proficiency_level or 0.0),
+        )
         for row in skill_rows
     }
 
@@ -214,14 +222,15 @@ def get_all_progress(
     for rid in sorted(all_roadmap_ids):
         total = totals.get(rid, 0)
         done = completed.get(rid, 0)
-        trust_score, proficiency_level = skills.get(rid, (800.0, 0.0))
+        xp, level, proficiency_level = skills.get(rid, (0, 1, 0.0))
         progress_percent = min(100.0, round((done / total) * 100, 2)) if total > 0 else 0.0
         result.append({
             "roadmap_id": rid,
             "total_courses": total,
             "completed_courses": done,
             "progress_percent": progress_percent,
-            "trust_score": trust_score,
+            "xp": xp,
+            "level": level,
             "proficiency_level": proficiency_level,
         })
 

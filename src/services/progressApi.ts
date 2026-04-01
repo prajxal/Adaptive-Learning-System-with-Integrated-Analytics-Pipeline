@@ -3,7 +3,8 @@ export interface Progress {
     total_courses: number;
     completed_courses: number;
     progress_percent: number;
-    trust_score: number;
+    xp: number;
+    level: number;
     proficiency_level: number;
 }
 

@@ -1,4 +1,4 @@
-<!-- Generated: 2026-03-26 | Session: dynamic-roadmap + reason-metadata + bug-fixes -->
+<!-- Generated: 2026-04-01 | Sprint: 5 (AI Mentor) | No schema changes (feature is read-only query via MCP tools) -->
 
 # Data Codemap
 
@@ -10,17 +10,24 @@ PostgreSQL (Supabase), accessed via SQLAlchemy ORM. Engine configured in `backen
 
 ### User — `backend/models/user.py`
 Table: `users`. Central entity.
-Columns: `id` (PK), `clerk_user_id`, `email`, `password_hash`, `skill_level`, `engagement_score`, `global_elo_rating` (default 1000.0), `resume_status`, `github_*` fields, `google_*` fields, `avatar_url`, `created_at`.
+**New columns (Phase 2):** `total_xp` (int, default 0), `current_level` (int, default 1)
+**New columns (Sprint 3):** `onboarding_completed` (boolean, default False) — tracks if user has dismissed the onboarding wizard
+**Deprecated columns (retained for backward compatibility):** `global_elo_rating` (float, default 1000.0)
+Other columns: `id` (PK), `clerk_user_id`, `email`, `password_hash`, `skill_level`, `engagement_score`, `resume_status`, `github_*` fields, `google_*` fields, `avatar_url`, `created_at`.
 Relationships: `user_skills` → UserSkill, `events` → Event.
 
 ### UserSkill — `backend/models/user_skill.py`
 Table: `user_skills`. Per-roadmap skill rating.
-Columns: `id` (PK), `user_id` (FK→users), `skill_name`, `proficiency_level`, `elo_rating`, `trust_score`, `last_updated`.
-Unique: (`user_id`, `skill_name`) — constraint name: `uq_user_skill_user_skill_name`.
+**New columns (Phase 2):** `xp` (int, default 0), `level` (int, default 1)
+**Deprecated columns (retained for backward compatibility):** `elo_rating` (float, default 1000.0), `trust_score` (float, default 0.0)
+Other columns: `id` (PK), `user_id` (FK→users), `skill_name`, `proficiency_level`, `last_updated`.
+Unique: (`user_id`, `skill_name`) — constraint: `uq_user_skill_user_skill_name`.
 
 ### Course — `backend/models/course.py`
 Table: `courses`. Represents a topic node from roadmap.sh.
-Columns: `id` (PK, format: `{roadmap_id}:{node_id}`), `roadmap_id`, `node_id`, `title`, `description`, `difficulty_level` (default 1000.0), `created_at`.
+**New columns (Phase 2):** `required_level` (int, default 1) — integer 1–6 level requirement
+**Deprecated columns (retained for backward compatibility):** `difficulty_level` (float, default 1000.0) — ELO-based 800–2000 scale
+Other columns: `id` (PK, format: `{roadmap_id}:{node_id}`), `roadmap_id`, `node_id`, `title`, `description`, `created_at`.
 
 ### CoursePrerequisite — `backend/models/course_prerequisite.py`
 Table: `course_prerequisites`. Directed dependency edge.
@@ -34,7 +41,7 @@ Columns: `id` (PK), `course_id` (FK→courses), `resource_type`, `title`, `url`,
 ### Event — `backend/models/event.py`
 Table: `events`. Analytics event log.
 Columns: `id` (PK), `user_id` (FK→users), `event_type`, `course_id`, `roadmap_id`, `payload` (JSON), `created_at`.
-Enum: `event_type` is validated at application level via `Literal["course_completed", "course_skipped", "quiz_started", "quiz_failed", "resource_viewed"]`.
+Enum: `event_type` validated via `Literal["course_completed", "course_skipped", "quiz_started", "quiz_failed", "resource_viewed", "resource_completed"]`. **UPDATED (Sprint 2):** Added `resource_completed` type for fine-grained progress tracking.
 
 ### SkillWeight — `backend/models/skill_weight.py`
 Table: `skill_weights`. Raw ingestion weights from github/resume/quiz.
@@ -83,8 +90,22 @@ Location: `backend/migrations/` (Alembic config: `backend/alembic.ini`).
 
 | Migration | File | Changes |
 |-----------|------|---------|
-| Baseline schema | `versions/789321a178d7_baseline_schema.py` | |
-| Fix skill_weight PK | `versions/a1b2c3d4e5f6_fix_skill_weight_pk.py` | |
-| Drop skill_profile FK | `versions/b2c3d4e5f6a7_drop_skill_profile_fk.py` | |
-| Add clerk_user_id | `versions/75c7fce60b46_add_clerk_user_id_to_users.py` | |
-| Add unique constraint on user_skills | `versions/67604beb8fae_add_unique_constraint_on_user_skills_.py` | Named constraint `uq_user_skill_user_skill_name` on (`user_id`, `skill_name`) |
+| Baseline schema | `versions/789321a178d7_baseline_schema.py` | Initial schema |
+| Fix skill_weight PK | `versions/a1b2c3d4e5f6_fix_skill_weight_pk.py` | Corrected composite key |
+| Drop skill_profile FK | `versions/b2c3d4e5f6a7_drop_skill_profile_fk.py` | Removed invalid FK |
+| Add clerk_user_id | `versions/75c7fce60b46_add_clerk_user_id_to_users.py` | Clerk integration |
+| Add unique constraint on user_skills | `versions/67604beb8fae_add_unique_constraint_on_user_skills_.py` | Constraint: `uq_user_skill_user_skill_name` |
+| Add XP/Level columns | `versions/20260330_add_xp_level_columns.py` | Phase 2: Adds `users.total_xp`, `users.current_level`, `user_skills.xp`, `user_skills.level`, `courses.required_level` |
+| **Add onboarding_completed** | **`versions/20260331_add_onboarding_completed.py`** | **Sprint 3: Adds `users.onboarding_completed` (BOOLEAN default FALSE); backfills existing users to FALSE** |
+
+## Deprecated Fields & Backward Compatibility
+
+**ELO-based columns (retained for backward compatibility until Phase 3):**
+- `User.global_elo_rating` — Use `User.total_xp` + `User.current_level` instead
+- `UserSkill.elo_rating`, `UserSkill.trust_score` — Use `UserSkill.xp` + `UserSkill.level` instead
+- `Course.difficulty_level` — Use `Course.required_level` instead
+
+**Migration status:**
+- Phase 2 (complete): Schema migration adds new columns with defaults; old columns preserved
+- Phase 3 (future): Backfill ELO→XP data via `scripts/migrate_elo_to_xp.py`
+- Phase 4 (future): Drop deprecated columns

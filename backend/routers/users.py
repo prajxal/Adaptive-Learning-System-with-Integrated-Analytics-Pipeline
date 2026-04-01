@@ -9,6 +9,7 @@ from models.skill_profile import SkillProfile
 from models.course import Course
 from models.event import Event
 from models.user import User
+from models.user_skill import UserSkill
 from core.clerk_auth import get_current_user
 from services.github_skill_extractor import synthesize_all_skills_for_user
 
@@ -20,10 +21,19 @@ def get_user_me(current_user: User = Depends(get_current_user)):
         "id": current_user.id,
         "clerk_user_id": current_user.clerk_user_id,
         "email": current_user.email,
-        "global_elo_rating": current_user.global_elo_rating,
+        "total_xp": getattr(current_user, "total_xp", None) or 0,
+        "current_level": getattr(current_user, "current_level", None) or 1,
         "resume_status": current_user.resume_status,
-        "github_sync_status": current_user.github_sync_status
+        "github_sync_status": current_user.github_sync_status,
+        "onboarding_completed": bool(getattr(current_user, "onboarding_completed", False)),
     }
+
+
+@router.post("/me/onboarding/complete")
+def complete_onboarding(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    current_user.onboarding_completed = True
+    db.commit()
+    return {"status": "ok"}
 
 @router.get("/me/profile")
 def get_user_profile(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -56,7 +66,8 @@ def get_user_profile(current_user: User = Depends(get_current_user), db: Session
         top_skills = []
 
     return {
-        "global_elo_rating": current_user.global_elo_rating,
+        "total_xp": getattr(current_user, "total_xp", None) or 0,
+        "current_level": getattr(current_user, "current_level", None) or 1,
         "resume_status": current_user.resume_status,
         "github_sync_status": current_user.github_sync_status,
         "last_github_sync": current_user.last_github_sync,
@@ -102,18 +113,34 @@ def get_user_skills(current_user: User = Depends(get_current_user), db: Session 
         .all()
     completeds: dict[str, int] = {row.roadmap_id: int(row.completed) for row in completed_rows}
 
+    # Batch: UserSkill xp and level per roadmap (skill_name = roadmap_id)
+    user_skill_rows = (
+        db.query(UserSkill.skill_name, UserSkill.xp, UserSkill.level)
+        .filter(
+            UserSkill.user_id == user_id,
+            UserSkill.skill_name.in_(roadmap_ids),
+        )
+        .all()
+    )
+    user_skill_map: dict[str, tuple[int, int]] = {
+        str(row.skill_name): (int(row.xp or 0), int(row.level or 1))
+        for row in user_skill_rows
+    }
+
     for roadmap_id in roadmap_ids:
         roadmap_profiles = [p for p in profiles if p.roadmap_id == roadmap_id]
-        avg_confidence = sum(p.confidence for p in roadmap_profiles) / len(roadmap_profiles)
         avg_proficiency = sum(p.proficiency_level for p in roadmap_profiles) / len(roadmap_profiles)
 
         total_courses = totals.get(roadmap_id, 0)
         completed_courses = completeds.get(roadmap_id, 0)
         progress_percent = round((completed_courses / total_courses) * 100, 2) if total_courses > 0 else 0.0
 
+        xp, level = user_skill_map.get(roadmap_id, (0, 1))
+
         skill_list.append({
             "roadmap_id": roadmap_id,
-            "trust_score": float(avg_confidence * 1000) if avg_confidence else 800.0,
+            "xp": xp,
+            "level": level,
             "proficiency_level": float(avg_proficiency) if avg_proficiency else 0.0,
             "completed_courses": completed_courses,
             "total_courses": total_courses,

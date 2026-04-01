@@ -2,11 +2,11 @@ import React from 'react';
 import { getCourseDifficultyInfo } from '../../lib/xpUtils';
 
 interface CourseDifficultyBadgeProps {
-  difficultyLevel: number | null | undefined;
+  requiredLevel: number | null | undefined;
   /** When true, signals the course is locked (used as fallback when userLevel is absent). */
   isLocked?: boolean;
   /**
-   * The user's current XP level (1–6), derived from their ELO via eloToLevel().
+   * The user's current level (1–6).
    * When provided, "Requires Level N" is shown only if the user hasn't reached the
    * required level yet; otherwise the badge renders as neutral info.
    */
@@ -15,7 +15,7 @@ interface CourseDifficultyBadgeProps {
 }
 
 /**
- * Compact inline badge that renders a course's difficulty_level (800–2000 ELO scale)
+ * Compact inline badge that renders a course's required_level (integer 1–6)
  * as a human-readable required-level string with a colored accent dot.
  *
  * - Not locked:                          "Level Requirement: N — Label"
@@ -24,14 +24,14 @@ interface CourseDifficultyBadgeProps {
  * - Locked, userLevel not provided:      falls back to isLocked flag
  */
 export const CourseDifficultyBadge: React.FC<CourseDifficultyBadgeProps> = ({
-  difficultyLevel,
+  requiredLevel,
   isLocked = false,
   userLevel,
   className = '',
 }) => {
-  // Treat 0 the same as null/undefined — not a valid difficulty value
-  const safeDifficulty = difficultyLevel || null;
-  const { level, label, color } = getCourseDifficultyInfo(safeDifficulty);
+  // Treat 0 the same as null/undefined — not a valid level value
+  const safeLevel = requiredLevel || null;
+  const { level, label, color } = getCourseDifficultyInfo(safeLevel);
 
   // Show "Requires Level" only when the level is genuinely a gating factor.
   const levelIsBlocker =

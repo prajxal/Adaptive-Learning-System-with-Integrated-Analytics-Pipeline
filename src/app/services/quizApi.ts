@@ -32,6 +32,10 @@ export interface QuizSubmissionResponse {
     score: number;
     passed: boolean;
     message: string;
+    xp_awarded: number;
+    total_xp: number;
+    current_level: number;
+    leveled_up: boolean;
 }
 
 // --- Helper for Authorized Requests ---

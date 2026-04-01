@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { toast } from "sonner";
 import { useUser } from "@clerk/clerk-react";
 import { usePostHog } from "@posthog/react";
 import { Check, RefreshCw, Unlink } from "lucide-react";
@@ -7,6 +8,8 @@ import { getGithubAnalysis, getGithubStatus, redirectToGithubConnect } from "../
 import { uploadResume, checkResumeStatus as getResumeStatus } from "../../services/resumeApi";
 import BACKEND_URL, { fetchWithAuth } from "../../services/api";
 import GithubInsightsCard from "../../components/dashboard/GithubInsightsCard";
+import { getUserProfile, getUserSkills } from "../../services/userApi";
+import { getLevelFromXP, LEVEL_COLORS, LEVEL_LABELS } from "../../lib/xpUtils";
 
 interface GithubAnalysis {
   connected?: boolean;
@@ -111,6 +114,13 @@ export default function MyProfilePage() {
 
   const [loading, setLoading] = useState(true);
 
+  const [statsProfile, setStatsProfile] = useState<{
+    total_xp: number;
+    current_level: number;
+    completed_courses: number;
+  } | null>(null);
+  const [skillsList, setSkillsList] = useState<any[]>([]);
+
   const githubPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -156,7 +166,16 @@ export default function MyProfilePage() {
   useEffect(() => {
     const init = async () => {
       try {
-        await Promise.all([fetchGithubData(), fetchResumeStatus()]);
+        await Promise.all([
+          fetchGithubData(),
+          fetchResumeStatus(),
+          getUserProfile()
+            .then((p) => setStatsProfile({ total_xp: p.total_xp ?? 0, current_level: p.current_level ?? 1, completed_courses: p.completed_courses ?? 0 }))
+            .catch(() => {}),
+          getUserSkills()
+            .then((data) => setSkillsList(data.skills || []))
+            .catch(() => {}),
+        ]);
       } finally {
         setLoading(false);
       }
@@ -180,10 +199,11 @@ export default function MyProfilePage() {
               repo_count: (analysis as any)?.repo_count,
               language_count: analysis?.languages?.length,
             });
+            toast.success("GitHub sync complete");
             setTimeout(() => setGithubSuccess(false), 5000);
           } else {
             posthog?.capture("github_sync_failed");
-            alert("GitHub processing failed.");
+            toast.error("GitHub processing failed. Please try again.");
           }
         }
       } catch (err) {
@@ -200,7 +220,7 @@ export default function MyProfilePage() {
       await fetchGithubData();
     } catch {
       posthog?.capture("github_manual_sync_failed");
-      alert("GitHub sync failed. Please try again.");
+      toast.error("GitHub sync failed. Please try again.");
     } finally {
       setGithubActionLoading(false);
     }
@@ -214,9 +234,10 @@ export default function MyProfilePage() {
       setGithubConnected(false);
       setGithubUsername("");
       setGithubAnalysis(null);
+      toast.success("GitHub disconnected");
     } catch {
       posthog?.capture("github_disconnect_failed");
-      alert("GitHub disconnect failed. Please try again.");
+      toast.error("GitHub disconnect failed. Please try again.");
     } finally {
       setGithubActionLoading(false);
     }
@@ -229,19 +250,22 @@ export default function MyProfilePage() {
         const response = await getResumeStatus();
         const status = response?.status;
         setResumeStatus(status);
-        if (status === "completed") return;
+        if (status === "completed") {
+          toast.success("Resume processed successfully");
+          return;
+        }
         if (status === "failed") {
           posthog?.capture("resume_processing_failed");
-          alert("Resume processing failed. Please try again.");
+          toast.error("Resume processing failed. Please try again.");
           return;
         }
         await new Promise((resolve) => setTimeout(resolve, 3000));
       }
       posthog?.capture("resume_processing_failed");
-      alert("Resume processing timed out. Please try again.");
+      toast.error("Resume processing timed out. Please try again.");
     } catch (err: any) {
       posthog?.captureException(err);
-      alert("Resume processing failed. Please try again.");
+      toast.error("Resume processing failed. Please try again.");
     } finally {
       setResumeUploading(false);
     }
@@ -258,7 +282,7 @@ export default function MyProfilePage() {
       await pollResumeStatus();
     } catch (err: any) {
       posthog?.captureException(err);
-      alert("Resume upload failed");
+      toast.error("Resume upload failed. Please try again.");
       setResumeUploading(false);
     }
   }
@@ -272,7 +296,7 @@ export default function MyProfilePage() {
       posthog?.capture("skill_profile_rebuilt");
       setTimeout(() => setRebuildSuccess(false), 5000);
     } catch {
-      alert("Failed to rebuild skill profile. Please try again.");
+      toast.error("Failed to rebuild skill profile. Please try again.");
     } finally {
       setRebuildLoading(false);
     }
@@ -335,7 +359,95 @@ export default function MyProfilePage() {
           )}
         </div>
 
-        {/* ── 2. CONNECTED ACCOUNTS ── */}
+        {/* ── 2. LEARNING PROGRESS ── */}
+        {(statsProfile || loading) && (
+          <div className="dark-card p-6 mb-6">
+            <h2 className="title-font text-xl font-semibold mb-5">Learning Progress</h2>
+            {loading || !statsProfile ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="rounded-lg p-4 animate-pulse" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)' }}>
+                    <div className="h-3 w-16 rounded mb-2" style={{ backgroundColor: 'var(--border)' }} />
+                    <div className="h-7 w-12 rounded" style={{ backgroundColor: 'var(--border)' }} />
+                  </div>
+                ))}
+              </div>
+            ) : (() => {
+              const { level, progressPercent, currentXP, nextLevelXP } = getLevelFromXP(statsProfile.total_xp);
+              const colors = LEVEL_COLORS[level] ?? LEVEL_COLORS[1];
+              const label = LEVEL_LABELS[level] ?? 'Master';
+              const activeRoadmaps = skillsList.filter((s) => (s.progress_percent || 0) > 0 && (s.progress_percent || 0) < 100);
+              const topSkills = [...skillsList]
+                .filter((s) => (s.progress_percent || 0) > 0)
+                .sort((a, b) => (b.progress_percent || 0) - (a.progress_percent || 0))
+                .slice(0, 4);
+
+              return (
+                <>
+                  {/* Stats row */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                    {[
+                      { label: 'Level', value: label, accent: colors.accent },
+                      { label: 'Total XP', value: `${statsProfile.total_xp}`, accent: '#a5b4fc' },
+                      { label: 'Courses Done', value: `${statsProfile.completed_courses}`, accent: '#10b981' },
+                      { label: 'Active Paths', value: `${activeRoadmaps.length}`, accent: '#f59e0b' },
+                    ].map(({ label: l, value, accent }) => (
+                      <div key={l} className="rounded-lg p-4" style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)' }}>
+                        <p className="text-[11px] font-bold uppercase tracking-widest mb-1" style={{ color: 'var(--text-muted)' }}>{l}</p>
+                        <p className="title-font text-2xl font-bold" style={{ color: accent }}>{value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* XP progress bar */}
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between text-xs mb-1.5">
+                      <span style={{ color: colors.accent }}>Level {level} · {label}</span>
+                      <span style={{ color: 'var(--text-muted)' }}>
+                        {level < 6 ? `${currentXP} / ${nextLevelXP} XP to Level ${level + 1}` : 'Max Level'}
+                      </span>
+                    </div>
+                    <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${progressPercent}%`, backgroundColor: colors.accent }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Per-roadmap mini progress */}
+                  {topSkills.length > 0 && (
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--text-muted)' }}>Roadmap Progress</p>
+                      <div className="space-y-2.5">
+                        {topSkills.map((s) => (
+                          <div key={s.roadmap_id}>
+                            <div className="flex items-center justify-between text-xs mb-1">
+                              <span className="capitalize font-medium" style={{ color: 'var(--text-primary)' }}>
+                                {s.roadmap_id.replace(/-/g, ' ')}
+                              </span>
+                              <span style={{ color: 'var(--text-muted)' }}>
+                                {s.completed_courses}/{s.total_courses} · {Math.round(s.progress_percent || 0)}%
+                              </span>
+                            </div>
+                            <div className="w-full h-[3px] rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+                              <div
+                                className="h-full rounded-full"
+                                style={{ width: `${s.progress_percent || 0}%`, backgroundColor: 'var(--accent-primary)' }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* ── 3. CONNECTED ACCOUNTS ── */}
         <div className="dark-card p-6 mb-6">
           <div className="flex items-center justify-between mb-5">
             <h2 className="title-font text-xl font-semibold">Connected Accounts</h2>
@@ -412,7 +524,7 @@ export default function MyProfilePage() {
           </div>
         </div>
 
-        {/* ── 3. RESUME ── */}
+        {/* ── 4. RESUME ── */}
         <div className="dark-card p-6 mb-6">
           <h2 className="title-font text-xl font-semibold mb-1">Resume</h2>
           <p className="text-sm mb-5" style={{ color: "var(--text-muted)" }}>
@@ -452,12 +564,12 @@ export default function MyProfilePage() {
           </div>
         </div>
 
-        {/* ── 4. DEVELOPER PROFILE ── */}
+        {/* ── 5. DEVELOPER PROFILE ── */}
         <div className="mb-6">
           <GithubInsightsCard githubAnalysis={githubAnalysis} loading={loading} />
         </div>
 
-        {/* ── 5. SKILL PROFILE ── */}
+        {/* ── 6. SKILL PROFILE ── */}
         <div className="dark-card p-6">
           <div className="flex items-start justify-between gap-6 flex-wrap">
             <div>

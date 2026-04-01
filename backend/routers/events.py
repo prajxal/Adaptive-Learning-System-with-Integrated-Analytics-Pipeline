@@ -12,12 +12,13 @@ from models.skill_profile import SkillProfile
 from models.user import User
 from services.dynamic_roadmap_service import get_skip_threshold
 from services.skill_graph_service import is_skill_completed
+from services import xp_level_service
 
 router = APIRouter()
 
 
 class EventPayload(BaseModel):
-    event_type: Literal["course_completed", "course_skipped", "quiz_started", "quiz_failed", "resource_viewed"]
+    event_type: Literal["course_completed", "course_skipped", "quiz_started", "quiz_failed", "resource_viewed", "resource_completed"]
     course_id: str
     payload: dict | None = None
 
@@ -101,6 +102,13 @@ def create_event(payload: EventPayload, current_user: User = Depends(get_current
     db.flush()
 
     if payload.event_type == "course_completed" and roadmap_id:
+        xp_level_service.award_xp_for_completion(
+            user_id=str(current_user.id),
+            course_id=payload.course_id,
+            roadmap_id=roadmap_id,
+            db=db,
+        )
+        # award_xp_for_completion commits internally; also ensure proficiency update
         user_skill = (
             db.query(UserSkill)
             .filter(
@@ -108,31 +116,21 @@ def create_event(payload: EventPayload, current_user: User = Depends(get_current
             )
             .first()
         )
-
         if user_skill:
-            user_skill.trust_score = min(user_skill.trust_score + 50, 2000)
             user_skill.proficiency_level = min(user_skill.proficiency_level + 0.05, 1.0)
         else:
             new_skill = UserSkill(
                 user_id=str(current_user.id),
                 skill_name=roadmap_id,
-                trust_score=850,
+                xp=0,
+                level=1,
                 proficiency_level=0.1,
             )
             db.add(new_skill)
-
-    elif payload.event_type == "quiz_failed" and roadmap_id:
-        user_skill = (
-            db.query(UserSkill)
-            .filter(
-                UserSkill.user_id == str(current_user.id), UserSkill.skill_name == roadmap_id
-            )
-            .first()
-        )
-        if user_skill:
-            user_skill.trust_score = max(user_skill.trust_score - 25, 0)
-
-    db.commit()
+        db.commit()
+    else:
+        # quiz_failed: XP never goes down — no trust_score penalty
+        db.commit()
     return {"status": "event received"}
 
 

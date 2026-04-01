@@ -316,7 +316,7 @@ def compute_dynamic_roadmap(user_id: str, roadmap_id: str, db: Session) -> dict[
             "reason": reason,
             "confidence": confidence,
             "proficiency": proficiency,
-            "difficulty_level": int(course.difficulty_level) if course.difficulty_level is not None else 0,
+            "required_level": int(getattr(course, "required_level", None) or 1),
             "can_skip": status == STATE_SKIPPABLE,
             "can_fast_track": status == STATE_FAST_TRACKED,
             "prerequisites": prereq_list,
@@ -331,8 +331,8 @@ def compute_dynamic_roadmap(user_id: str, roadmap_id: str, db: Session) -> dict[
     has_active = any(rc["status"] in active_states for rc in resolved_courses)
 
     if not has_active and resolved_courses:
-        # Find the lowest-difficulty course from the in-memory list
-        lowest = min(courses, key=lambda c: (c.difficulty_level if c.difficulty_level is not None else 0, c.id))
+        # Find the lowest-required-level course from the in-memory list
+        lowest = min(courses, key=lambda c: (getattr(c, "required_level", None) or 1, c.id))
         for rc in resolved_courses:
             if rc["skill_id"] == lowest.id:
                 rc["status"] = STATE_UNLOCKED

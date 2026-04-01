@@ -2,38 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   LEVEL_THRESHOLDS,
   LEVEL_LABELS,
-  eloToXP,
   getLevelFromXP,
-  eloToLevel,
+  xpToLevel,
   getCourseDifficultyInfo,
 } from '../xpUtils';
-
-// ─── eloToXP ────────────────────────────────────────────────────────────────
-
-describe('eloToXP', () => {
-  it('maps ELO 1000 (baseline) to 0 XP', () => {
-    expect(eloToXP(1000)).toBe(0);
-  });
-
-  it('maps ELO 1500 to 500 XP', () => {
-    expect(eloToXP(1500)).toBe(500);
-  });
-
-  it('maps ELO 2000 to 1000 XP (max)', () => {
-    expect(eloToXP(2000)).toBe(1000);
-  });
-
-  it('clamps ELO below 1000 to 0 XP', () => {
-    expect(eloToXP(800)).toBe(0);
-    expect(eloToXP(0)).toBe(0);
-    expect(eloToXP(-500)).toBe(0);
-  });
-
-  it('clamps ELO above 2000 to 1000 XP', () => {
-    expect(eloToXP(3000)).toBe(1000);
-    expect(eloToXP(9999)).toBe(1000);
-  });
-});
 
 // ─── getLevelFromXP ─────────────────────────────────────────────────────────
 
@@ -103,35 +75,13 @@ describe('getLevelFromXP', () => {
   });
 });
 
-// ─── eloToLevel ─────────────────────────────────────────────────────────────
+// ─── xpToLevel (alias) ──────────────────────────────────────────────────────
 
-describe('eloToLevel', () => {
-  it('maps ELO 1000 to Level 1', () => {
-    expect(eloToLevel(1000).level).toBe(1);
-  });
-
-  it('maps ELO 2000 to Level 6', () => {
-    expect(eloToLevel(2000).level).toBe(6);
-  });
-
-  it('clamps sub-baseline ELO (800) to Level 1', () => {
-    expect(eloToLevel(800).level).toBe(1);
-  });
-
-  it('maps ELO 1150 to Level 2 (XP=150, threshold boundary)', () => {
-    expect(eloToLevel(1150).level).toBe(2);
-  });
-
-  it('maps ELO 1400 to Level 3', () => {
-    expect(eloToLevel(1400).level).toBe(3);
-  });
-
-  it('maps ELO 1650 to Level 4', () => {
-    expect(eloToLevel(1650).level).toBe(4);
-  });
-
-  it('maps ELO 1850 to Level 5', () => {
-    expect(eloToLevel(1850).level).toBe(5);
+describe('xpToLevel', () => {
+  it('is an alias for getLevelFromXP and returns the same result', () => {
+    expect(xpToLevel(0)).toEqual(getLevelFromXP(0));
+    expect(xpToLevel(150)).toEqual(getLevelFromXP(150));
+    expect(xpToLevel(1000)).toEqual(getLevelFromXP(1000));
   });
 });
 
@@ -144,24 +94,6 @@ describe('monotonic level progression', () => {
       const { level } = getLevelFromXP(xp);
       expect(level).toBeGreaterThanOrEqual(prevLevel);
       prevLevel = level;
-    }
-  });
-
-  it('level never decreases as ELO increases (step 10)', () => {
-    let prevLevel = 0;
-    for (let elo = 800; elo <= 2200; elo += 10) {
-      const { level } = eloToLevel(elo);
-      expect(level).toBeGreaterThanOrEqual(prevLevel);
-      prevLevel = level;
-    }
-  });
-
-  it('XP never decreases as ELO increases (step 10)', () => {
-    let prevXP = 0;
-    for (let elo = 800; elo <= 2200; elo += 10) {
-      const xp = eloToXP(elo);
-      expect(xp).toBeGreaterThanOrEqual(prevXP);
-      prevXP = xp;
     }
   });
 });
@@ -184,51 +116,57 @@ describe('getCourseDifficultyInfo', () => {
     expect(info).toEqual({ level: 1, label: 'Unknown', color: '#666' });
   });
 
-  it('maps ELO 800 to Level 1 / Novice', () => {
-    const info = getCourseDifficultyInfo(800);
+  it('maps level 1 to Novice', () => {
+    const info = getCourseDifficultyInfo(1);
     expect(info.level).toBe(1);
     expect(info.label).toBe('Novice');
   });
 
-  it('maps ELO 1000 to Level 1 / Novice', () => {
-    const info = getCourseDifficultyInfo(1000);
-    expect(info.level).toBe(1);
-    expect(info.label).toBe('Novice');
-  });
-
-  it('maps ELO 1150 to Level 2 / Apprentice', () => {
-    const info = getCourseDifficultyInfo(1150);
+  it('maps level 2 to Apprentice', () => {
+    const info = getCourseDifficultyInfo(2);
     expect(info.level).toBe(2);
     expect(info.label).toBe('Apprentice');
   });
 
-  it('maps ELO 1400 to Level 3 / Practitioner', () => {
-    const info = getCourseDifficultyInfo(1400);
+  it('maps level 3 to Practitioner', () => {
+    const info = getCourseDifficultyInfo(3);
     expect(info.level).toBe(3);
     expect(info.label).toBe('Practitioner');
   });
 
-  it('maps ELO 1650 to Level 4 / Proficient', () => {
-    const info = getCourseDifficultyInfo(1650);
+  it('maps level 4 to Proficient', () => {
+    const info = getCourseDifficultyInfo(4);
     expect(info.level).toBe(4);
     expect(info.label).toBe('Proficient');
   });
 
-  it('maps ELO 1850 to Level 5 / Expert', () => {
-    const info = getCourseDifficultyInfo(1850);
+  it('maps level 5 to Expert', () => {
+    const info = getCourseDifficultyInfo(5);
     expect(info.level).toBe(5);
     expect(info.label).toBe('Expert');
   });
 
-  it('maps ELO 2000 to Level 6 / Master', () => {
-    const info = getCourseDifficultyInfo(2000);
+  it('maps level 6 to Master', () => {
+    const info = getCourseDifficultyInfo(6);
     expect(info.level).toBe(6);
     expect(info.label).toBe('Master');
   });
 
-  it('returns a non-empty color string for all levels', () => {
-    [800, 1150, 1400, 1650, 1850, 2000].forEach((elo) => {
-      const { color } = getCourseDifficultyInfo(elo);
+  it('clamps level above 6 to 6 (Master)', () => {
+    const info = getCourseDifficultyInfo(10);
+    expect(info.level).toBe(6);
+    expect(info.label).toBe('Master');
+  });
+
+  it('clamps level below 1 to 1 (Novice)', () => {
+    const info = getCourseDifficultyInfo(0);
+    // 0 is treated as null/missing — returns Unknown fallback
+    expect(info).toEqual({ level: 1, label: 'Unknown', color: '#666' });
+  });
+
+  it('returns a non-empty color string for all levels 1–6', () => {
+    [1, 2, 3, 4, 5, 6].forEach((level) => {
+      const { color } = getCourseDifficultyInfo(level);
       expect(typeof color).toBe('string');
       expect(color.length).toBeGreaterThan(0);
     });

@@ -5,10 +5,9 @@ import AppBreadcrumb from "../components/AppBreadcrumb";
 import DataLoadingState from "../components/DataLoadingState";
 import CourseDetailSkeleton from "../components/skeletons/CourseDetailSkeleton";
 
-import { getClerkToken } from "../../services/api";
+import BACKEND_URL, { fetchWithAuth } from "../../services/api";
 import { useProgress } from "../hooks/useProgress";
 import { getSkillProfile, SkillProfile } from "../services/quizApi";
-import BACKEND_URL from "../../services/api";
 import { getDynamicRoadmapStatus } from "../../services/dynamicRoadmapApi";
 import { PlayCircle, FileText, BookOpen } from "lucide-react";
 import { usePostHog } from "@posthog/react";
@@ -39,53 +38,36 @@ export default function CourseDetailPage() {
   useEffect(() => {
     if (!courseId) return;
 
-    getClerkToken().then(token => {
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
+    const roadmapId = courseId.split(":")[0];
 
-      fetch(`${BACKEND_URL}/courses/${courseId}`, { headers })
-        .then((res) => res.json())
-        .then((data) => { setCourse(data); setCourseLoading(false); })
-        .catch(() => { setCourse(null); setCourseLoading(false); });
+    fetchWithAuth(`${BACKEND_URL}/courses/${courseId}`)
+      .then((res) => res.json())
+      .then((data) => { setCourse(data); setCourseLoading(false); })
+      .catch(() => { setCourse(null); setCourseLoading(false); });
 
-      fetch(`${BACKEND_URL}/learning-path/${courseId}`, { headers })
-        .then((res) => res.json())
-        .then((data) => {
-          setLearningPath(data.path || []);
-          setPathLoading(false);
-        })
-        .catch(() => setPathLoading(false));
+    fetchWithAuth(`${BACKEND_URL}/learning-path/${courseId}`)
+      .then((res) => res.json())
+      .then((data) => { setLearningPath(data.path || []); setPathLoading(false); })
+      .catch(() => setPathLoading(false));
 
-      const roadmapId = courseId.split(":")[0];
+    getDynamicRoadmapStatus(roadmapId)
+      .then((data) => {
+        const currentSkill = data.courses.find((c) => c.skill_id === courseId);
+        if (currentSkill) {
+          const rawStatus = currentSkill.status;
+          setSkillStatus(
+            rawStatus === "completed" ? "completed" : rawStatus === "locked" ? "locked" : "unlocked"
+          );
+        }
+      })
+      .catch(() => setSkillStatus("locked"));
 
-      // Fetch Skill Graph Status
-      getDynamicRoadmapStatus(roadmapId)
-        .then((data) => {
-          const currentSkill = data.courses.find((c) => c.skill_id === courseId);
-          if (currentSkill) {
-            const rawStatus = currentSkill.status;
-            const mapped =
-              rawStatus === "completed"
-                ? "completed"
-                : rawStatus === "locked"
-                ? "locked"
-                : "unlocked"; // covers unlocked, skippable, fast_tracked
-            setSkillStatus(mapped);
-          }
-        })
-        .catch(() => setSkillStatus("locked"));
+    getSkillProfile(courseId).then(setSkillProfile);
 
-      // Fetch Adaptive Skill Profile
-      getSkillProfile(courseId).then(setSkillProfile);
-
-      fetch(`${BACKEND_URL}/courses/${courseId}/resources`, { headers })
-        .then((res) => res.json())
-        .then((data) => {
-          setResources(data || { primary: null, additional: [] });
-          setResourcesLoading(false);
-        })
-        .catch(() => setResourcesLoading(false));
-    });
+    fetchWithAuth(`${BACKEND_URL}/courses/${courseId}/resources`)
+      .then((res) => res.json())
+      .then((data) => { setResources(data || { primary: null, additional: [] }); setResourcesLoading(false); })
+      .catch(() => setResourcesLoading(false));
   }, [courseId]);
 
   const getResourceIcon = (type: string) => {
@@ -116,6 +98,7 @@ export default function CourseDetailPage() {
   }
 
   const totalRes = (resources.primary ? 1 : 0) + (resources.additional?.length || 0);
+  const courseProgress = getCourseProgress(course?.id ?? "", totalRes);
 
   return (
     <div className="course-detail-root">
@@ -236,9 +219,29 @@ export default function CourseDetailPage() {
           <h1 className="title-font text-4xl md:text-5xl font-bold tracking-tight mb-3" style={{ color: 'var(--text-primary)' }}>
             {course.title}
           </h1>
-          <p className="text-lg" style={{ color: 'var(--text-muted)' }}>
-            {totalRes} resources in this course
-          </p>
+          {course.description && (
+            <p className="text-base mb-4 max-w-2xl leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+              {course.description}
+            </p>
+          )}
+          <div className="flex items-center gap-4 flex-wrap">
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              {totalRes} resource{totalRes !== 1 ? 's' : ''} in this course
+            </p>
+            {totalRes > 0 && courseProgress.completedCount > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="w-24 h-[3px] rounded-full overflow-hidden" style={{ backgroundColor: 'var(--border)' }}>
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${courseProgress.percentage}%`, backgroundColor: 'var(--accent-primary)' }}
+                  />
+                </div>
+                <span className="text-xs font-medium" style={{ color: 'var(--accent-primary)' }}>
+                  {courseProgress.completedCount}/{totalRes} done
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Skill Status Banner */}

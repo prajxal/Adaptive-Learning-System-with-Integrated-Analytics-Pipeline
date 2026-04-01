@@ -21,7 +21,8 @@ def recommend(
 ):
     _t0 = time.perf_counter()
     user_id = current_user.id
-    user_elo = current_user.global_elo_rating or 1000.0
+    user_level = getattr(current_user, "current_level", None) or 1
+    user_xp = getattr(current_user, "total_xp", None) or 0
 
     # Query 1 — completed course IDs for this user
     completed_ids = get_completed_course_ids(str(user_id), db)
@@ -29,14 +30,14 @@ def recommend(
     # Query 2 — all courses across all roadmaps
     all_courses = db.query(Course).all()
 
-    # Group by roadmap and identify candidates (elo band + not completed)
+    # Group by roadmap and identify candidates (level band + not completed)
     courses_by_roadmap: dict[str, list[Course]] = {}
     candidate_ids: list[str] = []
     for c in all_courses:
         courses_by_roadmap.setdefault(c.roadmap_id, []).append(c)
         if (
             c.id not in completed_ids
-            and (user_elo - 150 <= (c.difficulty_level or 1000.0) <= user_elo + 150)
+            and (getattr(c, "required_level", None) or 1) <= user_level + 1
         ):
             candidate_ids.append(c.id)
 
@@ -56,17 +57,18 @@ def recommend(
             c for c in courses_by_roadmap.get(roadmap_id, [])
             if c.id in prereq_map and prereq_map[c.id].issubset(completed_ids)
         ]
-        ready.sort(key=lambda c: abs((c.difficulty_level or 1000.0) - user_elo))
+        # Sort by required_level ascending (lower required level first)
+        ready.sort(key=lambda c: (getattr(c, "required_level", None) or 1, c.id))
         return ready[:limit]
 
     # Stage 1 — next steps in the current roadmap
     next_nodes = get_ready_for_roadmap(current_roadmap_id, 5)
 
-    # Cold start fallback: no ready nodes → return easiest courses
+    # Cold start fallback: no ready nodes → return lowest-level courses
     if not next_nodes:
         next_nodes = sorted(
             courses_by_roadmap.get(current_roadmap_id, []),
-            key=lambda c: c.difficulty_level or 0,
+            key=lambda c: (getattr(c, "required_level", None) or 1, c.id),
         )[:5]
 
     # Query 4 — skill profile confidence for roadmap suggestions
@@ -92,12 +94,13 @@ def recommend(
 
     print(f"[PERF] GET /recommend/recommend took {(time.perf_counter() - _t0) * 1000:.0f}ms (roadmaps checked: {len(courses_by_roadmap)})")
     return {
-        "user_elo": current_user.global_elo_rating,
+        "user_level": user_level,
+        "user_xp": user_xp,
         "next_in_current_roadmap": [
             {
                 "id": c.id,
                 "title": c.title,
-                "difficulty": c.difficulty_level,
+                "required_level": getattr(c, "required_level", None) or 1,
                 "roadmap_id": c.roadmap_id,
             }
             for c in next_nodes

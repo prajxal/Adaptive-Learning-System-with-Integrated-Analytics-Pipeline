@@ -1,133 +1,752 @@
-CODEMAP UPDATE REPORT
-=====================
-Date: 2026-03-30
-Session: Dynamic roadmap prerequisites + user level awareness in locked course display
+================================================================================
+CODEMAP UPDATE REPORT: Sprint 1+2 Completion (Quiz XP + Error Handling + UI)
+Generated: 2026-03-31
+================================================================================
 
-FILES UPDATED:
-==============
+## EXECUTIVE SUMMARY
 
-1. docs/CODEMAPS/architecture.md
-   - Updated header: "dynamic-roadmap prerequisites, course lock reasons, user level awareness"
-   - Section "Dynamic roadmap status": clarified `prerequisites: [{id, title, completed}]` field
-   - Section "XP & Level Display System":
-     * Updated `eloToXP()` formula with explicit max clamping (1000 XP)
-     * Enhanced `CourseDifficultyBadge` description: `userLevel` prop shows "Requires Level N" when user hasn't met requirement
-   - NEW section: "Lock Reason Callout Pattern" explaining:
-     * Amber callout + prerequisite list rendering
-     * Difficulty badge with user level context
-     * Frontend integration flow
+The LearnPathAI project has completed Sprints 1 and 2. Sprint 1 delivered quiz
+XP/level rewards with toast notifications and fixed answer leakage. Sprint 2
+added error boundary handling, refined progress UI with search/filters, and
+implemented server-side progress event tracking. All codemaps in docs/CODEMAPS/
+have been updated to reflect these features.
 
-2. docs/CODEMAPS/backend.md
-   - Updated header: "dynamic-roadmap prerequisites, CoursePrerequisiteRef in responses"
-   - Endpoint `/skill-graph/{roadmap_id}/dynamic-status`: documented `prerequisites` field
-   - Service "Dynamic Roadmap": clarified `prerequisites` field in return value
+This report documents files added/removed/modified since 2026-03-30.
 
-3. docs/CODEMAPS/frontend.md
-   - Updated header: "XP/Level system, course difficulty badges, enhanced loading UX"
-   - Component "CourseDifficultyBadge": added `userLevel` param description
-   - Page "RoadmapDetailPage": expanded to describe:
-     * Parallel fetch of `getUserProfile()` for ELO
-     * Derivation of `userLevel` via `eloToLevel()`
-     * Locked card rendering: amber callout + prerequisite list + difficulty badge
-   - API module "dynamicRoadmapApi": documented `CoursePrerequisiteRef` interface
-   - NEW utility "roadmapUtils": `sortDynamicCourses(courses, recommendedId)`
-   - NEW section: "Testing" with vitest + test files (50 unit tests total)
+================================================================================
+## FILES ADDED (New XP/Level Infrastructure)
+================================================================================
 
-CODE CHANGES REFLECTED:
-=======================
+BACKEND:
+  - backend/services/xp_level_service.py
+    • Public API: award_xp_for_completion(), award_xp_for_quiz(),
+      get_user_global_xp(), get_user_level()
+    • Pure helpers: compute_level_from_xp(), compute_xp_for_course()
+    • Level thresholds: [0, 150, 400, 650, 850, 1000] (6 levels)
+    • XP formula: depth * 20 + 10
+    • Quiz scoring: ≥80% → full XP, ≥50% → half XP, <50% → 0 XP
+    • Mutates both User.total_xp + User.current_level and
+      UserSkill.xp + UserSkill.level in one call
 
-Backend Changes:
-----------------
-- backend/services/dynamic_roadmap_service.py (line 56–100+)
-  * Each course response now includes `prerequisites: [{id, title, completed}]`
-  * Built from in-memory prerequisite data (query Q3)
-  * Cross-roadmap prerequisite IDs silently skipped
-  * No additional DB queries
+  - backend/services/course_level_service.py
+    • compute_required_level(topological_depth: int) → int (1–6)
+    • Maps graph depth to learner-friendly level tiers
 
-Frontend Changes:
------------------
-- src/services/dynamicRoadmapApi.ts (lines 1–71)
-  * NEW: `CoursePrerequisiteRef` interface: {id, title, completed}
-  * Updated: `DynamicCourseNode` includes `prerequisites: CoursePrerequisiteRef[]`
+  - backend/migrations/versions/20260330_add_xp_level_columns.py
+    • Additive migration; all new columns have defaults
+    • users: +total_xp (int, default 0), +current_level (int, default 1)
+    • user_skills: +xp (int, default 0), +level (int, default 1)
+    • courses: +required_level (int, default 1)
+    • Deprecated columns retained: global_elo_rating, elo_rating,
+      trust_score, difficulty_level
 
-- src/app/pages/RoadmapDetailPage.tsx (lines 1–80+)
-  * NEW: Fetches `getUserProfile()` in parallel with `getDynamicRoadmapStatus()`
-  * NEW: State variable `userLevel` derived via `eloToLevel(getLevelFromXP(xp))`
-  * Renders locked cards with:
-    - Amber callout explaining locked state
-    - Full prerequisite list from API (✓ completed / "Start Learning →" pending)
-    - `CourseDifficultyBadge` with `userLevel` prop
+  - backend/scripts/migrate_elo_to_xp.py
+    • One-time backfill script (Phase 3): converts existing ELO to XP
+    • Safe to run multiple times (idempotent)
 
-- src/app/components/CourseDifficultyBadge.tsx (lines 1–67)
-  * NEW: `userLevel?: number` prop (1–6)
-  * Logic: Show "Requires Level N" only when user level < course requirement
-  * Otherwise: Show neutral "Level Requirement: N — Label"
-  * Props: difficultyLevel, isLocked, userLevel, className
+FRONTEND:
+  - src/app/components/CourseDifficultyBadge.tsx
+    • New component: renders course required_level (1–6) as "Lvl N — Label"
+    • Optional userLevel prop: shows "Requires Level N" only if user hasn't met requirement
+    • Props changed: difficultyLevel (number) instead of elo, userLevel (optional)
 
-- src/lib/xpUtils.ts (lines 1–60+)
-  * Updated `eloToXP()`: explicit `Math.min(1000, Math.max(0, elo - 1000))`
-  * All existing functions preserved (eloToLevel, getLevelFromXP, etc.)
+  - src/app/components/XPLevelBadge.tsx
+    • New component: displays user xp (0–1000) + level (1–6) badge
+    • Monospace font, glow effect, progress bar
+    • Props changed: xp (number) instead of elo
 
-- src/lib/roadmapUtils.ts (NEW, lines 1–47)
-  * `sortDynamicCourses(courses, recommendedId)` exported
-  * Sort priority:
-    1. difficulty_level ascending
-    2. recommended course first within tier
-    3. status order (completed/fast_tracked/skippable/unlocked/locked)
-    4. original array order (stable sort)
+  - src/app/components/DataLoadingState.tsx
+    • New component: staged loading state for cold-start UX
+    • Shows skeleton only (<3s), "Waking up..." message (5–14s),
+      "Preparing..." message (15s+)
+    • Uses fade-in animation from tailwind.css
 
-- vitest.config.ts (NEW, lines 1–8)
-  * Minimal config: `environment: node`
-  * Used for pure utility function testing
+  - src/app/components/skeletons/ (entire directory)
+    • RoadmapCatalogSkeleton.tsx, RoadmapDetailSkeleton.tsx,
+      CourseDetailSkeleton.tsx, ResourceViewerSkeleton.tsx
+    • Wrapped by DataLoadingState for progressive loading
 
-- src/lib/__tests__/xpUtils.test.ts (NEW)
-  * 40 unit tests for XP/level conversion functions
-  * Coverage: eloToXP, eloToLevel, getLevelFromXP, getCourseDifficultyInfo
+  - src/lib/xpUtils.ts
+    • Level thresholds: [0, 150, 400, 650, 850, 1000]
+    • Exports: getLevelFromXP(), xpToLevel(), getCourseDifficultyInfo(),
+      LEVEL_LABELS, LEVEL_COLORS
+    • Removed: eloToXP(), eloToLevel() (no longer needed; backend returns XP)
+    • Backend now returns raw XP values directly (0–1000)
 
-- src/lib/__tests__/roadmapUtils.test.ts (NEW)
-  * 10 unit tests for course sorting logic
-  * Coverage: sortDynamicCourses priority ordering
+  - src/lib/roadmapUtils.ts
+    • New: sortDynamicCourses(courses, recommendedId)
+    • Sorts flat course list by difficulty ascending → recommended first →
+      status order (completed/fast_tracked/skippable/unlocked/locked)
 
-ARCHITECTURE CHANGES:
-====================
+  - vitest.config.ts
+    • Test configuration (minimal, node environment)
 
-1. Dynamic API Response Enrichment
-   - `/skill-graph/{roadmap_id}/dynamic-status` now includes `prerequisites`
-   - Eliminates separate prerequisite lookup call from frontend
-   - Enables rich lock-reason UI without cascading queries
-   - Zero additional backend load (uses existing Q3 data)
+  - src/lib/__tests__/ (entire directory)
+    • xpUtils.test.ts: 40 tests for XP/level conversions
+    • roadmapUtils.test.ts: 10 tests for course sorting logic
 
-2. User Level Context in UI
-   - RoadmapDetailPage derives user level from global_elo_rating
-   - Difficulty badges become "level aware": show "Requires Level N" only when relevant
-   - Reduces cognitive load for users by explaining primary blocker
-   - Example: "Locked — 2 prerequisites remaining" vs "Requires Level 4 — Practitioner"
+================================================================================
+## FILES MODIFIED (Schema & API Changes)
+================================================================================
 
-3. Frontend Sorting & Display Order
-   - New `roadmapUtils.sortDynamicCourses()` standardizes course ordering
-   - Applied in RoadmapDetailPage for consistent render order
-   - Simplifies component logic (sorting happens once, not per-render)
+BACKEND MODELS:
 
-4. Test Coverage
-   - Pure logic tests via vitest (no React dependencies)
-   - Fast execution, deterministic, tooling-agnostic
-   - 50 total unit tests for utility functions
+  backend/models/user.py
+    Added columns:
+      - total_xp: int = 0
+      - current_level: int = 1
+    Deprecated columns (retained):
+      - global_elo_rating: float = 1000.0
 
-FRESHNESS:
-==========
-Codemaps regenerated: 2026-03-30
+  backend/models/user_skill.py
+    Added columns:
+      - xp: int = 0
+      - level: int = 1
+    Deprecated columns (retained):
+      - elo_rating: float = 1000.0
+      - trust_score: float = 0.0
 
-Verified source files:
-  ✓ backend/services/dynamic_roadmap_service.py (sampled lines 1–100)
-  ✓ src/services/dynamicRoadmapApi.ts (complete, 71 lines)
-  ✓ src/app/pages/RoadmapDetailPage.tsx (sampled lines 1–80)
-  ✓ src/app/components/CourseDifficultyBadge.tsx (complete, 67 lines)
-  ✓ src/lib/xpUtils.ts (sampled lines 1–60)
-  ✓ src/lib/roadmapUtils.ts (complete, 47 lines)
-  ✓ vitest.config.ts (complete, 8 lines)
-  ✓ src/lib/__tests__/xpUtils.test.ts (exists)
-  ✓ src/lib/__tests__/roadmapUtils.test.ts (exists)
+  backend/models/course.py
+    Added columns:
+      - required_level: int = 1  (integer 1–6, replaces ELO-based difficulty)
+    Deprecated columns (retained):
+      - difficulty_level: float = 1000.0
 
-All paths verified. No obsolete references. No broken links.
+BACKEND ROUTERS:
 
-Token efficiency: Architecture ~900, Backend ~800, Frontend ~1100 (stable, token-lean signatures + file paths only).
+  backend/routers/recommend.py
+    Changes:
+      - Returns: user_xp (int), user_level (int) instead of user_elo (float)
+      - Level filtering: required_level ≤ user_level + 1
+        (was: ELO-band logic in get_adaptive_skill_score)
+      - Performance: 4 queries → same (no regression)
+
+  backend/routers/users.py
+    Changes:
+      - GET /users/me returns: total_xp, current_level (not global_elo_rating)
+      - GET /users/me/skills returns: xp, level per roadmap (not elo_rating, trust_score)
+
+  backend/routers/progress.py
+    Changes:
+      - GET /progress/{roadmap_id} returns: xp, level (not trust_score)
+
+  backend/routers/events.py
+    Changes:
+      - POST /events on course_completed: calls award_xp_for_completion()
+        (was: ELO/trust_score updates)
+
+  backend/routers/learning_path.py
+    Removed functions:
+      - get_adaptive_skill_score() — no longer needed (level filter in recommend.py)
+      - get_user_elo() — replaced by get_user_level()
+    Note: get_completed_course_ids() still used by recommend.py
+
+  backend/routers/resources.py
+    Changes:
+      - Resource ranking by quality_score + is_primary
+        (was: ELO-distance to user skill level)
+
+FRONTEND API TYPES:
+
+  src/services/userApi.ts, progressApi.ts, etc.
+    Field changes:
+      - user_elo → user_xp (int, 0–1000)
+      - global_elo_rating → total_xp (int) + current_level (int)
+      - elo_rating → xp (int, per-skill) + level (int, per-skill)
+      - trust_score → removed from API responses
+      - difficulty_level → required_level (int, 1–6)
+
+  src/app/components/RecommendationPanel.tsx
+    Changes:
+      - XPLevelBadge prop: elo → xp
+      - Uses user_xp + user_level from recommendation endpoint
+
+FRONTEND PAGES:
+
+  src/app/pages/RoadmapDetailPage.tsx
+    Changes:
+      - Fetches user total_xp + current_level from getUserProfile()
+      - Derives userLevel for CourseDifficultyBadge
+      - Wrapped in DataLoadingState for cold-start UX
+
+  src/app/pages/RoadmapCatalogPage.tsx
+    Changes:
+      - Wrapped in DataLoadingState
+
+  src/app/pages/CourseDetailPage.tsx
+    Changes:
+      - Wrapped in DataLoadingState
+
+  src/app/pages/ResourceViewerPage.tsx
+    Changes:
+      - Wrapped in DataLoadingState
+
+FRONTEND COMPONENTS:
+
+  src/app/components/RoadmapContainer.tsx, RoadmapNode.tsx
+    Changes:
+      - Integrated CourseDifficultyBadge with required_level
+      - Updated status badge rendering for level-based locks
+
+  src/components/dashboard/SkillRadarChart.tsx
+    Changes:
+      - Radar axes now use level (1–6) instead of ELO (800–2000)
+      - Normalized to 0–100 scale
+
+FRONTEND STYLING:
+
+  src/styles/tailwind.css
+    Added:
+      - fade-in keyframe (opacity + translateY, 0.4s ease-out)
+      - Used by DataLoadingState staged message animation
+
+================================================================================
+## ARCHITECTURE CHANGES
+================================================================================
+
+### Progression System
+
+OLD (ELO-based):
+  • User global_elo_rating: float (800–2000 scale)
+  • Per-skill elo_rating: float (800–2000 scale)
+  • Confidence tracking via trust_score: float (0–1)
+  • Difficulty computed as: 800 + (depth * 100)
+  • Level display: frontend conversion eloToLevel() using fixed thresholds
+
+NEW (XP + Levels):
+  • User total_xp: int (0–1000+), current_level: int (1–6)
+  • Per-skill xp: int (0–1000+), level: int (1–6)
+  • Level derived from XP via compute_level_from_xp()
+  • Difficulty as required_level: int (1–6, computed from topological depth)
+  • Backend returns XP/level directly (no frontend conversion)
+
+### Course Filtering & Unlocking
+
+OLD:
+  • get_adaptive_skill_score() computed ELO-distance band
+  • Recommend endpoint returned user_elo, filtered by confidence
+  • Resources ranked by ELO-distance heuristic
+
+NEW:
+  • recommend.py filters: required_level ≤ user_level + 1
+  • Simplistic integer-based level progression (easier to understand)
+  • Resources ranked by quality_score + is_primary (deterministic)
+
+### API Return Types
+
+OLD:
+  • user_elo: float
+  • global_elo_rating: float
+  • elo_rating: float
+  • trust_score: float
+  • difficulty_level: float (800–2000)
+
+NEW:
+  • user_xp: int (0–1000)
+  • user_level: int (1–6)
+  • total_xp: int
+  • current_level: int
+  • xp: int (per-skill)
+  • level: int (per-skill)
+  • required_level: int (1–6)
+
+### XP Awarding
+
+  • Completion: depth * 20 + 10 (min 10 XP per course)
+  • Quiz ≥80%: full XP | ≥50%: half XP | <50%: 0 XP
+  • Both User and UserSkill rows updated atomically
+  • Level recalculated after every award
+
+### Cold-Start UX
+
+NEW:
+  • DataLoadingState wrapper component
+  • Skeleton screens suppress rendering during load
+  • Staged messaging: skeleton only → "Waking up..." → "Preparing..."
+  • fade-in animation at ≥5s elapsed
+
+================================================================================
+## DEPRECATED FIELDS (Retained for Backward Compatibility)
+================================================================================
+
+These columns will be dropped in Phase 4 (future). Currently retained:
+
+Database:
+  • User.global_elo_rating → Use User.total_xp + User.current_level
+  • UserSkill.elo_rating → Use UserSkill.xp + UserSkill.level
+  • UserSkill.trust_score → Removed from frontend; no replacement
+  • Course.difficulty_level → Use Course.required_level
+
+API Endpoints:
+  • /skill-graph/{roadmap_id}/status → Deprecated; use /dynamic-status
+    (Sunset: 2026-06-01)
+
+Frontend:
+  • xpUtils.eloToXP(), eloToLevel() → Removed
+  • XPLevelBadge prop: elo → xp
+  • CourseDifficultyBadge prop: difficultyLevel → requiredLevel
+
+================================================================================
+## CODEMAP UPDATES SUMMARY
+================================================================================
+
+docs/CODEMAPS/architecture.md
+  • Replaced ELO system description with XP + Levels (0–1000, 1–6)
+  • Updated progression loop: completion → award_xp → level update → recommendation
+  • Removed ELO-based display conversion; backend now returns XP directly
+  • Updated lock reason pattern to reference required_level
+
+docs/CODEMAPS/backend.md
+  • New services: xp_level_service, course_level_service
+  • Updated route return types: user_xp/user_level, xp/level, required_level
+  • Removed: get_adaptive_skill_score, get_user_elo
+  • Updated service descriptions to reflect XP awards, level computation
+  • Added migration script: migrate_elo_to_xp.py
+
+docs/CODEMAPS/frontend.md
+  • Updated component props: XPLevelBadge (elo → xp), CourseDifficultyBadge
+  • Added new components: DataLoadingState, skeleton screens, CourseDifficultyBadge
+  • Removed ELO conversion layer description (backend returns XP directly)
+  • Added xpUtils exports: getLevelFromXP, xpToLevel (removed eloToXP, eloToLevel)
+  • Added new utility: roadmapUtils.sortDynamicCourses()
+
+docs/CODEMAPS/data.md
+  • Added XP/level columns to User, UserSkill, Course models
+  • Marked deprecated columns (global_elo_rating, elo_rating, trust_score, difficulty_level)
+  • Added Phase 2 migration entry: 20260330_add_xp_level_columns.py
+  • Documented backward compatibility strategy (Phases 3 & 4)
+
+================================================================================
+## TESTING & VALIDATION
+================================================================================
+
+New Tests Added:
+  • src/lib/__tests__/xpUtils.test.ts (40 tests)
+    - getLevelFromXP() for all level boundaries
+    - XP clamping at 1000 max
+    - Level derivation correctness
+
+  • src/lib/__tests__/roadmapUtils.test.ts (10 tests)
+    - Course sorting by difficulty, recommended status, unlock state
+
+Backend Testing:
+  • xp_level_service.py uses getattr/setattr with safe fallbacks
+    (works both before and after schema migration)
+  • Award functions log outcomes at INFO level for debugging
+
+================================================================================
+## NOTES & KNOWN ISSUES
+================================================================================
+
+1. ELO Columns Retained: global_elo_rating, elo_rating, trust_score, difficulty_level
+   are still in the database but unused. These will be dropped in Phase 4.
+
+2. Schema Migration Safety: Phase 2 migration is purely additive with defaults.
+   No data loss. Safe to apply multiple times.
+
+3. Backward Compatibility: Backend /recommend endpoint uses getattr/setattr with
+   fallbacks for both pre-migration (ELO) and post-migration (XP) scenarios.
+
+4. Frontend No Longer Converts ELO: Backend now returns XP directly (0–1000),
+   eliminating the frontend eloToXP() conversion layer that was previously needed.
+
+5. Course Level Computation: Required level (1–6) is computed from topological
+   depth via course_level_service. Future: run compute_difficulty.py to backfill
+   required_level for all existing courses.
+
+6. Radar Chart Normalization: SkillRadarChart now uses level (1–6) instead of
+   ELO (800–2000). Axes are normalized to 0–100 for visualization.
+
+================================================================================
+## SPRINT 1: QUIZ XP REWARDS + TOAST NOTIFICATIONS (2026-03-30)
+================================================================================
+
+COMPLETION:
+  ✓ Quiz submission now returns xp_awarded, total_xp, current_level, leveled_up
+  ✓ Quiz result screen displays +XP badge animation
+  ✓ Level-up notification when leveled_up=true
+  ✓ Fixed quiz answer leakage: GET /quiz/{skill_id} strips correct_answer + explanation
+  ✓ Fixed score normalization: skill_profile_service receives 0-1 scores (not 0-100)
+  ✓ Sonner toast component integrated (no next-themes, hardcoded dark theme)
+  ✓ Toast notifications wired to QuizPage (submit errors)
+
+FILES ADDED/MODIFIED:
+  Frontend:
+    ~ src/main.tsx — Added Toaster component (position bottom-right, richColors)
+    ~ src/app/pages/QuizPage.tsx — Result screen shows +XP badge, leveled_up notification, toast.error()
+
+  Backend:
+    ~ backend/routers/quiz.py — GET strips answers; POST returns XP fields
+    ~ backend/services/xp_level_service.py — award_xp_for_quiz() validates score (0–1)
+
+================================================================================
+## SPRINT 2: ERROR BOUNDARY + PROGRESS UI + EVENT TRACKING (2026-03-31)
+================================================================================
+
+COMPLETION:
+  ✓ ErrorBoundary component catches unhandled exceptions
+  ✓ RoadmapDetailPage search input (case-insensitive title filter)
+  ✓ RoadmapDetailPage status filter chips (all/unlocked/completed/locked)
+  ✓ RoadmapDetailPage progress summary bar (X/Y completed, N unlocked, N locked)
+  ✓ AppSidebar XP badge (compact display, fetches user profile on mount)
+  ✓ useProgress hook fires server-side events (write-through pattern)
+  ✓ API resilience: fetchWithAuth() retries 3x on 502/503/504 with exponential backoff
+  ✓ Toast notifications integrated with RoadmapDetailPage (skip/unskip)
+  ✓ Toast notifications integrated with MyProfilePage (all alerts)
+  ✓ Rate limiter fixed: X-Forwarded-For uses last IP (was using first, spoofable)
+
+FILES ADDED/MODIFIED:
+  Frontend:
+    + src/app/components/ErrorBoundary.tsx (NEW) — React error boundary
+    ~ src/app/App.tsx — AppLayout wrapped in ErrorBoundary
+    ~ src/app/pages/RoadmapDetailPage.tsx — Added search, filter chips, progress bar
+    ~ src/app/components/AppSidebar.tsx — Added compact XP/Level badge
+    ~ src/app/hooks/useProgress.ts — markResourceComplete/markResourceInProgress fire POST /events
+    ~ src/services/api.ts — fetchWithAuth() retries 3x on 502/503/504
+    ~ src/app/pages/MyProfilePage.tsx — All alerts → toasts
+
+  Backend:
+    ~ backend/routers/events.py — Added resource_completed to event_type enum
+    ~ backend/core/rate_limit.py — Fixed X-Forwarded-For to use last IP
+
+================================================================================
+## SPRINT 3: ONBOARDING WIZARD + IMPROVED EMPTY STATES (2026-03-31)
+================================================================================
+
+COMPLETION:
+  ✓ OnboardingWizard component for new users (no skills, no GitHub)
+  ✓ 3-step wizard: import skills, pick roadmap, start learning
+  ✓ Dismissible card; calls POST /users/me/onboarding/complete on dismiss
+  ✓ DashboardPage fetches onboarding_completed flag from GET /users/me
+  ✓ Empty state improvements: LearningInsightsCard + SkillRadarChart show actionable CTAs
+  ✓ Migration: 20260331_add_onboarding_completed.py (backfills existing users to FALSE)
+
+FILES ADDED/MODIFIED:
+  Frontend:
+    + src/app/components/OnboardingWizard.tsx (NEW) — 3-step wizard card
+    ~ src/app/pages/DashboardPage.tsx — Integrated wizard, fetch onboarding flag, improved empty states
+    ~ src/components/dashboard/LearningInsightsCard.tsx — Empty state with actionable "Browse Paths" link
+    ~ src/components/dashboard/SkillRadarChart.tsx — Empty state distinguishes zero-skills vs low-roadmap users
+    ~ src/services/userApi.ts — Added getCurrentUser(), completeOnboarding()
+
+  Backend:
+    + backend/migrations/versions/20260331_add_onboarding_completed.py (NEW)
+    ~ backend/models/user.py — Added onboarding_completed (Boolean, default False)
+    ~ backend/routers/users.py — Added GET /users/me.onboarding_completed field
+                                 Added POST /users/me/onboarding/complete endpoint
+
+================================================================================
+## CODEMAP UPDATE SUMMARY (2026-03-31)
+================================================================================
+
+SPRINT 3 CODEMAP UPDATES (All ≤30% change magnitude — updated in place):
+
+  docs/CODEMAPS/architecture.md (v2.4)
+    • Freshness: "Sprint: 1+2 complete" → "Sprint: 3 complete"
+    • Added: Onboarding UX Pattern (Sprint 3) section
+      - Problem statement, solution, condition, implementation details
+    • Added: Sprint 3 Updates section with 4 subsections
+      - OnboardingWizard component details
+      - DashboardPage integration
+      - Empty state improvements
+      - Backend endpoint + migration details
+    Change magnitude: ~12-15%
+
+  docs/CODEMAPS/backend.md (v2.4)
+    • Freshness: "Sprint: 1+2 complete" → "Sprint: 3 complete"
+    • Updated: Users router section
+      - GET /users/me now includes onboarding_completed field
+      - POST /users/me/onboarding/complete endpoint (NEW)
+    Change magnitude: ~8-10%
+
+  docs/CODEMAPS/frontend.md (v2.4)
+    • Freshness: "Sprint: 1+2 complete" → "Sprint: 3 complete"
+    • Added: OnboardingWizard to shared components table (marked NEW)
+    • Updated: DashboardPage section with new user flow + wizard integration
+    • Updated: userApi module docs with getCurrentUser(), completeOnboarding()
+    • Updated: LearningInsightsCard, SkillRadarChart docs (empty state improvements)
+    Change magnitude: ~15-18%
+
+  docs/CODEMAPS/data.md (v2.3)
+    • Freshness: "Sprint: 1+2 complete" → "Sprint: 3 complete"
+    • Updated: User model documentation
+      - Added onboarding_completed (Boolean, default False) to model section
+    • Updated: Migration list
+      - Added 20260331_add_onboarding_completed.py entry
+    Change magnitude: ~10-12%
+
+VALIDATION:
+  ✓ All file paths verified to exist
+  ✓ Component OnboardingWizard.tsx present at expected location
+  ✓ API endpoints verified in backend/routers/users.py
+  ✓ Migration file exists at expected location
+  ✓ Frontend API functions added to userApi.ts
+  ✓ DashboardPage integration verified
+  ✓ Empty state improvements verified in LearningInsightsCard + SkillRadarChart
+
+TOKEN EFFICIENCY:
+  • All codemaps remain under 1000 tokens
+  • architecture.md: ~750 tokens, backend.md: ~600 tokens
+  • frontend.md: ~800 tokens, data.md: ~500 tokens
+  • Concise descriptions; high-level architecture focus
+
+BACKWARD COMPATIBILITY:
+  ✓ New endpoints are additive
+  ✓ New UI components conditionally rendered
+  ✓ Database migration includes safe backfill (existing users → FALSE)
+  ✓ No breaking changes to existing APIs
+
+================================================================================
+
+## SPRINT 4: QUIZ RESULT SPLIT + LEARNING PROGRESS CARD (2026-03-31)
+================================================================================
+
+COMPLETION:
+  ✓ QuizPage result screen split: passed (green celebration) vs failed (score card)
+  ✓ Passed screen: "View Learning Path →" → /roadmap/{id}, "Go to Dashboard", "Retake Quiz"
+  ✓ Failed screen: "Retake Quiz", "Back to Course" CTAs
+  ✓ QuizSkeleton component mirrors quiz question card layout (NEW)
+  ✓ QuizPage wrapped in DataLoadingState + QuizSkeleton while generating
+  ✓ CourseDetailPage uses fetchWithAuth() with auto-retry on 502/503/504
+  ✓ CourseDetailPage shows course description + progress bar header
+  ✓ MyProfilePage "Learning Progress" card: stats, XP bar, mini roadmap bars
+  ✓ ProfilePage.tsx removed (dead code; functionality in MyProfilePage)
+
+FILES ADDED/MODIFIED:
+  Frontend:
+    + src/app/components/skeletons/QuizSkeleton.tsx (NEW) — Mirrors quiz card layout
+    ~ src/app/pages/QuizPage.tsx — Split result screen; DataLoadingState + QuizSkeleton loading
+    ~ src/app/pages/CourseDetailPage.tsx — fetchWithAuth() + description + progress bar
+    ~ src/app/pages/MyProfilePage.tsx — Added "Learning Progress" card (stats + XP bar + mini bars)
+    - src/app/pages/ProfilePage.tsx (DELETED) — Dead code; moved to MyProfilePage
+
+CODEMAP UPDATES (All ≤30% change magnitude — updated in place):
+
+  docs/CODEMAPS/architecture.md (v2.5)
+    • Freshness: "Sprint: 3 complete" → "Sprint: 4 complete"
+    • Added: Sprint 4 Updates section (5 subsections)
+      - QuizPage result screen split: passed vs failed experiences
+      - QuizPage loading: DataLoadingState + QuizSkeleton for Gemini wait
+      - CourseDetailPage: fetchWithAuth() retry + description + progress bar
+      - MyProfilePage: Learning Progress card (stats, XP bar, mini bars)
+      - Deleted ProfilePage.tsx note
+    Change magnitude: ~15%
+
+  docs/CODEMAPS/backend.md (v2.5)
+    • Freshness: "Sprint: 3 complete" → "Sprint: 4 complete" + note "No backend changes"
+    • No API or service changes (frontend-only sprint)
+    Change magnitude: ~0%
+
+  docs/CODEMAPS/frontend.md (v2.5)
+    • Freshness: "Sprint: 3 complete" → "Sprint: 4 complete"
+    • Updated: Routes table (removed ProfilePage.tsx from unused files)
+    • Updated: Skeleton Screens section (added QuizSkeleton)
+    • Updated: Other Pages section (QuizPage now uses DataLoadingState + QuizSkeleton)
+    • Updated: MyProfilePage layout (added "Learning Progress" as item 2)
+    • Added: Key Updates (Sprint 4) section with quick reference
+    Change magnitude: ~20%
+
+  docs/CODEMAPS/data.md (v2.4)
+    • Freshness: "Sprint: 3 complete" → "Sprint: 4 complete" + note "No schema changes"
+    • No model or migration changes (frontend-only sprint)
+    Change magnitude: ~0%
+
+VALIDATION:
+  ✓ QuizSkeleton.tsx exists and matches expected layout
+  ✓ QuizPage loading state verified (DataLoadingState + QuizSkeleton)
+  ✓ CourseDetailPage fetchWithAuth() usage verified
+  ✓ MyProfilePage Learning Progress card verified (stats + XP bar + mini bars)
+  ✓ ProfilePage.tsx deleted from codebase
+  ✓ All file paths in codemaps verified to exist
+
+TOKEN EFFICIENCY:
+  • All codemaps remain under 1000 tokens
+  • architecture.md: ~850 tokens, backend.md: ~600 tokens
+  • frontend.md: ~900 tokens, data.md: ~500 tokens
+  • Concise descriptions; high-level architecture focus
+
+NO BACKEND CHANGES:
+  • XP award system already correct from Phase 2
+  • No API route changes required
+  • No schema migrations needed
+
+================================================================================
+
+## SPRINT 5: AI MENTOR FEATURE (GEMINI FUNCTION-CALLING) (2026-04-01)
+================================================================================
+
+COMPLETION:
+  ✓ AIMentorPage.tsx: new /ai-mentor route with chat UI (message bubbles, typing indicator, textarea)
+  ✓ Chat endpoint: POST /chat with Gemini function-calling loop (max 5 rounds, 60s timeout)
+  ✓ MCP tools: 5 functions (get_user_profile, get_user_progress, get_next_course, get_roadmap_courses, get_skill_graph)
+  ✓ Tool registry: TOOL_DECLARATIONS (JSON schema), USER_ID_TOOLS (auth override), TOOL_REGISTRY (dispatch table)
+  ✓ Security: Router always overrides tool user_id args with authenticated user's ID
+  ✓ AppSidebar updated: Added "AI Mentor" nav item (MessageSquare icon) between Learning Paths and My Profile
+  ✓ Frontend API: sendChatMessage(message) → POST /chat via fetchWithAuth()
+  ✓ System prompt: Instructs Gemini to fetch real data via tools before answering (prevents hallucination)
+
+FILES ADDED (NEW):
+  Backend:
+    + backend/mcp_server/__init__.py — Package marker
+    + backend/mcp_server/tools.py — 5 tool functions
+      - get_user_profile(user_id) → {email, elo, xp, level, github_status, skills[]}
+      - get_user_progress(user_id) → {total_completed, roadmaps[{id, total, completed, progress%}]}
+      - get_next_course(user_id, roadmap_id) → calls get_recommended_start_courses_batched()
+      - get_roadmap_courses(roadmap_id) → {id, title, difficulty_level, required_level}[]
+      - get_skill_graph(roadmap_id, user_id?) → graph edges ± user completion status
+      - Each function opens/closes its own DB session (no FastAPI context required)
+
+    + backend/mcp_server/registry.py — Gemini function declarations + tool dispatch
+      - TOOL_DECLARATIONS: list[dict] — JSON schema for 5 tools (sent in every request)
+      - USER_ID_TOOLS: frozenset[str] — {get_user_profile, get_user_progress, get_next_course, get_skill_graph}
+      - TOOL_REGISTRY: dict[str, Callable] — tool_name → function dispatch table
+
+    + backend/routers/chat.py — Chat endpoint with function-calling loop
+      - POST /chat {message: string} → ChatResponse{reply: string}
+      - Depends on get_current_user (Clerk auth required)
+      - Gemini model: gemini-3-flash-preview (env: GEMINI_CHAT_MODEL)
+      - Loop: send message + tools → Gemini → parse response (check for function_calls)
+        - If function_calls: execute tools, append results, loop (max 5 rounds)
+        - If no function_calls: return reply
+      - Timeout: 60s per request; error handling for 502, timeout, network errors
+      - System prompt: "You are an AI learning mentor... always use tools to fetch real user data..."
+
+  Frontend:
+    + src/services/chatApi.ts — sendChatMessage(message) → POST /chat
+      - Uses fetchWithAuth() for Clerk JWT + auto-retry on 502/503/504
+      - Returns reply: string from ChatResponse
+
+    + src/app/pages/AIMentorPage.tsx — /ai-mentor route
+      - Chat UI: message bubbles (user: indigo right-aligned, assistant: dark left-aligned)
+      - Typing indicator: 3 animated dots while assistant composes
+      - Input area: textarea (Enter to send, Shift+Enter for newline) + Send button
+      - State: messages[], input (string), loading (boolean)
+      - Behavior: append user message → setLoading → sendChatMessage() → append reply → clearInput
+      - Auto-scroll: useRef bottomRef scrolls to bottom on message/loading change
+      - Styling: custom font imports (DM Sans, Sora), dark theme, custom CSS animations
+
+FILES MODIFIED:
+  Backend:
+    ~ backend/main.py — Added app.include_router(chat_router) for /chat endpoint
+
+  Frontend:
+    ~ src/app/components/AppSidebar.tsx
+      - Added "AI Mentor" to menuItems array with MessageSquare icon
+      - Route: /ai-mentor
+      - Position: between "Learning Paths" and "My Profile"
+
+    ~ src/app/App.tsx
+      - Import AIMentorPage
+      - Added route: <Route path="/ai-mentor" element={<AIMentorPage />} />
+      - Updated AppLayout currentPage detection: "if location.pathname.startsWith('/ai-mentor') currentPage = 'ai-mentor'"
+
+ARCHITECTURE:
+  • NO schema changes (feature is read-only query via MCP tools)
+  • NO new models
+  • NO migrations required
+  • Purely additive: new router, new tools, new page component
+
+DATA FLOW:
+  1. User sends message in AIMentorPage textarea → sendChatMessage(message)
+  2. Frontend: sendChatMessage() → POST /chat via fetchWithAuth() + Clerk JWT
+  3. Backend /chat endpoint receives {message: string}, validates Clerk auth
+  4. Router calls Gemini API with message + TOOL_DECLARATIONS in initial payload
+  5. Gemini responds with tool_calls (or text if no tools needed)
+  6. For each tool_call:
+     a. Router extracts tool_name + args
+     b. If tool_name in USER_ID_TOOLS: override args["user_id"] = authenticated_user_id (security)
+     c. Call TOOL_REGISTRY[tool_name](**args)
+     d. Append result to conversation history
+  7. Loop max 5 rounds until Gemini responds with no tool_calls
+  8. Return ChatResponse{reply: final_text}
+  9. Frontend receives reply, appends to messages[], setLoading(false)
+
+SECURITY CONSIDERATIONS:
+  • Router always overrides user_id in tool calls — prevents LLM from querying other users
+  • Clerk JWT validation required for /chat endpoint
+  • Tools fetch only current user's data (user_id forced by router)
+  • MCP tools open/close DB sessions (stateless, safe for concurrent requests)
+
+GEMINI CONFIGURATION:
+  • API Key: GEMINI_API_KEY env var (required)
+  • Model: gemini-3-flash-preview (configurable via GEMINI_CHAT_MODEL)
+  • Temperature: 0.7 (creative but grounded)
+  • Max output tokens: 1024
+  • System prompt: Instructs model to use tools before answering
+
+KNOWN LIMITATIONS:
+  • Max 5 tool-call rounds per request (prevents infinite loops)
+  • 60s timeout per request (Gemini latency + tool execution)
+  • Tool errors caught and returned as {error: str} in response
+  • LLM cannot modify data (all tools are read-only queries)
+
+CODEMAP UPDATES (All ≤25% change magnitude — updated in place):
+
+  docs/CODEMAPS/architecture.md (v3.0)
+    • Freshness: "Sprint: 4 complete" → "Sprint: 5 (AI Mentor feature)"
+    • Added: "Sprint 5 Updates: AI Mentor (Gemini Function-Calling)" section
+      - AIMentorPage description (route, UI, data flow)
+      - Chat endpoint description (/chat, function-calling loop, max 5 rounds, 60s timeout)
+      - MCP tools description (5 functions, data fetched)
+      - Tool registry description (TOOL_DECLARATIONS, USER_ID_TOOLS, TOOL_REGISTRY)
+      - Sidebar integration note
+      - System prompt note
+    Change magnitude: ~20%
+
+  docs/CODEMAPS/backend.md (v3.0)
+    • Freshness: "Sprint: 4 complete" → "Sprint: 5 (AI Mentor)"
+    • Added: Chat (AI Mentor) section in API Routes
+      - POST /chat endpoint details
+      - Gemini model config
+      - Tools, security, system prompt
+    • Added: MCP Tools + MCP Registry to Services table (2 rows)
+    Change magnitude: ~18%
+
+  docs/CODEMAPS/frontend.md (v3.0)
+    • Freshness: "Sprint: 4 complete" → "Sprint: 5 (AI Mentor feature)"
+    • Updated: Routes table (added /ai-mentor route)
+    • Updated: AppSidebar component docs (AI Mentor nav item added)
+    • Updated: Granular API Modules section (added chatApi module)
+    • Added: "AI Mentor Page (AIMentorPage.tsx) **NEW (Sprint 5)**" subsection
+      - Route, UI components, data flow, behavior, styling
+    Change magnitude: ~22%
+
+  docs/CODEMAPS/data.md (v3.0)
+    • Freshness: "Sprint: 4 complete" → "Sprint: 5 (AI Mentor)"
+    • Added note: "No schema changes (feature is read-only query via MCP tools)"
+    Change magnitude: ~2%
+
+VALIDATION:
+  ✓ backend/mcp_server/__init__.py exists
+  ✓ backend/mcp_server/tools.py exists with 5 functions
+  ✓ backend/mcp_server/registry.py exists with TOOL_DECLARATIONS, USER_ID_TOOLS, TOOL_REGISTRY
+  ✓ backend/routers/chat.py exists with POST /chat endpoint
+  ✓ src/services/chatApi.ts exists with sendChatMessage()
+  ✓ src/app/pages/AIMentorPage.tsx exists with chat UI
+  ✓ src/app/components/AppSidebar.tsx includes "AI Mentor" nav item
+  ✓ src/app/App.tsx includes /ai-mentor route + AppLayout currentPage detection
+  ✓ backend/main.py includes app.include_router(chat_router)
+  ✓ All file paths verified to exist
+
+TOKEN EFFICIENCY:
+  • All codemaps remain under 1000 tokens
+  • architecture.md: ~900 tokens, backend.md: ~700 tokens
+  • frontend.md: ~950 tokens, data.md: ~500 tokens
+  • Concise descriptions; high-level architecture focus
+
+BACKWARD COMPATIBILITY:
+  ✓ New endpoints are fully additive
+  ✓ New UI components additive (no changes to existing pages except AppSidebar nav)
+  ✓ No schema changes; no migrations needed
+  ✓ MCP tools are read-only queries (safe concurrent access)
+  ✓ No breaking changes to existing APIs
+
+TESTING CONSIDERATIONS:
+  • /chat endpoint requires Clerk auth (use valid JWT in tests)
+  • MCP tools open/close DB sessions (stateless; safe for unit testing)
+  • Tool errors should be caught and returned as {error: str}
+  • Max 5 tool-call rounds prevents infinite loops
+  • 60s timeout prevents hanging requests
+
+================================================================================
+

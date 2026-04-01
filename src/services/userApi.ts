@@ -27,6 +27,16 @@ const normalizeSkillProfile = (payload: unknown): UserSkillProfileItem[] => {
         .filter((item) => item.skill_id.length > 0);
 };
 
+export async function getCurrentUser(): Promise<{ onboarding_completed: boolean; [key: string]: unknown }> {
+    const response = await fetchWithAuth(`${BACKEND_URL}/users/me`);
+    if (!response.ok) throw new Error("Failed to fetch current user");
+    return response.json();
+}
+
+export async function completeOnboarding(): Promise<void> {
+    await fetchWithAuth(`${BACKEND_URL}/users/me/onboarding/complete`, { method: "POST" });
+}
+
 export async function getUserProfile() {
     const response = await fetch(`${BACKEND_URL}/users/me/profile`, {
         headers: {

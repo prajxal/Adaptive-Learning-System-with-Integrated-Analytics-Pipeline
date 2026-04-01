@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { Link } from "react-router-dom";
 import {
   RadarChart,
   Radar,
@@ -7,11 +8,9 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import { eloToXP } from "../../lib/xpUtils";
-
 interface Skill {
   roadmap_id: string;
-  trust_score?: number;
+  xp?: number;
 }
 
 interface SkillRadarChartProps {
@@ -28,15 +27,13 @@ const formatLabel = (id: string) => {
   return words.slice(0, 2).join(" ");
 };
 
-const normalizeScore = (score: number): number => {
-  const clamped = Math.min(Math.max(score, 800), 2000);
-  return Math.round(((clamped - 800) / 1200) * 100);
+const normalizeScore = (xp: number): number => {
+  return Math.round((Math.min(Math.max(xp, 0), 1000) / 1000) * 100);
 };
 
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
-    // trust_score is a Backend field — displayed as XP
-    const xpValue = eloToXP(payload[0]?.payload?.rawTrustScore ?? 1000);
+    const xpValue = payload[0]?.payload?.rawXP ?? 0;
     return (
       <div
         className="rounded-md px-3 py-2 text-xs"
@@ -57,13 +54,12 @@ const CustomTooltip = ({ active, payload }: any) => {
 export default function SkillRadarChart({ skills, loading = false }: SkillRadarChartProps) {
   const data = useMemo(() => {
     return [...skills]
-      .sort((a, b) => (b.trust_score || 800) - (a.trust_score || 800))
+      .sort((a, b) => (b.xp || 0) - (a.xp || 0))
       .slice(0, 8)
       .map((s) => ({
         subject: formatLabel(s.roadmap_id),
-        score: normalizeScore(s.trust_score || 800),
-        // rawTrustScore is a Backend field — used to compute XP for the tooltip
-        rawTrustScore: s.trust_score || 800,
+        score: normalizeScore(s.xp || 0),
+        rawXP: s.xp || 0,
         fullMark: 100,
       }));
   }, [skills]);
@@ -92,9 +88,18 @@ export default function SkillRadarChart({ skills, loading = false }: SkillRadarC
           >
             <span className="text-2xl" style={{ color: "#6366f1" }}>◈</span>
           </div>
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            Start at least 3 roadmaps to see your skill distribution chart.
+          <p className="text-sm mb-3" style={{ color: "var(--text-muted)" }}>
+            {data.length === 0
+              ? "Connect GitHub or upload your resume to visualise your skill profile."
+              : "Start at least 3 roadmaps to see your skill distribution chart."}
           </p>
+          <Link
+            to={data.length === 0 ? "/profile" : "/roadmaps"}
+            className="inline-block text-xs font-semibold px-3 py-1.5 rounded-full"
+            style={{ backgroundColor: "rgba(99,102,241,0.1)", color: "#818cf8", border: "1px solid rgba(99,102,241,0.15)" }}
+          >
+            {data.length === 0 ? "Import Skills →" : "Browse Paths →"}
+          </Link>
         </div>
       ) : (
         <div style={{ minHeight: 220 }}>

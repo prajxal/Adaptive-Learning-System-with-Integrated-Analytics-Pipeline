@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { ROUTES } from "../constants/routes";
 import { getQuiz, submitQuizAttempt, getSkillProfile, Quiz, SkillProfile } from "../services/quizApi";
 import { usePostHog } from "@posthog/react";
 import AppBreadcrumb from "../components/AppBreadcrumb";
+import DataLoadingState from "../components/DataLoadingState";
+import QuizSkeleton from "../components/skeletons/QuizSkeleton";
 
 export default function QuizPage() {
     const { courseId } = useParams();
@@ -18,7 +21,14 @@ export default function QuizPage() {
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [submitting, setSubmitting] = useState(false);
 
-    const [result, setResult] = useState<{ score: number; passed: boolean } | null>(null);
+    const [result, setResult] = useState<{
+        score: number;
+        passed: boolean;
+        xp_awarded: number;
+        total_xp: number;
+        current_level: number;
+        leveled_up: boolean;
+    } | null>(null);
     const [newProfile, setNewProfile] = useState<SkillProfile | null>(null);
 
     // To track submitted answers for result explanations
@@ -79,6 +89,10 @@ export default function QuizPage() {
                 setResult({
                     score: submissionResult.score,
                     passed: submissionResult.passed,
+                    xp_awarded: submissionResult.xp_awarded ?? 0,
+                    total_xp: submissionResult.total_xp ?? 0,
+                    current_level: submissionResult.current_level ?? 1,
+                    leveled_up: submissionResult.leveled_up ?? false,
                 });
                 posthog?.capture('quiz_submitted', {
                     course_id: courseId,
@@ -93,7 +107,9 @@ export default function QuizPage() {
                 setError("Failed to submit quiz attempt.");
             }
         } catch (err: any) {
-            setError(err.message || "Error submitting quiz");
+            const msg = err.message || "Error submitting quiz";
+            setError(msg);
+            toast.error(msg);
             posthog?.captureException(err);
         } finally {
             setSubmitting(false);
@@ -102,18 +118,10 @@ export default function QuizPage() {
 
     if (loading) {
         return (
-            <div className="quiz-page-root flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-                <style>{`
-                    .quiz-page-root {
-                        --bg-primary: #0a0a0f;
-                        --text-primary: #f1f5f9;
-                        --text-muted: #64748b;
-                        --accent-primary: #6366f1;
-                        background-color: var(--bg-primary);
-                    }
-                `}</style>
-                <div className="w-10 h-10 border-4 rounded-full border-t-transparent animate-spin" style={{ borderColor: 'var(--accent-primary)', borderTopColor: 'transparent' }}></div>
-                <p style={{ color: 'var(--text-muted)' }}>Generating your quiz...</p>
+            <div style={{ backgroundColor: "#0a0a0f", minHeight: "100vh" }}>
+                <DataLoadingState>
+                    <QuizSkeleton />
+                </DataLoadingState>
             </div>
         );
     }
@@ -143,10 +151,30 @@ export default function QuizPage() {
     if (!quiz) return null;
 
     // --- RESULT SCREEN ---
-    if (result && newProfile) {
+    if (result) {
+        const roadmapId = courseId?.split(":")[0] ?? "";
         let scoreColor = '#ef4444'; // red
         if (result.score >= 75) scoreColor = '#22c55e'; // green
         else if (result.score >= 50) scoreColor = '#eab308'; // yellow
+
+        const retakeButton = (
+            <button
+                onClick={() => {
+                    posthog?.capture('quiz_retaken', { course_id: courseId, previous_score: result?.score });
+                    setResult(null);
+                    setNewProfile(null);
+                    setAnswers({});
+                    setSubmittedAnswers({});
+                    setCurrentQuestionIndex(0);
+                }}
+                className="px-8 py-3 rounded-lg font-bold border transition-colors"
+                style={{ borderColor: 'var(--border)', color: 'var(--text-primary)', backgroundColor: 'transparent' }}
+                onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--accent-primary)' }}
+                onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
+            >
+                Retake Quiz
+            </button>
+        );
 
         return (
             <div className="quiz-page-root">
@@ -159,7 +187,7 @@ export default function QuizPage() {
                         --text-primary: #f1f5f9;
                         --text-muted: #64748b;
                         --border: #1e1e2e;
-                        
+
                         background-color: var(--bg-primary);
                         color: var(--text-primary);
                         font-family: 'DM Sans', sans-serif;
@@ -175,56 +203,132 @@ export default function QuizPage() {
                 `}</style>
 
                 <div className="max-w-3xl mx-auto pt-12 px-4">
-                    <div className="dark-card p-10 text-center mb-8">
-                        <div className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: 'var(--text-muted)' }}>Quiz Results</div>
-                        <div className="title-font font-bold text-7xl md:text-8xl mb-6 flex justify-center items-baseline gap-2" style={{ color: scoreColor }}>
-                            {Math.round(result.score)}<span className="text-4xl opacity-50">%</span>
-                        </div>
+                    {result.passed ? (
+                        /* ── PASSED: Course Completed celebration ── */
+                        <div
+                            className="rounded-2xl p-8 sm:p-10 text-center mb-8 relative overflow-hidden"
+                            style={{
+                                background: 'linear-gradient(135deg, #052e16 0%, #14532d 50%, #166534 100%)',
+                                border: '1px solid rgba(34,197,94,0.3)',
+                            }}
+                        >
+                            <div
+                                className="absolute top-0 right-0 w-64 h-64 rounded-full pointer-events-none"
+                                style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.08) 0%, transparent 70%)', transform: 'translate(30%,-30%)' }}
+                            />
+                            <div className="relative z-10">
+                                <div className="text-5xl mb-4">🎉</div>
+                                <div className="text-sm font-bold uppercase tracking-widest mb-2" style={{ color: 'rgba(134,239,172,0.7)' }}>
+                                    Course Completed
+                                </div>
+                                <h2 className="title-font text-3xl sm:text-4xl font-bold text-white mb-1">
+                                    {Math.round(result.score)}% Score
+                                </h2>
+                                <p className="text-sm mb-6" style={{ color: 'rgba(134,239,172,0.6)' }}>
+                                    You've mastered this topic. This course is now marked as complete.
+                                </p>
 
-                        <div className="inline-flex items-center gap-6 px-8 py-4 rounded-xl border mb-10" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
-                            <div className="text-left">
-                                <div className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--accent-primary)' }}>Mastery Updated</div>
-                                <div className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
-                                    {Math.min(100, Math.round(newProfile.proficiency_level * (newProfile.proficiency_level <= 1 ? 100 : 1)))}%
+                                {/* XP + level-up badges */}
+                                {result.xp_awarded > 0 && (
+                                    <div className="flex items-center justify-center gap-3 mb-6 flex-wrap">
+                                        <div
+                                            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-bold text-sm"
+                                            style={{ backgroundColor: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.4)', color: '#a5b4fc' }}
+                                        >
+                                            +{result.xp_awarded} XP
+                                        </div>
+                                        {result.leveled_up && (
+                                            <div
+                                                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-bold text-sm"
+                                                style={{ backgroundColor: 'rgba(234,179,8,0.2)', border: '1px solid rgba(234,179,8,0.4)', color: '#fde68a' }}
+                                            >
+                                                🎊 Level {result.current_level}!
+                                            </div>
+                                        )}
+                                        <div
+                                            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full font-bold text-sm"
+                                            style={{ backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}
+                                        >
+                                            {result.total_xp} XP total
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* CTAs */}
+                                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                    <button
+                                        onClick={() => navigate(`/roadmap/${roadmapId}`)}
+                                        className="px-8 py-3 rounded-lg font-bold text-sm transition-all shadow-md"
+                                        style={{ backgroundColor: '#22c55e', color: 'white' }}
+                                        onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#16a34a'}
+                                        onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#22c55e'}
+                                    >
+                                        View Learning Path →
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/dashboard')}
+                                        className="px-8 py-3 rounded-lg font-bold text-sm border transition-colors"
+                                        style={{ borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)', backgroundColor: 'transparent' }}
+                                        onMouseOver={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)'; e.currentTarget.style.color = 'white'; }}
+                                        onMouseOut={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+                                    >
+                                        Go to Dashboard
+                                    </button>
+                                    {retakeButton}
                                 </div>
                             </div>
-                            <div className="w-px h-10 bg-[var(--border)]"></div>
-                            <div className="text-left">
-                                <div className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Confidence</div>
-                                <div className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
-                                    {Math.min(100, Math.round(newProfile.confidence * 100))}%
+                        </div>
+                    ) : (
+                        /* ── FAILED: Standard results card ── */
+                        <div className="dark-card p-10 text-center mb-8">
+                            <div className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: 'var(--text-muted)' }}>Quiz Results</div>
+                            <div className="title-font font-bold text-7xl md:text-8xl mb-6 flex justify-center items-baseline gap-2" style={{ color: scoreColor }}>
+                                {Math.round(result.score)}<span className="text-4xl opacity-50">%</span>
+                            </div>
+                            <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
+                                You need {quiz?.passing_score ?? 75}% to pass. Review the questions below and try again.
+                            </p>
+
+                            {/* Stats row */}
+                            <div className="inline-flex items-center gap-6 px-8 py-4 rounded-xl border mb-10" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                                {newProfile && (
+                                    <>
+                                        <div className="text-left">
+                                            <div className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--accent-primary)' }}>Mastery</div>
+                                            <div className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
+                                                {Math.min(100, Math.round(newProfile.proficiency_level * (newProfile.proficiency_level <= 1 ? 100 : 1)))}%
+                                            </div>
+                                        </div>
+                                        <div className="w-px h-10 bg-[var(--border)]"></div>
+                                        <div className="text-left">
+                                            <div className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Confidence</div>
+                                            <div className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>
+                                                {Math.min(100, Math.round(newProfile.confidence * 100))}%
+                                            </div>
+                                        </div>
+                                        <div className="w-px h-10 bg-[var(--border)]"></div>
+                                    </>
+                                )}
+                                <div className="text-left">
+                                    <div className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Total XP</div>
+                                    <div className="font-semibold text-lg" style={{ color: 'var(--text-primary)' }}>{result.total_xp}</div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <button
-                                onClick={() => {
-                                    posthog?.capture('quiz_retaken', { course_id: courseId, previous_score: result?.score });
-                                    setResult(null);
-                                    setNewProfile(null);
-                                    setAnswers({});
-                                    setSubmittedAnswers({});
-                                    setCurrentQuestionIndex(0);
-                                }}
-                                className="px-8 py-3 rounded-lg font-bold border transition-colors"
-                                style={{ borderColor: 'var(--border)', color: 'var(--text-primary)', backgroundColor: 'transparent' }}
-                                onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--accent-primary)' }}
-                                onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border)' }}
-                            >
-                                Retake Quiz
-                            </button>
-                            <button
-                                onClick={() => navigate(-1)}
-                                className="px-8 py-3 rounded-lg font-bold transition-colors shadow-sm"
-                                style={{ backgroundColor: 'var(--accent-primary)', color: 'white' }}
-                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#4f46e5'}
-                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--accent-primary)'}
-                            >
-                                Back to Course
-                            </button>
+                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                                {retakeButton}
+                                <button
+                                    onClick={() => navigate(-1)}
+                                    className="px-8 py-3 rounded-lg font-bold transition-colors shadow-sm"
+                                    style={{ backgroundColor: 'var(--accent-primary)', color: 'white' }}
+                                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#4f46e5'}
+                                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--accent-primary)'}
+                                >
+                                    Back to Course
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <div className="space-y-4">
                         <h3 className="title-font text-xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>Question Review</h3>

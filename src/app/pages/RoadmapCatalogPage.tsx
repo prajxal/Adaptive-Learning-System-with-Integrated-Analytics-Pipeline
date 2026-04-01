@@ -23,7 +23,7 @@ function RoadmapCard({ roadmap, progress }: { roadmap: any; progress: Progress |
     };
 
     const hasProgress = !!progress;
-    const score = hasProgress ? Math.round(progress.trust_score) : 800;
+    const score = hasProgress ? Math.round(progress.xp) : 0;
 
     return (
         <Link
@@ -56,7 +56,7 @@ function RoadmapCard({ roadmap, progress }: { roadmap: any; progress: Progress |
 
             <div className="mt-auto flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                    {score !== 800 ? (
+                    {score !== 0 ? (
                         <div
                             className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border"
                             style={{

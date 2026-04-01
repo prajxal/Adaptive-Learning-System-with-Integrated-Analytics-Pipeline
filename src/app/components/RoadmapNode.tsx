@@ -180,7 +180,7 @@ export function RoadmapNode({ id, title, description, status, difficultyLevel, m
         <div className="flex items-center justify-between text-xs font-medium bg-gray-50 rounded-lg p-3 border">
           <div className="flex flex-col gap-1">
             <span className="text-gray-500 uppercase tracking-wider text-[10px]">Difficulty</span>
-            <CourseDifficultyBadge difficultyLevel={difficultyLevel} />
+            <CourseDifficultyBadge requiredLevel={difficultyLevel} />
           </div>
           <div className="w-px h-8 bg-gray-200"></div>
           <div className="flex flex-col gap-1 items-end">

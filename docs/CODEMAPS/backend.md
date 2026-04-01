@@ -1,4 +1,4 @@
-<!-- Generated: 2026-03-30 | Session: dynamic-roadmap prerequisites + CoursePrerequisiteRef in responses -->
+<!-- Generated: 2026-04-01 | Sprint: 5 (AI Mentor) | /chat endpoint, MCP tools (get_user_profile, get_user_progress, get_next_course, get_roadmap_courses, get_skill_graph), function-calling loop -->
 
 # Backend Codemap
 
@@ -15,54 +15,64 @@
 - `POST /auth/google/exchange` — Supabase Google OAuth token exchange
 
 ### Users — `backend/routers/users.py` (prefix: `/users`)
-- `GET  /users/me` — user details (id, email, elo, statuses)
+- `GET  /users/me` — user details: `id`, `email`, `total_xp`, `current_level`, `onboarding_completed` (Sprint 3), statuses
+- `POST /users/me/onboarding/complete` — **NEW (Sprint 3):** mark onboarding as complete (sets `users.onboarding_completed = True`)
 - `GET  /users/me/profile` — completed courses, top skills
-- `GET  /users/me/skills` — all skill profiles with progress per roadmap. **Performance:** uses 2 GROUP BY queries (total courses + completed courses across all roadmaps) instead of 2×N per-roadmap COUNT queries.
+- `GET  /users/me/skills` — all skill profiles with `xp`, `level` per roadmap (replaces `elo_rating`, `trust_score`)
 - `POST /users/me/skills/rebuild` — calls `synthesize_all_skills_for_user()`
 - `GET  /users/me/github-analysis` — GitHub language weights + top skills
 
 ### Courses — `backend/routers/courses.py` (prefix: `/courses`)
-- `GET  /courses` — list courses (optional `roadmap_id`), calls `get_recommended_start_courses()`
-- `GET  /courses/{course_id}` — single course detail
+- `GET  /courses` — list courses with `required_level` (integer 1–6; replaces `difficulty_level`)
+- `GET  /courses/{course_id}` — single course detail with `required_level`
 - `GET  /courses/{course_id}/roadmap` — prerequisite courses
 
 ### Resources — `backend/routers/resources.py` (prefix: `/courses`)
-- `GET  /courses/{course_id}/resources` — ranked resources by adaptive score
+- `GET  /courses/{course_id}/resources` — ranked resources by quality + is_primary (no longer ELO-distance)
 
 ### Learning Path — `backend/routers/learning_path.py` (prefix: `/learning-path`)
-- `GET  /learning-path/{course_id}` — prerequisite chain + ELO-based status per node
-- **`get_next_ready_nodes(user_id, roadmap_id, db, limit, completed_ids?, user_elo?)`** — shared helper; accepts pre-fetched `completed_ids` and `user_elo` to avoid redundant DB hits; batch-loads prerequisites for all elo-band candidates in one `IN` query.
-- **`get_completed_course_ids(user_id, db)`** — returns `set[str]`; imported by `recommend.py`.
+- `GET  /learning-path/{course_id}` — prerequisite chain + level-based status per node
+- **`get_completed_course_ids(user_id, db)`** — returns `set[str]`; imported by `recommend.py`
+- **Removed:** `get_adaptive_skill_score()`, `get_user_elo()` (level-based filtering now in `recommend.py`)
 
 ### Recommend — `backend/routers/recommend.py` (prefix: `/recommend`)
-- `GET  /recommend/recommend` — next courses in current roadmap + suggested new roadmaps
-- **Performance:** 4 queries total (completed_ids, all courses, all prereqs for elo-band candidates, skill profiles). All roadmap iteration and scoring done in Python — no per-roadmap DB calls. Was 5,086 queries; now 4. Latency: 33,652ms → 398ms.
+- `GET  /recommend/recommend?current_roadmap_id=X` — next courses + suggested new roadmaps
+- **Returns:** `user_xp`, `user_level` (replaces `user_elo`)
+- **Filtering:** `required_level ≤ user_level + 1` (replaces ELO-band logic)
+- **Performance:** 4 queries total (completed_ids, courses, prereqs, skill profiles). Was 5,086 queries; now 4. Latency: ~400ms.
 
 ### Events — `backend/routers/events.py` (prefix: `/events`)
-- `POST /events` — logs events (payload type validated as `Literal` union); validates `course_skipped` (confidence ≥ threshold, all prereqs satisfied, no duplicate completion); updates trust_score on `course_completed` / `quiz_failed`
-- `DELETE /events/skip/{course_id}` — reverses a skip by deleting the `course_skipped` event
+- `POST /events` — logs events; accepts `event_type: Literal["course_completed", "course_skipped", "quiz_started", "quiz_failed", "resource_viewed", "resource_completed"]`; calls `award_xp_for_completion()` on `course_completed` (replaces ELO updates)
+- `DELETE /events/skip/{course_id}` — reverses a skip
 
 ### Progress — `backend/routers/progress.py` (prefix: `/progress`)
 - `GET  /progress/roadmap/{roadmap_id}` — per-course completion map
-- `GET  /progress/{roadmap_id}` — aggregate progress %, trust_score, proficiency
+- `GET  /progress/{roadmap_id}` — aggregate progress %, `xp`, `level` per roadmap (replaces `trust_score`)
 
 ### Roadmaps — `backend/routers/roadmaps.py` (prefix: `/roadmaps`)
 - `GET  /roadmaps` — list distinct roadmap_ids with topic counts
 
 ### Quiz — `backend/routers/quiz.py` (prefix: `/quiz`)
-- `GET  /quiz/{skill_id}` — fetch or generate quiz via Gemini
-- `POST /quiz/{skill_id}/submit` — evaluate answers, update profile, emit events
+- `GET  /quiz/{skill_id}` — fetch or generate quiz via Gemini; strips `correct_answer` + `explanation` from questions (prevents answer leakage)
+- `POST /quiz/{skill_id}/submit` — evaluate answers, call `award_xp_for_quiz()`, emit events; **RETURNS:** `xp_awarded` (int), `total_xp` (int), `current_level` (int 1–6), `leveled_up` (bool)
 
 ### Skill Graph — `backend/routers/skill_graph.py` (prefix: `/skill-graph`)
-- `GET  /skill-graph/{roadmap_id}/dynamic-status` — 5-state course status map for roadmap. Each `DynamicCourseNode` includes `prerequisites: [{id, title, completed}]` (built from in-memory prerequisite data; cross-roadmap IDs skipped)
-- `GET  /skill-graph/{roadmap_id}/status` — unlock status for all skills in roadmap (**DEPRECATED**: Sunset 2026-06-01; use `/dynamic-status` instead)
+- `GET  /skill-graph/{roadmap_id}/dynamic-status` — 5-state course status map. Each `DynamicCourseNode` includes `prerequisites: [{id, title, completed}]`
+- `GET  /skill-graph/{roadmap_id}/status` — (**DEPRECATED**: Sunset 2026-06-01; use `/dynamic-status` instead)
 
 ### Skill Profile — `backend/routers/skill_profile.py` (prefix: `/skill-profile`)
 - `GET  /skill-profile/{skill_id}` — get or create profile with cold-start init
 
+### Chat (AI Mentor) — `backend/routers/chat.py` (prefix: `/chat`) **NEW (Sprint 5)**
+- `POST /chat` — Gemini function-calling loop; accepts `{message: string}` (Clerk auth required); runs max 5 tool-call rounds (60s timeout); returns `ChatResponse{reply: string}`
+  - **Gemini Model:** `gemini-3-flash-preview` (configurable via `GEMINI_CHAT_MODEL` env var)
+  - **Tools:** Declares 5 MCP tools in every request; model calls them, backend executes via `TOOL_REGISTRY`, feeds results back
+  - **Security:** Router always overrides tool `user_id` args with authenticated user's ID (prevents LLM from querying other users)
+  - **System Prompt:** Instructs Gemini to use tools to fetch real data before answering
+
 ### GitHub Auth — `backend/routers/github_auth.py` (prefix: `/github`)
 - `GET  /github/connect` — initiate OAuth flow
-- `GET  /github/callback` — exchange code, extract skills in background; redirects to `FRONTEND_URL/profile?github=connected`
+- `GET  /github/callback` — exchange code, extract skills in background
 - `GET  /github/status` — connection status `{ connected, username, sync_status }`
 - `POST /github/sync` — re-sync GitHub data
 - `DELETE /github/disconnect` — remove GitHub connection
@@ -75,10 +85,14 @@
 
 | Service | File | Key Functions |
 |---------|------|---------------|
-| Dynamic Roadmap | `services/dynamic_roadmap_service.py` | `compute_dynamic_roadmap(user_id, roadmap_id, db)` (returns courses with `prerequisites` field), `_build_reason()`, `get_skip_threshold()`, `get_fast_track_threshold()` |
+| **MCP Tools** | **`mcp_server/tools.py`** | **`get_user_profile(user_id)`**, **`get_user_progress(user_id)`**, **`get_next_course(user_id, roadmap_id)`**, **`get_roadmap_courses(roadmap_id)`**, **`get_skill_graph(roadmap_id, user_id?)`** — Called by Gemini function-calling loop via `TOOL_REGISTRY` |
+| **MCP Registry** | **`mcp_server/registry.py`** | **`TOOL_DECLARATIONS`** (JSON schema), **`USER_ID_TOOLS`** (frozenset), **`TOOL_REGISTRY`** (dispatch table) |
+| **XP / Level** | **`services/xp_level_service.py`** | **`award_xp_for_completion(user_id, course_id, roadmap_id, db)`**, **`award_xp_for_quiz(user_id, score, course_id, roadmap_id, db)`** (now validates score 0–1, returns `(xp, level_up)`), `compute_level_from_xp()`, `compute_xp_for_course(depth)`, `get_user_global_xp()`, `get_user_level()` |
+| **Course Level** | **`services/course_level_service.py`** | **`compute_required_level(topological_depth)`** — maps depth 0–5 → level 1–6 |
+| Dynamic Roadmap | `services/dynamic_roadmap_service.py` | `compute_dynamic_roadmap(user_id, roadmap_id, db)` returns courses with `prerequisites` field |
 | Recommendation | `services/learning_priority_service.py` | `get_unlocked_courses()`, `compute_importance_score()`, `get_recommended_start_courses()` |
-| Skill Graph | `services/skill_graph_service.py` | `is_skill_unlocked()`, `is_skill_completed()` (now treats `course_skipped` as satisfied), `get_roadmap_skill_status()` |
-| Quiz Scoring | `services/quiz_service.py` | `evaluate_quiz_attempt()` |
+| Skill Graph | `services/skill_graph_service.py` | `is_skill_unlocked()`, `is_skill_completed()`, `get_roadmap_skill_status()` |
+| Quiz Scoring | `services/quiz_service.py` | `evaluate_quiz_attempt()` — no longer calls Elo functions |
 | Quiz Generation | `services/quiz_generation_service.py` | `get_or_generate_quiz()` (calls Gemini) |
 | Skill Synthesis | `services/skill_synthesizer.py` | `get_skill_profile()` |
 | Skill Profiles | `services/skill_profile_service.py` | `get_or_create_skill_profile()`, `update_skill_profile_from_quiz()`, `initialize_skill_profile_from_cold_start()` |
@@ -89,13 +103,13 @@
 
 ## Performance Instrumentation
 
-All dashboard-related endpoints emit `[PERF] GET /path took Xms` to stdout on every request. Endpoints instrumented: `/users/me/skills`, `/users/me/github-analysis`, `/roadmaps`, `/progress/all`, `/recommend/recommend`, `/courses`.
+Dashboard endpoints emit `[PERF] GET /path took Xms` to stdout. Instrumented: `/users/me/skills`, `/users/me/github-analysis`, `/roadmaps`, `/progress/all`, `/recommend/recommend`, `/courses`.
 
 ## Core Modules
 
 - `core/clerk_auth.py` — `get_current_user()` dependency (Clerk JWT validation)
 - `core/security.py` — `create_access_token()`, `hash_password()`, `verify_password()`
-- `core/rate_limit.py` — `RateLimiter` class
+- `core/rate_limit.py` — `RateLimiter` class; **FIXED:** uses `X-Forwarded-For` last IP (was using first IP, spoofable on shared reverse proxies)
 - `db/database.py` — SQLAlchemy engine, `SessionLocal`, `Base`, `get_db()`
 
 ## Scripts
@@ -106,4 +120,5 @@ All dashboard-related endpoints emit `[PERF] GET /path took Xms` to stdout on ev
 | `scripts/generate_skill_graph.py` | Generates `skill_edges` for a roadmap |
 | `scripts/extract_roadmap_resources.py` | Extracts resources for roadmap courses |
 | `scripts/seed_course_resources.py` | Seeds `course_resources` table |
-| `scripts/compute_difficulty.py` | Computes difficulty levels |
+| `scripts/compute_difficulty.py` | Computes `difficulty_level` (legacy; future: call `course_level_service` to populate `required_level`) |
+| `scripts/migrate_elo_to_xp.py` | **NEW (Phase 2):** One-time backfill of ELO→XP for existing users; safe to run multiple times |

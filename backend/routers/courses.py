@@ -8,7 +8,7 @@ from models.course import Course
 from models.course_prerequisite import CoursePrerequisite
 from models.user import User
 from core.clerk_auth import get_current_user
-from services.learning_priority_service import get_recommended_start_courses
+from services.learning_priority_service import get_recommended_start_courses_batched
 
 router = APIRouter()
 
@@ -41,7 +41,7 @@ def list_courses(
     alternative_starts = []
 
     if roadmap_id:
-        recommended = get_recommended_start_courses(
+        recommended = get_recommended_start_courses_batched(
             current_user.id,
             roadmap_id,
             db

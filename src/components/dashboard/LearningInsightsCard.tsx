@@ -1,14 +1,12 @@
 import React from "react";
 import { BookOpen, AlertTriangle, TrendingUp, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
-import { eloToXP } from "../../lib/xpUtils";
-
 interface Skill {
   roadmap_id: string;
   progress_percent?: number;
   completed_courses?: number;
   total_courses?: number;
-  trust_score?: number;
+  xp?: number;
 }
 
 interface RecommendedCourse {
@@ -38,13 +36,13 @@ export default function LearningInsightsCard({
   const totalCourses = skills.reduce((sum, s) => sum + (s.total_courses || 0), 0);
   const activeRoadmaps = skills.filter((s) => (s.progress_percent || 0) > 0).length;
 
-  // Diagnostic: struggle areas — skills with lowest trust_score that are above baseline
-  const engagedSkills = skills.filter((s) => (s.trust_score || 800) !== 800);
+  // Diagnostic: struggle areas — skills with XP below Level 2 threshold (150 XP)
+  const engagedSkills = skills.filter((s) => (s.xp || 0) > 0);
   const sortedByScore = [...skills].sort(
-    (a, b) => (a.trust_score || 800) - (b.trust_score || 800)
+    (a, b) => (a.xp || 0) - (b.xp || 0)
   );
   const struggleAreas = sortedByScore
-    .filter((s) => (s.trust_score || 800) < 950)
+    .filter((s) => (s.xp || 0) < 150)
     .slice(0, 3);
 
   // Prescriptive: conditional action nudges
@@ -73,9 +71,18 @@ export default function LearningInsightsCard({
         loading ? (
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>Loading...</p>
         ) : skills.length === 0 ? (
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            No activity yet. Start a roadmap.
-          </p>
+          <div>
+            <p className="text-sm mb-2" style={{ color: "var(--text-muted)" }}>
+              No activity yet.
+            </p>
+            <Link
+              to="/roadmaps"
+              className="inline-block text-xs font-semibold px-3 py-1 rounded-full"
+              style={{ backgroundColor: "rgba(99,102,241,0.12)", color: "#818cf8" }}
+            >
+              Pick a roadmap →
+            </Link>
+          </div>
         ) : (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
@@ -104,11 +111,22 @@ export default function LearningInsightsCard({
         loading ? (
           <p className="text-sm" style={{ color: "var(--text-muted)" }}>Loading...</p>
         ) : struggleAreas.length === 0 ? (
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-            {engagedSkills.length === 0
-              ? "Take quizzes to identify struggle areas."
-              : "No struggle areas detected — great work!"}
-          </p>
+          <div>
+            <p className="text-sm mb-2" style={{ color: "var(--text-muted)" }}>
+              {engagedSkills.length === 0
+                ? "Take quizzes to identify struggle areas."
+                : "No struggle areas detected — great work!"}
+            </p>
+            {engagedSkills.length === 0 && (
+              <Link
+                to="/roadmaps"
+                className="inline-block text-xs font-semibold px-3 py-1 rounded-full"
+                style={{ backgroundColor: "rgba(245,158,11,0.1)", color: "#f59e0b" }}
+              >
+                Start a quiz →
+              </Link>
+            )}
+          </div>
         ) : (
           <div className="space-y-1.5">
             {struggleAreas.map((s) => (
@@ -117,8 +135,7 @@ export default function LearningInsightsCard({
                   {formatRoadmapName(s.roadmap_id)}
                 </span>
                 <span className="font-medium" style={{ color: "#f59e0b" }}>
-                  {/* trust_score is a Backend field — displayed as XP */}
-                  {eloToXP(Math.round(s.trust_score || 800))} XP
+                  {s.xp || 0} XP
                 </span>
               </div>
             ))}

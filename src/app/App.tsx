@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, Outlet, useLocation } from 'react-router-dom';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { SignedIn, SignedOut, useAuth } from '@clerk/clerk-react';
 import { AppNavbar } from './components/AppNavbar';
 import { AppSidebar } from './components/AppSidebar';
@@ -13,6 +14,7 @@ import DashboardPage from './pages/DashboardPage';
 import ResourceViewerPage from './pages/ResourceViewerPage';
 import QuizPage from './pages/QuizPage';
 import MyProfilePage from './pages/MyProfilePage';
+import AIMentorPage from './pages/AIMentorPage';
 
 import { useEffect as UseEffectAlias } from 'react';
 
@@ -23,6 +25,7 @@ function AppLayout() {
 
   let currentPage = 'roadmap';
   if (location.pathname.startsWith('/dashboard')) currentPage = 'dashboard';
+  else if (location.pathname.startsWith('/ai-mentor')) currentPage = 'ai-mentor';
   else if (location.pathname.startsWith('/profile')) currentPage = 'profile';
 
   return (
@@ -57,7 +60,9 @@ export default function App() {
         <Route element={
           <>
             <SignedIn>
-              <AppLayout />
+              <ErrorBoundary>
+                <AppLayout />
+              </ErrorBoundary>
             </SignedIn>
             <SignedOut>
               <Navigate to="/signin" replace />
@@ -70,6 +75,7 @@ export default function App() {
             <Route path="/course/:courseId" element={<CourseDetailPage />} />
             <Route path="/course/:courseId/resource/:resourceId" element={<ResourceViewerPage />} />
             <Route path="/course/:courseId/quiz" element={<QuizPage />} />
+            <Route path="/ai-mentor" element={<AIMentorPage />} />
             <Route path="/profile" element={<MyProfilePage />} />
             <Route path="/progress" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

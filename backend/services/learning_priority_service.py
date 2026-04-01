@@ -1,6 +1,10 @@
+from sqlalchemy import literal, select, union_all
 from sqlalchemy.orm import Session
+
 from models.course import Course
 from models.course_prerequisite import CoursePrerequisite
+from models.event import Event
+from models.quiz_attempt import QuizAttempt
 from models.skill_profile import SkillProfile
 from services.skill_graph_service import (
     get_prerequisites,
@@ -146,4 +150,141 @@ def get_recommended_start_courses(user_id: str, roadmap_id: str, db: Session) ->
     return {
         "recommended": recommended,
         "alternatives": alternatives
+    }
+
+
+def get_recommended_start_courses_batched(user_id: str, roadmap_id: str, db: Session) -> dict:
+    """
+    Batched drop-in replacement for get_recommended_start_courses.
+
+    Executes exactly 4 SQL queries regardless of roadmap size, then resolves
+    unlock status, graph metrics, and confidence adjustments entirely in memory.
+
+    Q1 — All Course rows for roadmap_id
+    Q2 — All CoursePrerequisite edges for those course IDs
+    Q3 — All satisfied course IDs for this user (events + passed quiz attempts)
+    Q4 — All SkillProfile rows for (user_id, skill_ids in Q1)
+    """
+    # Q1 — courses
+    courses: list[Course] = (
+        db.query(Course)
+        .filter(Course.roadmap_id == roadmap_id)
+        .all()
+    )
+    if not courses:
+        return {"recommended": None, "alternatives": []}
+
+    course_ids = [c.id for c in courses]
+    course_map: dict[str, Course] = {c.id: c for c in courses}
+
+    # Q2 — prerequisite edges
+    prereq_edges: list[CoursePrerequisite] = (
+        db.query(CoursePrerequisite)
+        .filter(CoursePrerequisite.course_id.in_(course_ids))
+        .all()
+    )
+    # prereq_map: course_id -> set of prerequisite_ids (what must be done first)
+    prereq_map: dict[str, set[str]] = {cid: set() for cid in course_ids}
+    # forward_map: prerequisite_id -> set of dependent course_ids (for BFS descendants)
+    forward_map: dict[str, set[str]] = {cid: set() for cid in course_ids}
+    for edge in prereq_edges:
+        if edge.course_id in prereq_map:
+            prereq_map[edge.course_id].add(edge.prerequisite_id)
+        if edge.prerequisite_id in forward_map:
+            forward_map[edge.prerequisite_id].add(edge.course_id)
+
+    # Q3 — satisfied course IDs (completed events + skipped events + passed quizzes)
+    events_subq = select(Event.course_id.label("course_id")).where(
+        Event.user_id == user_id,
+        Event.course_id.in_(course_ids),
+        Event.event_type.in_(["course_completed", "course_skipped"]),
+    )
+    quiz_subq = select(QuizAttempt.skill_id.label("course_id")).where(
+        QuizAttempt.user_id == user_id,
+        QuizAttempt.skill_id.in_(course_ids),
+        QuizAttempt.passed.is_(True),
+    )
+    completed_rows = db.execute(union_all(events_subq, quiz_subq)).fetchall()
+    completed_ids: set[str] = {row[0] for row in completed_rows if row[0] is not None}
+
+    # Q4 — skill profiles
+    skill_profiles: list[SkillProfile] = (
+        db.query(SkillProfile)
+        .filter(
+            SkillProfile.user_id == user_id,
+            SkillProfile.skill_id.in_(course_ids),
+        )
+        .all()
+    )
+    profile_map: dict[str, SkillProfile] = {sp.skill_id: sp for sp in skill_profiles}
+
+    # --- In-memory unlock resolution ---
+    def is_unlocked(cid: str) -> bool:
+        if cid in completed_ids:
+            return False
+        prereqs = prereq_map.get(cid, set())
+        return all(p in completed_ids for p in prereqs)
+
+    unlocked_ids = [cid for cid in course_ids if is_unlocked(cid)]
+
+    if not unlocked_ids:
+        return {"recommended": None, "alternatives": []}
+
+    # --- In-memory graph metrics ---
+
+    # BFS descendants count (how many nodes downstream of cid)
+    def count_descendants(cid: str) -> int:
+        visited: set[str] = set()
+        queue = [cid]
+        while queue:
+            current = queue.pop(0)
+            for dep in forward_map.get(current, set()):
+                if dep not in visited:
+                    visited.add(dep)
+                    queue.append(dep)
+        return len(visited)
+
+    # Memoised recursive depth (longest path from any root to cid)
+    depth_memo: dict[str, int] = {}
+
+    def compute_depth(node: str) -> int:
+        if node in depth_memo:
+            return depth_memo[node]
+        prereqs = prereq_map.get(node, set())
+        if not prereqs:
+            depth_memo[node] = 0
+            return 0
+        d = max(compute_depth(p) + 1 for p in prereqs)
+        depth_memo[node] = d
+        return d
+
+    # --- Score each unlocked course ---
+    course_scores = []
+    for cid in unlocked_ids:
+        course = course_map[cid]
+        out_degree = len(forward_map.get(cid, set()))
+        descendants = count_descendants(cid)
+        depth = compute_depth(cid)
+        base_score = float((descendants * 3) + (out_degree * 2) + (10 - depth))
+
+        profile = profile_map.get(cid)
+        confidence_adj = 0.0
+        if profile:
+            confidence = float(profile.confidence or 0.0)
+            if confidence < 0.4:
+                confidence_adj = 5.0
+            elif confidence > 0.7:
+                confidence_adj = -3.0
+
+        course_scores.append((base_score + confidence_adj, course))
+
+    course_scores.sort(key=lambda x: x[0], reverse=True)
+
+    top = course_scores[0][1]
+    return {
+        "recommended": {"id": top.id, "title": top.title},
+        "alternatives": [
+            {"id": c.id, "title": c.title}
+            for _, c in course_scores[1:3]
+        ],
     }

@@ -1,7 +1,9 @@
-import React from 'react';
-import { Home, Map, GraduationCap, X, LogOut, User } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Home, Map, GraduationCap, X, LogOut, User, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useClerk } from '@clerk/clerk-react';
+import { getUserProfile } from '../../services/userApi';
+import { getLevelFromXP, LEVEL_COLORS, LEVEL_LABELS } from '../../lib/xpUtils';
 
 interface AppSidebarProps {
   currentPage: string;
@@ -12,12 +14,20 @@ interface AppSidebarProps {
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/dashboard' },
   { id: 'roadmap', label: 'Learning Paths', icon: Map, path: '/roadmaps' },
+  { id: 'ai-mentor', label: 'AI Mentor', icon: MessageSquare, path: '/ai-mentor' },
   { id: 'profile', label: 'My Profile', icon: User, path: '/profile' },
 ];
 
 export function AppSidebar({ currentPage, isOpen = true, onClose }: AppSidebarProps) {
   const navigate = useNavigate();
   const { signOut } = useClerk();
+  const [totalXP, setTotalXP] = useState<number | null>(null);
+
+  useEffect(() => {
+    getUserProfile()
+      .then(data => { if (data?.total_xp != null) setTotalXP(data.total_xp); })
+      .catch(() => {}); // fail silently — XP display is non-critical
+  }, []);
 
   const handleLogout = () => {
     signOut(() => navigate('/signin', { replace: true }));
@@ -105,6 +115,42 @@ export function AppSidebar({ currentPage, isOpen = true, onClose }: AppSidebarPr
 
           {/* Footer */}
           <div className="p-4 border-t border-[#1e1e2e] space-y-4">
+            {/* XP / Level compact display */}
+            {totalXP !== null && (() => {
+              const { level, progressPercent } = getLevelFromXP(totalXP);
+              const colors = LEVEL_COLORS[level] ?? LEVEL_COLORS[1];
+              const label = LEVEL_LABELS[level] ?? 'Master';
+              return (
+                <div
+                  className="rounded-lg px-3 py-2.5 border"
+                  style={{ backgroundColor: '#111118', borderColor: '#1e1e2e' }}
+                >
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                      style={{ backgroundColor: colors.bg, border: `1px solid ${colors.border}`, color: colors.accent }}
+                    >
+                      {level}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[11px] font-semibold truncate" style={{ color: colors.accent }}>
+                        {label}
+                      </div>
+                      <div className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                        {totalXP} XP
+                      </div>
+                    </div>
+                  </div>
+                  <div className="w-full h-1 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+                    <div
+                      className="h-full rounded-full"
+                      style={{ width: `${progressPercent}%`, backgroundColor: colors.accent }}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
+
             <button
               onClick={handleLogout}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 text-[#64748b] hover:text-[#ef4444] rounded-md transition-colors font-medium border border-transparent"

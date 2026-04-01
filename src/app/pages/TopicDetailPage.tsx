@@ -83,7 +83,7 @@ export function TopicDetailPage({ topic, onBack, onMarkComplete }: TopicDetailPa
             <p className="text-muted-foreground">{topic.description}</p>
           </div>
           <span className="text-sm px-3 py-1.5 bg-muted text-muted-foreground rounded-[6px] whitespace-nowrap">
-            <CourseDifficultyBadge difficultyLevel={topic.difficultyLevel} />
+            <CourseDifficultyBadge requiredLevel={topic.difficultyLevel} />
           </span>
         </div>
       </div>

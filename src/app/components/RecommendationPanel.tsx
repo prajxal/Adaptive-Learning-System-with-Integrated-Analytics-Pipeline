@@ -19,7 +19,8 @@ interface RoadmapNode {
 }
 
 interface RecommendationResponse {
-    user_elo: number;
+    user_xp: number;
+    user_level: number;
     next_in_current_roadmap: RoadmapNode[];
     suggested_new_roadmaps: string[];
 }
@@ -30,7 +31,7 @@ interface RecommendationPanelProps {
     alternativeStarts?: { id: string; title: string }[];
 }
 
-// Returns the level (1–6) for a difficulty_level on the ELO scale (800–2000).
+// Returns the level (1–6) for a required_level integer (1–6).
 const normalizeDifficulty = (difficulty: number): number => {
     return getCourseDifficultyInfo(difficulty).level;
 };
@@ -188,8 +189,7 @@ export const RecommendationPanel: React.FC<RecommendationPanelProps> = ({ curren
 
             {/* ZONE 1: User Level / XP Badge */}
             <div className="relative z-10 pb-6 border-b border-gray-800">
-                {/* user_elo is a Backend field — displayed as XP/Level */}
-                <XPLevelBadge elo={data.user_elo} showProgress={true} />
+                <XPLevelBadge xp={data.user_xp} showProgress={true} />
             </div>
 
             {/* ZONE 2: Recommended Start */}

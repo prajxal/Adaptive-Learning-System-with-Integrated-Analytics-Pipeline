@@ -8,7 +8,8 @@ export type RoadmapNode = {
 };
 
 export type RecommendationResponse = {
-  user_elo: number;
+  user_xp: number;
+  user_level: number;
   next_in_current_roadmap: RoadmapNode[];
   suggested_new_roadmaps: string[];
 };
@@ -16,7 +17,8 @@ export type RecommendationResponse = {
 export type UserResponse = {
   id: string;
   email: string;
-  global_elo_rating: number;
+  total_xp: number;
+  current_level: number;
   resume_status: string | null;
   github_status: string | null;
 };
