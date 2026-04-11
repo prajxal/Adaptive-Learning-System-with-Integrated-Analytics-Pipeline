@@ -1,0 +1,980 @@
+{
+  "metadata": {
+    "description": "Ground-truth skill annotation dataset for ENGINEERING resume corpus",
+    "purpose": "Evaluate precision, recall, and false-positive rate of the LearnPathAI skill-extraction pipeline",
+    "annotation_method": "Human-quality annotation via curated vocabulary (~75 canonical skills) with context-aware regex extraction and manual post-filters to remove false positives. Annotated skills reflect only technical skills relevant to software engineering (programming languages, frameworks, databases, tools, DevOps, ML libraries). Soft skills, generic words, and non-evidence mentions are excluded.",
+    "corpus": {
+      "source_folder": "ENGINEERING/",
+      "total_resumes": 118,
+      "resumes_with_sw_skills": 69,
+      "resumes_with_zero_sw_skills": 49,
+      "note": "49 resumes have 0 software-engineering skills because they belong to hardware, civil, mechanical, or general management engineering roles."
+    },
+    "validation": {
+      "total_unique_skills": 75,
+      "total_skill_occurrences": 315,
+      "avg_skills_per_resume": 2.67,
+      "top_20_skills": [
+        {
+          "skill": "C++",
+          "count": 23
+        },
+        {
+          "skill": "MATLAB",
+          "count": 16
+        },
+        {
+          "skill": "Java",
+          "count": 15
+        },
+        {
+          "skill": "SQL",
+          "count": 15
+        },
+        {
+          "skill": "HTML",
+          "count": 14
+        },
+        {
+          "skill": "Linux",
+          "count": 14
+        },
+        {
+          "skill": "LabVIEW",
+          "count": 12
+        },
+        {
+          "skill": "Python",
+          "count": 11
+        },
+        {
+          "skill": "Scrum",
+          "count": 11
+        },
+        {
+          "skill": "Agile",
+          "count": 10
+        },
+        {
+          "skill": "JavaScript",
+          "count": 8
+        },
+        {
+          "skill": "XML",
+          "count": 8
+        },
+        {
+          "skill": "Jenkins",
+          "count": 7
+        },
+        {
+          "skill": "Jira",
+          "count": 7
+        },
+        {
+          "skill": "JSON",
+          "count": 7
+        },
+        {
+          "skill": "Visual Studio",
+          "count": 7
+        },
+        {
+          "skill": "CSS",
+          "count": 6
+        },
+        {
+          "skill": "REST API",
+          "count": 6
+        },
+        {
+          "skill": "Oracle",
+          "count": 6
+        },
+        {
+          "skill": "Unix",
+          "count": 6
+        }
+      ]
+    },
+    "normalization_rules": {
+      "Node.js": "NodeJS / Node.js / nodejs \u2192 Node.js",
+      "React": "ReactJS / React.js \u2192 React",
+      "Vue.js": "VueJS / Vue.js \u2192 Vue.js",
+      "Next.js": "NextJS / Next.js \u2192 Next.js",
+      "scikit-learn": "sklearn / scikit-learn \u2192 scikit-learn",
+      "PostgreSQL": "Postgres / PostgreSQL / Postgre SQL \u2192 PostgreSQL",
+      "TensorFlow": "Tensorflow / TensorFlow \u2192 TensorFlow",
+      "JavaScript": "JS / Javascript / JavaScript \u2192 JavaScript",
+      "TypeScript": "TS / Typescript / TypeScript \u2192 TypeScript",
+      "C++": "CPP / c++ \u2192 C++",
+      "C#": "CSharp / C Sharp / C# \u2192 C#",
+      "ASP.NET": "ASP.NET / asp.net / asp net \u2192 ASP.NET",
+      "SQL Server": "MSSQL / MS SQL / SQL Server \u2192 SQL Server"
+    },
+    "usage": {
+      "precision": "precision = |extracted_skills \u2229 annotated_skills| / |extracted_skills|",
+      "recall": "recall    = |extracted_skills \u2229 annotated_skills| / |annotated_skills|",
+      "f1": "F1 = 2 * precision * recall / (precision + recall)",
+      "fpr": "false_positive_rate = |extracted_skills - annotated_skills| / |extracted_skills|"
+    }
+  },
+  "annotations": [
+    {
+      "resume_file": "10030015.pdf",
+      "annotated_skills": [
+        "LabVIEW"
+      ]
+    },
+    {
+      "resume_file": "10219099.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "10624813.pdf",
+      "annotated_skills": [
+        "AWS",
+        "Agile",
+        "Bootstrap",
+        "C++",
+        "CI/CD",
+        "CSS",
+        "GitHub",
+        "HTML",
+        "Hibernate",
+        "JUnit",
+        "Java",
+        "JavaScript",
+        "Jenkins",
+        "Jira",
+        "MongoDB",
+        "PHP",
+        "PL/SQL",
+        "Perl",
+        "Python",
+        "REST",
+        "SOAP",
+        "SQL",
+        "Selenium"
+      ]
+    },
+    {
+      "resume_file": "10712803.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "10985403.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "11890896.pdf",
+      "annotated_skills": [
+        "C++",
+        "SQL"
+      ]
+    },
+    {
+      "resume_file": "11981094.pdf",
+      "annotated_skills": [
+        "C++",
+        "HTML",
+        "JSON",
+        "JavaScript",
+        "Jenkins",
+        "REST API",
+        "Scrum",
+        "XML"
+      ]
+    },
+    {
+      "resume_file": "12011623.pdf",
+      "annotated_skills": [
+        "ASP.NET",
+        "HTML",
+        "Oracle",
+        "Pandas",
+        "Python",
+        "R",
+        "SQL",
+        "Tableau"
+      ]
+    },
+    {
+      "resume_file": "12022566.pdf",
+      "annotated_skills": [
+        "C++"
+      ]
+    },
+    {
+      "resume_file": "12472574.pdf",
+      "annotated_skills": [
+        "C++",
+        "HTML",
+        "Java",
+        "JavaScript",
+        "Linux",
+        "SQL",
+        "Unix"
+      ]
+    },
+    {
+      "resume_file": "12488356.pdf",
+      "annotated_skills": [
+        "Agile",
+        "Salesforce"
+      ]
+    },
+    {
+      "resume_file": "12518008.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "12748557.pdf",
+      "annotated_skills": [
+        "React"
+      ]
+    },
+    {
+      "resume_file": "13149176.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "13264796.pdf",
+      "annotated_skills": [
+        "Agile",
+        "R",
+        "Rails",
+        "Ruby"
+      ]
+    },
+    {
+      "resume_file": "14049846.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "14206561.pdf",
+      "annotated_skills": [
+        "Oracle"
+      ]
+    },
+    {
+      "resume_file": "14554542.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "15139979.pdf",
+      "annotated_skills": [
+        "C++"
+      ]
+    },
+    {
+      "resume_file": "15601399.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "15858254.pdf",
+      "annotated_skills": [
+        "LabVIEW",
+        "Linux"
+      ]
+    },
+    {
+      "resume_file": "15941675.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "16803215.pdf",
+      "annotated_skills": [
+        "Java"
+      ]
+    },
+    {
+      "resume_file": "16911115.pdf",
+      "annotated_skills": [
+        "Oracle DB"
+      ]
+    },
+    {
+      "resume_file": "17043822.pdf",
+      "annotated_skills": [
+        "Linux",
+        "MySQL",
+        "PHP",
+        "Unix"
+      ]
+    },
+    {
+      "resume_file": "17103000.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "17108676.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "17488801.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "17926546.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "18753367.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "19124258.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "19396040.pdf",
+      "annotated_skills": [
+        "C++",
+        "Java",
+        "Kanban",
+        "Python"
+      ]
+    },
+    {
+      "resume_file": "19397727.pdf",
+      "annotated_skills": [
+        "LabVIEW"
+      ]
+    },
+    {
+      "resume_file": "19553067.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "19612167.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "20566550.pdf",
+      "annotated_skills": [
+        "Jira",
+        "MATLAB",
+        "Oracle",
+        "Python",
+        "SQL",
+        "Scrum"
+      ]
+    },
+    {
+      "resume_file": "20882041.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "20981299.pdf",
+      "annotated_skills": [
+        "Kanban"
+      ]
+    },
+    {
+      "resume_file": "21038022.pdf",
+      "annotated_skills": [
+        "ASP.NET",
+        "C++",
+        "CSS",
+        "HTML",
+        "Java",
+        "SQL",
+        "SQL Server",
+        "Visual Studio"
+      ]
+    },
+    {
+      "resume_file": "21298336.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "21629057.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "21807224.pdf",
+      "annotated_skills": [
+        "AWS"
+      ]
+    },
+    {
+      "resume_file": "21847415.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "22605864.pdf",
+      "annotated_skills": [
+        "PowerShell"
+      ]
+    },
+    {
+      "resume_file": "22890839.pdf",
+      "annotated_skills": [
+        "Linux",
+        "Puppet",
+        "Python",
+        "Shell"
+      ]
+    },
+    {
+      "resume_file": "23234047.pdf",
+      "annotated_skills": [
+        "Java",
+        "LabVIEW",
+        "MATLAB",
+        "VHDL"
+      ]
+    },
+    {
+      "resume_file": "23438227.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "23497307.pdf",
+      "annotated_skills": [
+        "Agile",
+        "Jira",
+        "Oracle"
+      ]
+    },
+    {
+      "resume_file": "24322804.pdf",
+      "annotated_skills": [
+        "C++"
+      ]
+    },
+    {
+      "resume_file": "24647794.pdf",
+      "annotated_skills": [
+        ".NET",
+        "Assembly",
+        "C++",
+        "MATLAB",
+        "Simulink",
+        "Verilog",
+        "Visual Studio"
+      ]
+    },
+    {
+      "resume_file": "25425322.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "25608963.pdf",
+      "annotated_skills": [
+        "LabVIEW"
+      ]
+    },
+    {
+      "resume_file": "25797445.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "25919149.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "25930778.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "26456899.pdf",
+      "annotated_skills": [
+        "C++",
+        "Java",
+        "Linux",
+        "SQL",
+        "Visual Studio"
+      ]
+    },
+    {
+      "resume_file": "26834746.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "27040860.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "27152464.pdf",
+      "annotated_skills": [
+        "Agile",
+        "COBOL",
+        "Confluence",
+        "Git",
+        "Groovy",
+        "JSON",
+        "Jira",
+        "Linux",
+        "MongoDB",
+        "Oracle",
+        "Perl",
+        "PostgreSQL",
+        "Postman",
+        "Python",
+        "REST",
+        "SQL",
+        "Scrum",
+        "Shell",
+        "Unix",
+        "XML"
+      ]
+    },
+    {
+      "resume_file": "27756469.pdf",
+      "annotated_skills": [
+        "LabVIEW",
+        "MATLAB"
+      ]
+    },
+    {
+      "resume_file": "28005884.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "28078163.pdf",
+      "annotated_skills": [
+        "C++",
+        "HTML",
+        "JSON",
+        "JavaScript",
+        "Jenkins",
+        "REST API",
+        "Scrum",
+        "XML"
+      ]
+    },
+    {
+      "resume_file": "28320387.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "28505854.pdf",
+      "annotated_skills": [
+        "Agile",
+        "C++",
+        "CUDA",
+        "HTML",
+        "JSON",
+        "Java",
+        "Linux",
+        "MATLAB",
+        "OpenCV",
+        "REST API",
+        "SOAP",
+        "Scrum",
+        "TensorFlow",
+        "Unix",
+        "XML"
+      ]
+    },
+    {
+      "resume_file": "28628090.pdf",
+      "annotated_skills": [
+        "COBOL",
+        "Fortran"
+      ]
+    },
+    {
+      "resume_file": "28630325.pdf",
+      "annotated_skills": [
+        ".NET",
+        "Agile",
+        "Bootstrap",
+        "CSS",
+        "HTML",
+        "Kanban",
+        "MySQL",
+        "Objective-C",
+        "PHP",
+        "Perl",
+        "REST",
+        "SOAP",
+        "SQL Server",
+        "Scrum",
+        "jQuery"
+      ]
+    },
+    {
+      "resume_file": "28631840.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "28762662.pdf",
+      "annotated_skills": [
+        "C++",
+        "CSS",
+        "HTML",
+        "JSON",
+        "JavaScript",
+        "Jenkins",
+        "REST API",
+        "Scrum",
+        "XML"
+      ]
+    },
+    {
+      "resume_file": "28831378.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "28923650.pdf",
+      "annotated_skills": [
+        "Fortran",
+        "MATLAB"
+      ]
+    },
+    {
+      "resume_file": "30097175.pdf",
+      "annotated_skills": [
+        "C++",
+        "HTML",
+        "LabVIEW",
+        "MATLAB",
+        "SQL",
+        "VHDL",
+        "Verilog"
+      ]
+    },
+    {
+      "resume_file": "30288581.pdf",
+      "annotated_skills": [
+        "MATLAB",
+        "MySQL",
+        "VBA"
+      ]
+    },
+    {
+      "resume_file": "30542184.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "31677347.pdf",
+      "annotated_skills": [
+        "C++",
+        "HTML",
+        "JSON",
+        "JavaScript",
+        "Jenkins",
+        "REST API",
+        "Scrum",
+        "XML"
+      ]
+    },
+    {
+      "resume_file": "31684925.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "31694970.pdf",
+      "annotated_skills": [
+        "ASP.NET",
+        "SQL",
+        "Visual Studio"
+      ]
+    },
+    {
+      "resume_file": "32081266.pdf",
+      "annotated_skills": [
+        "SQL",
+        "SQL Server"
+      ]
+    },
+    {
+      "resume_file": "32802563.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "32985311.pdf",
+      "annotated_skills": [
+        "Python",
+        "SQL",
+        "Tableau"
+      ]
+    },
+    {
+      "resume_file": "33685075.pdf",
+      "annotated_skills": [
+        "LabVIEW"
+      ]
+    },
+    {
+      "resume_file": "35172961.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "35389360.pdf",
+      "annotated_skills": [
+        "CSS",
+        "HTML",
+        "Java",
+        "Linux",
+        "MySQL",
+        "PHP",
+        "jQuery"
+      ]
+    },
+    {
+      "resume_file": "35651876.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "35737840.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "36149549.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "36517781.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "37335325.pdf",
+      "annotated_skills": [
+        "Agile",
+        "C++",
+        "Git",
+        "Java",
+        "Jenkins",
+        "Jira",
+        "Linux",
+        "Objective-C",
+        "Scrum",
+        "Visual Studio"
+      ]
+    },
+    {
+      "resume_file": "38220146.pdf",
+      "annotated_skills": [
+        "Kanban"
+      ]
+    },
+    {
+      "resume_file": "38314236.pdf",
+      "annotated_skills": [
+        "LabVIEW",
+        "MATLAB"
+      ]
+    },
+    {
+      "resume_file": "38535335.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "39835894.pdf",
+      "annotated_skills": [
+        "Linux"
+      ]
+    },
+    {
+      "resume_file": "39855211.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "43752620.pdf",
+      "annotated_skills": [
+        "Fortran",
+        "MATLAB",
+        "Simulink"
+      ]
+    },
+    {
+      "resume_file": "44624796.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "47276718.pdf",
+      "annotated_skills": [
+        "MATLAB"
+      ]
+    },
+    {
+      "resume_file": "47549345.pdf",
+      "annotated_skills": [
+        "C++",
+        "LabVIEW",
+        "MATLAB",
+        "Simulink"
+      ]
+    },
+    {
+      "resume_file": "47919212.pdf",
+      "annotated_skills": [
+        "Azure",
+        "CSS"
+      ]
+    },
+    {
+      "resume_file": "49127329.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "50328713.pdf",
+      "annotated_skills": [
+        "C++",
+        "Git",
+        "Linux",
+        "MATLAB",
+        "Matplotlib",
+        "Pandas",
+        "Python",
+        "SQL",
+        "Seaborn",
+        "Shell",
+        "TensorFlow",
+        "Unix",
+        "XGBoost",
+        "scikit-learn"
+      ]
+    },
+    {
+      "resume_file": "51588273.pdf",
+      "annotated_skills": [
+        "ASP.NET",
+        "Agile",
+        "Apache",
+        "ETL",
+        "Eclipse",
+        "Java",
+        "JavaScript",
+        "Oracle",
+        "PHP",
+        "SQL",
+        "SQL Server",
+        "Scrum",
+        "Visual Studio"
+      ]
+    },
+    {
+      "resume_file": "54227873.pdf",
+      "annotated_skills": [
+        "C++",
+        "HTML",
+        "Java",
+        "Linux",
+        "Python"
+      ]
+    },
+    {
+      "resume_file": "55595908.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "55953734.pdf",
+      "annotated_skills": [
+        "LabVIEW",
+        "Python"
+      ]
+    },
+    {
+      "resume_file": "56691064.pdf",
+      "annotated_skills": [
+        "Java",
+        "XML"
+      ]
+    },
+    {
+      "resume_file": "60004873.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "61579998.pdf",
+      "annotated_skills": [
+        "Agile",
+        "C++",
+        "Java",
+        "Jira",
+        "MATLAB",
+        "Simulink",
+        "Visual Studio"
+      ]
+    },
+    {
+      "resume_file": "62071407.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "64468610.pdf",
+      "annotated_skills": [
+        "C++",
+        "HTML",
+        "JSON",
+        "JavaScript",
+        "Jenkins",
+        "REST API",
+        "Scrum",
+        "XML"
+      ]
+    },
+    {
+      "resume_file": "64755882.pdf",
+      "annotated_skills": [
+        "C++",
+        "LabVIEW",
+        "Linux",
+        "Verilog"
+      ]
+    },
+    {
+      "resume_file": "74236636.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "77828437.pdf",
+      "annotated_skills": [
+        "MATLAB"
+      ]
+    },
+    {
+      "resume_file": "81125166.pdf",
+      "annotated_skills": [
+        "Kanban"
+      ]
+    },
+    {
+      "resume_file": "82125182.pdf",
+      "annotated_skills": [
+        "Java"
+      ]
+    },
+    {
+      "resume_file": "82246962.pdf",
+      "annotated_skills": [
+        "Kanban",
+        "Linux",
+        "Python",
+        "SQL",
+        "SQL Server",
+        "Unix"
+      ]
+    },
+    {
+      "resume_file": "86209934.pdf",
+      "annotated_skills": []
+    },
+    {
+      "resume_file": "86828820.pdf",
+      "annotated_skills": [
+        "ETL"
+      ]
+    },
+    {
+      "resume_file": "90280583.pdf",
+      "annotated_skills": [
+        "Confluence",
+        "Jira",
+        "Power BI",
+        "Tableau"
+      ]
+    },
+    {
+      "resume_file": "96029688.pdf",
+      "annotated_skills": [
+        "MATLAB"
+      ]
+    }
+  ]
+}
