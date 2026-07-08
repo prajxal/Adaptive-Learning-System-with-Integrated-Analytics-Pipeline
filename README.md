@@ -34,7 +34,7 @@ Every quiz updates your per-skill Elo rating using the standard logistic formula
 | 6 | Grandmaster |
 
 ### Skill Graph & Dependency Tracking
-Course prerequisites are sourced from roadmap.sh JSON data and stored as a graph of directed edges. BFS traversal determines which topics are completed, unlocked, or locked for each user.
+Course prerequisites are sourced from roadmap.sh JSON data and  stored as a graph of directed edges. BFS traversal determines which topics are completed, unlocked, or locked for each user.
 
 ### Course Recommendation Engine
 Unlocked courses are ranked by an importance score:
@@ -51,7 +51,7 @@ A conversational AI mentor with live access to your learning data. When you ask 
 - Can invoke backend tools during the conversation (Gemini function calling) for deeper queries.
 - Always responds with real data — never fabricated statistics.
 
-### MCP-Style Tool Architecture
+### MCP-Style Tool Architecture:
 The AI Mentor uses an in-process Model Context Protocol (MCP) style tool registry. Five tools are available to the Gemini model during a conversation:
 
 | Tool | Description |
@@ -59,7 +59,7 @@ The AI Mentor uses an in-process Model Context Protocol (MCP) style tool registr
 | `get_user_profile` | Skills, Elo rating, XP, level, GitHub status |
 | `get_user_progress` | Completed courses per roadmap with progress percentages |
 | `get_next_course` | Top recommendation + alternatives for a given roadmap |
-| `get_roadmap_courses` | All courses in a roadmap ordered by difficulty |
+| `get_roadmap_courses` | All courses in a roadmap ordered by a difficulty |
 | `get_skill_graph` | Prerequisite edges; optionally with per-skill completion status |
 
 ### GitHub Skill Extraction
