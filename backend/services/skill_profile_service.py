@@ -142,7 +142,7 @@ def update_skill_profile_from_quiz(user_id: str, skill_id: str, quiz_score: floa
     if resolved_roadmap_id:
         # award_xp_for_quiz expects a 0–1 normalized score; quiz_score is 0–100
         xp_level_service.award_xp_for_quiz(
-            user_id=int(user_id),
+            user_id=str(user_id),
             quiz_score=quiz_score / 100.0,
             course_id=skill_id,
             roadmap_id=resolved_roadmap_id,
