@@ -1,5 +1,65 @@
-node_modules
+# ── Secrets & environment ────────────────────────────────────────────────────
 .env
-*.db
 .env.local
-.claude
+.env.*.local
+
+# ── Node / Frontend ───────────────────────────────────────────────────────────
+node_modules/
+dist/
+.vite/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+*.out
+
+# ── Databases ─────────────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Uploaded / generated files ────────────────────────────────────────────────
+uploads/
+backend/uploads/
+
+# ── Dataset directories (large binary/document files) ─────────────────────────
+Software_Engineering_Resume_Dataset_CVParserPro/
+ENGINEERING/
+
+# ── Build / experiment artefacts ─────────────────────────────────────────────
+*.pdf
+*.docx
+*.csv
+*.png
+*.jpg
+*.jpeg
+*.json.bak
+a.out
+
+# ── Jupyter notebooks (duplicates with " 2" suffix) ──────────────────────────
+*\ 2.ipynb
+*\ 2.py
+*\ 2.md
+*\ 2.csv
+*\ 2.json
+*\ 2.pdf
+*\ 2.docx
+*\ 2.numbers
+*\ 2.png
+
+# ── OS / IDE ──────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ── Tool / agent config ───────────────────────────────────────────────────────
+.claude/
+.agents/
+.reports/
