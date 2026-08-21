@@ -136,7 +136,7 @@ async def github_callback(
         access_token=access_token
     )
 
-    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5174")
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
     return RedirectResponse(url=f"{FRONTEND_URL}/profile?github=connected")
 
 @router.get("/status")

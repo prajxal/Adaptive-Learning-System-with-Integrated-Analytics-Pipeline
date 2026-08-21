@@ -1,0 +1,1399 @@
+{
+  "summary": {
+    "dataset": "Software_Engineering_Resume_Dataset_CVParserPro",
+    "total_resumes": 100,
+    "pdf_count": 0,
+    "docx_count": 100,
+    "resumes_with_skills": 100,
+    "resumes_without_skills": 0,
+    "extraction_success_rate_pct": 100.0,
+    "avg_skills_per_resume": 5.35,
+    "median_skills_per_resume": 5.0,
+    "avg_confidence": 0.5318,
+    "median_confidence": 0.5,
+    "top_20_skills": [
+      {
+        "skill": "backend",
+        "count": 100
+      },
+      {
+        "skill": "java",
+        "count": 62
+      },
+      {
+        "skill": "python",
+        "count": 60
+      },
+      {
+        "skill": "docker",
+        "count": 48
+      },
+      {
+        "skill": "javascript",
+        "count": 46
+      },
+      {
+        "skill": "kubernetes",
+        "count": 44
+      },
+      {
+        "skill": "nodejs",
+        "count": 43
+      },
+      {
+        "skill": "ai",
+        "count": 40
+      },
+      {
+        "skill": "react",
+        "count": 38
+      },
+      {
+        "skill": "aws",
+        "count": 32
+      },
+      {
+        "skill": "fullstack",
+        "count": 22
+      }
+    ],
+    "errors": []
+  },
+  "per_resume": [
+    {
+      "file": "software_engineer_cv_1.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "javascript",
+        "docker",
+        "java",
+        "aws",
+        "backend"
+      ],
+      "avg_confidence": 0.4667
+    },
+    {
+      "file": "software_engineer_cv_10.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "java",
+        "nodejs",
+        "react",
+        "backend",
+        "aws"
+      ],
+      "avg_confidence": 0.6
+    },
+    {
+      "file": "software_engineer_cv_100.docx",
+      "format": "docx",
+      "skills_found": 7,
+      "skills": [
+        "java",
+        "nodejs",
+        "python",
+        "docker",
+        "react",
+        "fullstack",
+        "backend"
+      ],
+      "avg_confidence": 0.4762
+    },
+    {
+      "file": "software_engineer_cv_11.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "ai",
+        "java",
+        "javascript",
+        "nodejs",
+        "aws",
+        "backend"
+      ],
+      "avg_confidence": 0.4445
+    },
+    {
+      "file": "software_engineer_cv_12.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "java",
+        "kubernetes",
+        "nodejs",
+        "docker",
+        "react",
+        "backend"
+      ],
+      "avg_confidence": 0.5278
+    },
+    {
+      "file": "software_engineer_cv_13.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "ai",
+        "kubernetes",
+        "nodejs",
+        "python",
+        "backend"
+      ],
+      "avg_confidence": 0.6333
+    },
+    {
+      "file": "software_engineer_cv_14.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "java",
+        "python",
+        "aws",
+        "backend",
+        "fullstack"
+      ],
+      "avg_confidence": 0.4667
+    },
+    {
+      "file": "software_engineer_cv_15.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "ai",
+        "java",
+        "nodejs",
+        "python",
+        "backend"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_16.docx",
+      "format": "docx",
+      "skills_found": 7,
+      "skills": [
+        "ai",
+        "kubernetes",
+        "python",
+        "docker",
+        "java",
+        "aws",
+        "backend"
+      ],
+      "avg_confidence": 0.4524
+    },
+    {
+      "file": "software_engineer_cv_17.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "kubernetes",
+        "nodejs",
+        "python",
+        "docker",
+        "react",
+        "backend"
+      ],
+      "avg_confidence": 0.4445
+    },
+    {
+      "file": "software_engineer_cv_18.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "ai",
+        "javascript",
+        "docker",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.4333
+    },
+    {
+      "file": "software_engineer_cv_19.docx",
+      "format": "docx",
+      "skills_found": 7,
+      "skills": [
+        "javascript",
+        "nodejs",
+        "python",
+        "docker",
+        "aws",
+        "fullstack",
+        "backend"
+      ],
+      "avg_confidence": 0.4762
+    },
+    {
+      "file": "software_engineer_cv_2.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "nodejs",
+        "python",
+        "docker",
+        "react",
+        "backend",
+        "fullstack"
+      ],
+      "avg_confidence": 0.4722
+    },
+    {
+      "file": "software_engineer_cv_20.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "nodejs",
+        "docker",
+        "react",
+        "aws",
+        "backend"
+      ],
+      "avg_confidence": 0.4333
+    },
+    {
+      "file": "software_engineer_cv_21.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "javascript",
+        "nodejs",
+        "python",
+        "docker",
+        "backend",
+        "fullstack"
+      ],
+      "avg_confidence": 0.5278
+    },
+    {
+      "file": "software_engineer_cv_22.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "nodejs",
+        "python",
+        "react",
+        "backend",
+        "aws",
+        "fullstack"
+      ],
+      "avg_confidence": 0.5278
+    },
+    {
+      "file": "software_engineer_cv_23.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "python",
+        "docker",
+        "react",
+        "java",
+        "backend",
+        "fullstack"
+      ],
+      "avg_confidence": 0.4722
+    },
+    {
+      "file": "software_engineer_cv_24.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "ai",
+        "kubernetes",
+        "nodejs",
+        "python",
+        "backend"
+      ],
+      "avg_confidence": 0.5667
+    },
+    {
+      "file": "software_engineer_cv_25.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "ai",
+        "java",
+        "python",
+        "docker",
+        "backend"
+      ],
+      "avg_confidence": 0.6667
+    },
+    {
+      "file": "software_engineer_cv_26.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "ai",
+        "kubernetes",
+        "docker",
+        "react",
+        "backend"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_27.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "java",
+        "javascript",
+        "python",
+        "react",
+        "backend",
+        "fullstack"
+      ],
+      "avg_confidence": 0.4722
+    },
+    {
+      "file": "software_engineer_cv_28.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "nodejs",
+        "python",
+        "docker",
+        "aws",
+        "fullstack",
+        "backend"
+      ],
+      "avg_confidence": 0.3889
+    },
+    {
+      "file": "software_engineer_cv_29.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "nodejs",
+        "docker",
+        "react",
+        "backend",
+        "aws",
+        "fullstack"
+      ],
+      "avg_confidence": 0.4722
+    },
+    {
+      "file": "software_engineer_cv_3.docx",
+      "format": "docx",
+      "skills_found": 4,
+      "skills": [
+        "python",
+        "docker",
+        "backend",
+        "fullstack"
+      ],
+      "avg_confidence": 0.6667
+    },
+    {
+      "file": "software_engineer_cv_30.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "javascript",
+        "kubernetes",
+        "nodejs",
+        "python",
+        "backend"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_31.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "javascript",
+        "python",
+        "docker",
+        "react",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.5555
+    },
+    {
+      "file": "software_engineer_cv_32.docx",
+      "format": "docx",
+      "skills_found": 4,
+      "skills": [
+        "javascript",
+        "nodejs",
+        "aws",
+        "backend"
+      ],
+      "avg_confidence": 0.5417
+    },
+    {
+      "file": "software_engineer_cv_33.docx",
+      "format": "docx",
+      "skills_found": 7,
+      "skills": [
+        "ai",
+        "java",
+        "javascript",
+        "kubernetes",
+        "nodejs",
+        "docker",
+        "backend"
+      ],
+      "avg_confidence": 0.4524
+    },
+    {
+      "file": "software_engineer_cv_34.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "javascript",
+        "kubernetes",
+        "nodejs",
+        "docker",
+        "react",
+        "backend"
+      ],
+      "avg_confidence": 0.5555
+    },
+    {
+      "file": "software_engineer_cv_35.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "ai",
+        "python",
+        "docker",
+        "java",
+        "aws",
+        "backend"
+      ],
+      "avg_confidence": 0.5278
+    },
+    {
+      "file": "software_engineer_cv_36.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "ai",
+        "kubernetes",
+        "java",
+        "backend",
+        "fullstack"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_37.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "ai",
+        "javascript",
+        "python",
+        "react",
+        "fullstack",
+        "backend"
+      ],
+      "avg_confidence": 0.4722
+    },
+    {
+      "file": "software_engineer_cv_38.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "python",
+        "docker",
+        "java",
+        "aws",
+        "backend"
+      ],
+      "avg_confidence": 0.4333
+    },
+    {
+      "file": "software_engineer_cv_39.docx",
+      "format": "docx",
+      "skills_found": 4,
+      "skills": [
+        "java",
+        "javascript",
+        "react",
+        "backend"
+      ],
+      "avg_confidence": 0.6667
+    },
+    {
+      "file": "software_engineer_cv_4.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "java",
+        "javascript",
+        "python",
+        "react",
+        "backend"
+      ],
+      "avg_confidence": 0.6333
+    },
+    {
+      "file": "software_engineer_cv_40.docx",
+      "format": "docx",
+      "skills_found": 4,
+      "skills": [
+        "ai",
+        "java",
+        "nodejs",
+        "backend"
+      ],
+      "avg_confidence": 0.7083
+    },
+    {
+      "file": "software_engineer_cv_41.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "java",
+        "javascript",
+        "python",
+        "react",
+        "backend"
+      ],
+      "avg_confidence": 0.6
+    },
+    {
+      "file": "software_engineer_cv_42.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "kubernetes",
+        "nodejs",
+        "python",
+        "docker",
+        "aws",
+        "backend"
+      ],
+      "avg_confidence": 0.5555
+    },
+    {
+      "file": "software_engineer_cv_43.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "javascript",
+        "kubernetes",
+        "react",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.6
+    },
+    {
+      "file": "software_engineer_cv_44.docx",
+      "format": "docx",
+      "skills_found": 4,
+      "skills": [
+        "java",
+        "python",
+        "fullstack",
+        "backend"
+      ],
+      "avg_confidence": 0.5834
+    },
+    {
+      "file": "software_engineer_cv_45.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "javascript",
+        "nodejs",
+        "react",
+        "backend",
+        "aws"
+      ],
+      "avg_confidence": 0.6
+    },
+    {
+      "file": "software_engineer_cv_46.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "nodejs",
+        "docker",
+        "react",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.5667
+    },
+    {
+      "file": "software_engineer_cv_47.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "ai",
+        "kubernetes",
+        "python",
+        "docker",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.5278
+    },
+    {
+      "file": "software_engineer_cv_48.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "ai",
+        "nodejs",
+        "python",
+        "java",
+        "backend",
+        "fullstack"
+      ],
+      "avg_confidence": 0.4722
+    },
+    {
+      "file": "software_engineer_cv_49.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "javascript",
+        "docker",
+        "java",
+        "backend",
+        "aws"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_5.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "java",
+        "kubernetes",
+        "python",
+        "react",
+        "fullstack",
+        "backend"
+      ],
+      "avg_confidence": 0.3889
+    },
+    {
+      "file": "software_engineer_cv_50.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "ai",
+        "kubernetes",
+        "python",
+        "react",
+        "backend"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_51.docx",
+      "format": "docx",
+      "skills_found": 4,
+      "skills": [
+        "javascript",
+        "nodejs",
+        "react",
+        "backend"
+      ],
+      "avg_confidence": 0.5417
+    },
+    {
+      "file": "software_engineer_cv_52.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "java",
+        "python",
+        "react",
+        "backend",
+        "aws"
+      ],
+      "avg_confidence": 0.6333
+    },
+    {
+      "file": "software_engineer_cv_53.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "ai",
+        "kubernetes",
+        "python",
+        "docker",
+        "backend"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_54.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "ai",
+        "javascript",
+        "kubernetes",
+        "nodejs",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.5278
+    },
+    {
+      "file": "software_engineer_cv_55.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "javascript",
+        "kubernetes",
+        "python",
+        "backend",
+        "fullstack"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_56.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "java",
+        "kubernetes",
+        "python",
+        "react",
+        "backend"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_57.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "javascript",
+        "kubernetes",
+        "docker",
+        "react",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.5555
+    },
+    {
+      "file": "software_engineer_cv_58.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "ai",
+        "javascript",
+        "kubernetes",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_59.docx",
+      "format": "docx",
+      "skills_found": 4,
+      "skills": [
+        "ai",
+        "java",
+        "javascript",
+        "backend"
+      ],
+      "avg_confidence": 0.75
+    },
+    {
+      "file": "software_engineer_cv_6.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "java",
+        "nodejs",
+        "python",
+        "docker",
+        "backend"
+      ],
+      "avg_confidence": 0.6333
+    },
+    {
+      "file": "software_engineer_cv_60.docx",
+      "format": "docx",
+      "skills_found": 4,
+      "skills": [
+        "javascript",
+        "kubernetes",
+        "nodejs",
+        "backend"
+      ],
+      "avg_confidence": 0.625
+    },
+    {
+      "file": "software_engineer_cv_61.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "ai",
+        "javascript",
+        "nodejs",
+        "docker",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.5555
+    },
+    {
+      "file": "software_engineer_cv_62.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "ai",
+        "kubernetes",
+        "python",
+        "docker",
+        "backend"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_63.docx",
+      "format": "docx",
+      "skills_found": 7,
+      "skills": [
+        "kubernetes",
+        "nodejs",
+        "python",
+        "docker",
+        "react",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.4762
+    },
+    {
+      "file": "software_engineer_cv_64.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "ai",
+        "javascript",
+        "react",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_65.docx",
+      "format": "docx",
+      "skills_found": 7,
+      "skills": [
+        "ai",
+        "java",
+        "javascript",
+        "kubernetes",
+        "python",
+        "react",
+        "backend"
+      ],
+      "avg_confidence": 0.4524
+    },
+    {
+      "file": "software_engineer_cv_66.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "javascript",
+        "kubernetes",
+        "python",
+        "aws",
+        "backend"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_67.docx",
+      "format": "docx",
+      "skills_found": 4,
+      "skills": [
+        "ai",
+        "python",
+        "backend",
+        "aws"
+      ],
+      "avg_confidence": 0.625
+    },
+    {
+      "file": "software_engineer_cv_68.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "ai",
+        "kubernetes",
+        "nodejs",
+        "backend",
+        "aws",
+        "fullstack"
+      ],
+      "avg_confidence": 0.4722
+    },
+    {
+      "file": "software_engineer_cv_69.docx",
+      "format": "docx",
+      "skills_found": 4,
+      "skills": [
+        "javascript",
+        "python",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.625
+    },
+    {
+      "file": "software_engineer_cv_7.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "ai",
+        "javascript",
+        "java",
+        "backend",
+        "aws",
+        "fullstack"
+      ],
+      "avg_confidence": 0.5278
+    },
+    {
+      "file": "software_engineer_cv_70.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "kubernetes",
+        "docker",
+        "backend",
+        "aws",
+        "fullstack"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_71.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "ai",
+        "javascript",
+        "python",
+        "react",
+        "backend"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_72.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "javascript",
+        "kubernetes",
+        "python",
+        "docker",
+        "aws",
+        "backend"
+      ],
+      "avg_confidence": 0.5278
+    },
+    {
+      "file": "software_engineer_cv_73.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "java",
+        "javascript",
+        "nodejs",
+        "react",
+        "backend"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_74.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "ai",
+        "java",
+        "javascript",
+        "kubernetes",
+        "python",
+        "backend"
+      ],
+      "avg_confidence": 0.5555
+    },
+    {
+      "file": "software_engineer_cv_75.docx",
+      "format": "docx",
+      "skills_found": 4,
+      "skills": [
+        "ai",
+        "nodejs",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.625
+    },
+    {
+      "file": "software_engineer_cv_76.docx",
+      "format": "docx",
+      "skills_found": 4,
+      "skills": [
+        "kubernetes",
+        "docker",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.5833
+    },
+    {
+      "file": "software_engineer_cv_77.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "javascript",
+        "docker",
+        "java",
+        "backend",
+        "aws"
+      ],
+      "avg_confidence": 0.6
+    },
+    {
+      "file": "software_engineer_cv_78.docx",
+      "format": "docx",
+      "skills_found": 7,
+      "skills": [
+        "ai",
+        "nodejs",
+        "python",
+        "react",
+        "java",
+        "aws",
+        "backend"
+      ],
+      "avg_confidence": 0.4524
+    },
+    {
+      "file": "software_engineer_cv_79.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "java",
+        "javascript",
+        "nodejs",
+        "docker",
+        "backend",
+        "aws"
+      ],
+      "avg_confidence": 0.5278
+    },
+    {
+      "file": "software_engineer_cv_8.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "javascript",
+        "kubernetes",
+        "docker",
+        "react",
+        "aws",
+        "backend"
+      ],
+      "avg_confidence": 0.5278
+    },
+    {
+      "file": "software_engineer_cv_80.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "javascript",
+        "python",
+        "docker",
+        "react",
+        "aws",
+        "backend"
+      ],
+      "avg_confidence": 0.5555
+    },
+    {
+      "file": "software_engineer_cv_81.docx",
+      "format": "docx",
+      "skills_found": 7,
+      "skills": [
+        "javascript",
+        "kubernetes",
+        "nodejs",
+        "python",
+        "docker",
+        "fullstack",
+        "backend"
+      ],
+      "avg_confidence": 0.4048
+    },
+    {
+      "file": "software_engineer_cv_82.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "ai",
+        "javascript",
+        "python",
+        "react",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.5278
+    },
+    {
+      "file": "software_engineer_cv_83.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "java",
+        "kubernetes",
+        "nodejs",
+        "python",
+        "backend"
+      ],
+      "avg_confidence": 0.5667
+    },
+    {
+      "file": "software_engineer_cv_84.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "ai",
+        "java",
+        "python",
+        "docker",
+        "aws",
+        "backend"
+      ],
+      "avg_confidence": 0.4445
+    },
+    {
+      "file": "software_engineer_cv_85.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "ai",
+        "javascript",
+        "kubernetes",
+        "docker",
+        "backend"
+      ],
+      "avg_confidence": 0.6
+    },
+    {
+      "file": "software_engineer_cv_86.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "ai",
+        "java",
+        "javascript",
+        "python",
+        "backend"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_87.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "ai",
+        "javascript",
+        "kubernetes",
+        "docker",
+        "backend"
+      ],
+      "avg_confidence": 0.5667
+    },
+    {
+      "file": "software_engineer_cv_88.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "java",
+        "kubernetes",
+        "nodejs",
+        "python",
+        "backend"
+      ],
+      "avg_confidence": 0.5667
+    },
+    {
+      "file": "software_engineer_cv_89.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "ai",
+        "kubernetes",
+        "nodejs",
+        "docker",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.4445
+    },
+    {
+      "file": "software_engineer_cv_9.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "kubernetes",
+        "python",
+        "docker",
+        "backend",
+        "fullstack"
+      ],
+      "avg_confidence": 0.4667
+    },
+    {
+      "file": "software_engineer_cv_90.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "nodejs",
+        "python",
+        "docker",
+        "aws",
+        "backend"
+      ],
+      "avg_confidence": 0.5333
+    },
+    {
+      "file": "software_engineer_cv_91.docx",
+      "format": "docx",
+      "skills_found": 7,
+      "skills": [
+        "ai",
+        "javascript",
+        "kubernetes",
+        "python",
+        "docker",
+        "react",
+        "backend"
+      ],
+      "avg_confidence": 0.4524
+    },
+    {
+      "file": "software_engineer_cv_92.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "kubernetes",
+        "python",
+        "docker",
+        "react",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.5555
+    },
+    {
+      "file": "software_engineer_cv_93.docx",
+      "format": "docx",
+      "skills_found": 6,
+      "skills": [
+        "ai",
+        "java",
+        "kubernetes",
+        "python",
+        "docker",
+        "backend"
+      ],
+      "avg_confidence": 0.4722
+    },
+    {
+      "file": "software_engineer_cv_94.docx",
+      "format": "docx",
+      "skills_found": 4,
+      "skills": [
+        "ai",
+        "java",
+        "python",
+        "backend"
+      ],
+      "avg_confidence": 0.625
+    },
+    {
+      "file": "software_engineer_cv_95.docx",
+      "format": "docx",
+      "skills_found": 4,
+      "skills": [
+        "java",
+        "kubernetes",
+        "python",
+        "backend"
+      ],
+      "avg_confidence": 0.7917
+    },
+    {
+      "file": "software_engineer_cv_96.docx",
+      "format": "docx",
+      "skills_found": 4,
+      "skills": [
+        "java",
+        "nodejs",
+        "python",
+        "backend"
+      ],
+      "avg_confidence": 0.6667
+    },
+    {
+      "file": "software_engineer_cv_97.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "java",
+        "nodejs",
+        "react",
+        "aws",
+        "backend"
+      ],
+      "avg_confidence": 0.5667
+    },
+    {
+      "file": "software_engineer_cv_98.docx",
+      "format": "docx",
+      "skills_found": 5,
+      "skills": [
+        "javascript",
+        "kubernetes",
+        "python",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 0.5667
+    },
+    {
+      "file": "software_engineer_cv_99.docx",
+      "format": "docx",
+      "skills_found": 4,
+      "skills": [
+        "java",
+        "nodejs",
+        "backend",
+        "aws"
+      ],
+      "avg_confidence": 0.625
+    }
+  ]
+}

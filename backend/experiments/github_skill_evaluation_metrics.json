@@ -1,0 +1,69 @@
+{
+  "generated_at": "2026-04-16T07:17:59.174926Z",
+  "n_evaluated": 30,
+  "n_unmapped_or_error": 0,
+  "top1_accuracy": 0.9,
+  "top3_accuracy": 1.0,
+  "mean_dominant_language_ratio": 0.696,
+  "macro_precision": 0.8917,
+  "macro_recall": 0.9219,
+  "macro_f1": 0.8998,
+  "per_class": [
+    {
+      "roadmap_skill": "cpp",
+      "support": 3,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "roadmap_skill": "golang",
+      "support": 4,
+      "precision": 0.8,
+      "recall": 1.0,
+      "f1": 0.8889
+    },
+    {
+      "roadmap_skill": "html-css",
+      "support": 6,
+      "precision": 1.0,
+      "recall": 0.8333,
+      "f1": 0.9091
+    },
+    {
+      "roadmap_skill": "java",
+      "support": 2,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    {
+      "roadmap_skill": "javascript",
+      "support": 8,
+      "precision": 1.0,
+      "recall": 0.875,
+      "f1": 0.9333
+    },
+    {
+      "roadmap_skill": "python-developer",
+      "support": 3,
+      "precision": 0.6667,
+      "recall": 0.6667,
+      "f1": 0.6667
+    },
+    {
+      "roadmap_skill": "rust",
+      "support": 2,
+      "precision": 0.6667,
+      "recall": 1.0,
+      "f1": 0.8
+    },
+    {
+      "roadmap_skill": "typescript",
+      "support": 2,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    }
+  ]
+}

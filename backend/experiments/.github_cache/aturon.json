@@ -1,0 +1,1 @@
+{"language_bytes": {"Rust": 86561, "Lua": 286, "HTML": 1042134, "SCSS": 336, "CSS": 11238, "Racket": 42628, "Scala": 89812, "Java": 27242, "Shell": 273}, "language_commits": {"Rust": 20, "HTML": 33, "Racket": 39, "Scala": 35, "Shell": 10}, "repos_analyzed": 17, "total_bytes": 1300510, "error": null}

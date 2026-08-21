@@ -1,4 +1,4 @@
-<!-- Generated: 2026-04-01 | Sprint: 5 (AI Mentor) | No schema changes (feature is read-only query via MCP tools) -->
+<!-- Generated: 2026-04-01 | Sprint: 5 (AI Mentor context injection) | No schema changes (feature is read-only query via MCP tools + context pre-loading) -->
 
 # Data Codemap
 

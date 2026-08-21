@@ -1,0 +1,16 @@
+learner,attempt,score,proficiency,confidence
+Improving,1,60,60.0,0.2
+Improving,2,70,68.0,0.4
+Improving,3,80,76.0,0.6
+Improving,4,90,84.0,0.8
+Improving,5,95,89.5,1.0
+Consistent,1,75,75.0,0.2
+Consistent,2,76,75.8,0.4
+Consistent,3,74,74.6,0.6
+Consistent,4,77,75.9714,0.8
+Consistent,5,75,75.4857,1.0
+Volatile,1,90,90.0,0.2
+Volatile,2,40,50.0,0.4
+Volatile,3,85,73.3333,0.6
+Volatile,4,50,60.0,0.8
+Volatile,5,80,70.0,1.0

@@ -1,4 +1,4 @@
-<!-- Generated: 2026-04-01 | Sprint: 5 (AI Mentor feature) | /ai-mentor route, AIMentorPage component, sendChatMessage API, AppSidebar nav update -->
+<!-- Generated: 2026-04-01 | Sprint: 5 (AI Mentor context injection) | /ai-mentor route, AIMentorPage component, sendChatMessage API, AppSidebar nav update -->
 
 # Frontend Codemap
 

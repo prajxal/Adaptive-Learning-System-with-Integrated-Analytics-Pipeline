@@ -1,0 +1,119 @@
+resume_id,precision,recall,f1_score,predicted_skills,ground_truth_skills,excluded_skills
+10030015.pdf,0.0,0.0,0.0,qa,,LabVIEW
+10219099.pdf,0.0,0.0,0.0,qa,,
+10624813.pdf,0.9,0.9,0.9,aws|backend|devops|html-css|java|javascript|mongodb|php|python|qa,aws|backend|cpp|devops|html-css|java|javascript|mongodb|php|python,Bootstrap|Hibernate|JUnit|Jira|PL/SQL|Perl|SOAP|SQL|Selenium
+10712803.pdf,0.0,0.0,0.0,cyber-security,,
+10985403.pdf,0.0,0.0,0.0,ai|r,,
+11890896.pdf,0.0,0.0,0.0,nodejs|qa,cpp,SQL
+11981094.pdf,0.6,0.6,0.6,backend|devops|golang|javascript|qa,backend|cpp|devops|html-css|javascript,JSON|REST API|XML
+12011623.pdf,0.6667,1.0,0.8,ai|csharp|html-css|python|qa|r,csharp|html-css|python|r,Oracle|SQL|Tableau
+12022566.pdf,0.0,0.0,0.0,r,cpp,
+12472574.pdf,0.5,0.8,0.6154,backend|cyber-security|golang|html-css|java|javascript|linux|qa,cpp|html-css|java|javascript|linux,SQL|Unix
+12488356.pdf,0.5,1.0,0.6667,backend|qa,backend,Salesforce
+12518008.pdf,0.0,0.0,0.0,qa,,
+12748557.pdf,0.5,1.0,0.6667,qa|react,react,
+13149176.pdf,0.0,0.0,0.0,qa|r,,
+13264796.pdf,0.375,1.0,0.5455,ai|android|backend|cyber-security|ios|qa|r|ruby,backend|r|ruby,
+14049846.pdf,0.0,0.0,0.0,qa|r,,
+14206561.pdf,0.0,0.0,0.0,cyber-security,,Oracle
+14554542.pdf,0.0,0.0,0.0,cyber-security|qa,,
+15139979.pdf,1.0,1.0,1.0,cpp,cpp,
+15601399.pdf,0.0,0.0,0.0,qa,,
+15858254.pdf,0.5,1.0,0.6667,linux|qa,linux,LabVIEW
+15941675.pdf,0.0,0.0,0.0,qa|r,,
+16803215.pdf,0.5,1.0,0.6667,golang|java,java,
+16911115.pdf,0.0,0.0,0.0,cyber-security|qa,,Oracle DB
+17043822.pdf,1.0,1.0,1.0,linux|mysql|php,linux|mysql|php,Unix
+17103000.pdf,0.0,0.0,0.0,cyber-security,,
+17108676.pdf,0.0,0.0,0.0,,,
+17488801.pdf,0.0,0.0,0.0,,,
+17926546.pdf,0.0,0.0,0.0,qa|r,,
+18753367.pdf,0.0,0.0,0.0,cyber-security|qa,,
+19124258.pdf,0.0,0.0,0.0,qa,,
+19396040.pdf,0.6667,0.6667,0.6667,java|python|r,cpp|java|python,Kanban
+19397727.pdf,0.0,0.0,0.0,qa,,LabVIEW
+19553067.pdf,0.0,0.0,0.0,nodejs|qa,,
+19612167.pdf,0.0,0.0,0.0,qa,,
+20566550.pdf,0.4,1.0,0.5714,ai|backend|python|qa|r,backend|python,Jira|MATLAB|Oracle|SQL
+20882041.pdf,0.0,0.0,0.0,qa|r,,
+20981299.pdf,0.0,0.0,0.0,r,,Kanban
+21038022.pdf,1.0,0.75,0.8571,csharp|html-css|java,cpp|csharp|html-css|java,SQL|SQL Server|Visual Studio
+21298336.pdf,0.0,0.0,0.0,,,
+21629057.pdf,0.0,0.0,0.0,golang|r,,
+21807224.pdf,1.0,1.0,1.0,aws,aws,
+21847415.pdf,0.0,0.0,0.0,java|qa|r,,
+22605864.pdf,0.0,0.0,0.0,cyber-security,,PowerShell
+22890839.pdf,0.4,1.0,0.5714,android|cyber-security|ios|linux|python,linux|python,Puppet
+23234047.pdf,0.5,1.0,0.6667,java|qa,java,LabVIEW|MATLAB|VHDL
+23438227.pdf,0.0,0.0,0.0,r,,
+23497307.pdf,1.0,1.0,1.0,backend,backend,Jira|Oracle
+24322804.pdf,0.0,0.0,0.0,,cpp,
+24647794.pdf,0.0,0.0,0.0,java|qa,cpp,.NET|Assembly|MATLAB|Simulink|Verilog|Visual Studio
+25425322.pdf,0.0,0.0,0.0,,,
+25608963.pdf,0.0,0.0,0.0,qa|r,,LabVIEW
+25797445.pdf,0.0,0.0,0.0,,,
+25919149.pdf,0.0,0.0,0.0,qa|r,,
+25930778.pdf,0.0,0.0,0.0,,,
+26456899.pdf,0.6667,0.6667,0.6667,java|linux|qa,cpp|java|linux,SQL|Visual Studio
+26834746.pdf,0.0,0.0,0.0,cyber-security|qa,,
+27040860.pdf,0.0,0.0,0.0,,,
+27152464.pdf,0.625,1.0,0.7692,backend|frontend|golang|linux|mongodb|postgresql|python|qa,backend|linux|mongodb|postgresql|python,COBOL|Confluence|Groovy|JSON|Jira|Oracle|Perl|Postman|SQL|Unix|XML
+27756469.pdf,0.0,0.0,0.0,,,LabVIEW|MATLAB
+28005884.pdf,0.0,0.0,0.0,,,
+28078163.pdf,0.6,0.6,0.6,backend|devops|golang|javascript|qa,backend|cpp|devops|html-css|javascript,JSON|REST API|XML
+28320387.pdf,0.0,0.0,0.0,cyber-security,,
+28505854.pdf,0.8,0.6667,0.7273,ai|backend|cyber-security|java|linux,ai|backend|cpp|html-css|java|linux,CUDA|JSON|MATLAB|OpenCV|REST API|SOAP|Unix|XML
+28628090.pdf,0.0,0.0,0.0,qa|r,,COBOL|Fortran
+28630325.pdf,1.0,1.0,1.0,backend|html-css|mysql|php,backend|html-css|mysql|php,.NET|Bootstrap|Kanban|Objective-C|Perl|SOAP|SQL Server|jQuery
+28631840.pdf,0.0,0.0,0.0,cyber-security|qa,,
+28762662.pdf,0.6667,0.8,0.7273,backend|devops|golang|html-css|javascript|qa,backend|cpp|devops|html-css|javascript,JSON|REST API|XML
+28831378.pdf,0.0,0.0,0.0,qa,,
+28923650.pdf,0.0,0.0,0.0,ai|qa,,Fortran|MATLAB
+30097175.pdf,0.5,0.5,0.5,html-css|qa,cpp|html-css,LabVIEW|MATLAB|SQL|VHDL|Verilog
+30288581.pdf,1.0,1.0,1.0,mysql,mysql,MATLAB|VBA
+30542184.pdf,0.0,0.0,0.0,cyber-security,,
+31677347.pdf,0.6,0.6,0.6,backend|devops|golang|javascript|qa,backend|cpp|devops|html-css|javascript,JSON|REST API|XML
+31684925.pdf,0.0,0.0,0.0,java|nodejs,,
+31694970.pdf,1.0,1.0,1.0,csharp,csharp,SQL|Visual Studio
+32081266.pdf,0.0,0.0,0.0,cyber-security|java|qa,,SQL|SQL Server
+32802563.pdf,0.0,0.0,0.0,,,
+32985311.pdf,0.3333,1.0,0.5,python|qa|r,python,SQL|Tableau
+33685075.pdf,0.0,0.0,0.0,qa,,LabVIEW
+35172961.pdf,0.0,0.0,0.0,,,
+35389360.pdf,0.5556,1.0,0.7143,android|cyber-security|html-css|ios|java|linux|mysql|php|qa,html-css|java|linux|mysql|php,jQuery
+35651876.pdf,0.0,0.0,0.0,cyber-security,,
+35737840.pdf,0.0,0.0,0.0,,,
+36149549.pdf,0.0,0.0,0.0,,,
+36517781.pdf,0.0,0.0,0.0,,,
+37335325.pdf,0.5,0.8,0.6154,android|backend|cyber-security|devops|ios|java|linux|qa,backend|cpp|devops|java|linux,Jira|Objective-C|Visual Studio
+38220146.pdf,0.0,0.0,0.0,cyber-security,,Kanban
+38314236.pdf,0.0,0.0,0.0,qa,,LabVIEW|MATLAB
+38535335.pdf,0.0,0.0,0.0,ios|r,,
+39835894.pdf,0.3333,1.0,0.5,linux|qa|r,linux,
+39855211.pdf,0.0,0.0,0.0,qa,,
+43752620.pdf,0.0,0.0,0.0,backend,,Fortran|MATLAB|Simulink
+44624796.pdf,0.0,0.0,0.0,cyber-security|qa,,
+47276718.pdf,0.0,0.0,0.0,qa,,MATLAB
+47549345.pdf,0.0,0.0,0.0,java|qa,cpp,LabVIEW|MATLAB|Simulink
+47919212.pdf,1.0,1.0,1.0,azure|html-css,azure|html-css,
+49127329.pdf,0.0,0.0,0.0,,,
+50328713.pdf,0.8,0.8,0.8,ai|backend|linux|python|r,ai|backend|cpp|linux|python,MATLAB|Matplotlib|SQL|Seaborn|Unix|XGBoost
+51588273.pdf,1.0,1.0,1.0,backend|csharp|java|javascript|php,backend|csharp|java|javascript|php,Apache|ETL|Eclipse|Oracle|SQL|SQL Server|Visual Studio
+54227873.pdf,0.8,0.8,0.8,html-css|java|linux|python|qa,cpp|html-css|java|linux|python,
+55595908.pdf,0.0,0.0,0.0,ai|qa,,
+55953734.pdf,0.5,1.0,0.6667,python|qa,python,LabVIEW
+56691064.pdf,1.0,1.0,1.0,java,java,XML
+60004873.pdf,0.0,0.0,0.0,,,
+61579998.pdf,0.6667,0.6667,0.6667,backend|cyber-security|java,backend|cpp|java,Jira|MATLAB|Simulink|Visual Studio
+62071407.pdf,0.0,0.0,0.0,qa,,
+64468610.pdf,0.6,0.6,0.6,backend|devops|golang|javascript|qa,backend|cpp|devops|html-css|javascript,JSON|REST API|XML
+64755882.pdf,1.0,0.5,0.6667,linux,cpp|linux,LabVIEW|Verilog
+74236636.pdf,0.0,0.0,0.0,,,
+77828437.pdf,0.0,0.0,0.0,,,MATLAB
+81125166.pdf,0.0,0.0,0.0,,,Kanban
+82125182.pdf,1.0,1.0,1.0,java,java,
+82246962.pdf,0.25,1.0,0.4,android|backend|cyber-security|frontend|linux|python|qa|r,linux|python,Kanban|SQL|SQL Server|Unix
+86209934.pdf,0.0,0.0,0.0,qa|r,,
+86828820.pdf,0.0,0.0,0.0,qa,,ETL
+90280583.pdf,0.0,0.0,0.0,,,Confluence|Jira|Power BI|Tableau
+96029688.pdf,0.0,0.0,0.0,,,MATLAB

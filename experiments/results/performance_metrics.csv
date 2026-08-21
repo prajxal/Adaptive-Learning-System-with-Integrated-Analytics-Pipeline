@@ -1,0 +1,13 @@
+endpoint,method,n_successful,n_errors,mean_ms,median_ms,min_ms,max_ms,std_ms,p50_ms,p95_ms,p99_ms
+Health Check,GET,5,0,1.25,1.27,0.86,1.56,0.25,1.27,1.51,1.55
+GET /roadmaps,GET,5,0,92.23,91.35,89.43,96.39,3.01,91.35,95.96,96.31
+GET /users/me,GET,0,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+GET /users/me/profile,GET,0,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+GET /users/me/skills,GET,0,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+GET /courses,GET,0,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+GET /progress/all,GET,0,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+GET /github/status,GET,0,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+GET /recommend,GET,0,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+GET /skill-graph,GET,0,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+GET /learning-path,GET,0,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+GET /skill-profile,GET,0,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0

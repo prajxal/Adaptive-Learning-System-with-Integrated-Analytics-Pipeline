@@ -1,0 +1,89 @@
+{
+  "num_resumes_evaluated": 20,
+  "original_precision": 0.4954,
+  "original_recall": 0.45,
+  "original_f1": 0.4716,
+  "original_tp": 54,
+  "original_fp": 55,
+  "original_fn": 66,
+  "filtered_precision": 0.7013,
+  "filtered_recall": 0.45,
+  "filtered_f1": 0.5482,
+  "filtered_tp": 54,
+  "filtered_fp": 23,
+  "filtered_fn": 66,
+  "ignored_skills": [
+    "ai",
+    "backend",
+    "devops",
+    "frontend"
+  ],
+  "precision": 0.4954,
+  "recall": 0.45,
+  "f1": 0.4716,
+  "tp": 54,
+  "fp": 55,
+  "fn": 66,
+  "avg_predicted_skills_per_resume": 5.45,
+  "avg_true_skills_per_resume": 6.0,
+  "top_false_positives": [
+    {
+      "skill": "backend",
+      "count": 20
+    },
+    {
+      "skill": "ai",
+      "count": 12
+    },
+    {
+      "skill": "nodejs",
+      "count": 11
+    },
+    {
+      "skill": "java",
+      "count": 6
+    },
+    {
+      "skill": "fullstack",
+      "count": 3
+    },
+    {
+      "skill": "python",
+      "count": 3
+    }
+  ],
+  "top_false_negatives": [
+    {
+      "skill": "machine learning",
+      "count": 12
+    },
+    {
+      "skill": "node.js",
+      "count": 11
+    },
+    {
+      "skill": "rest apis",
+      "count": 9
+    },
+    {
+      "skill": "git",
+      "count": 9
+    },
+    {
+      "skill": "spring boot",
+      "count": 7
+    },
+    {
+      "skill": "c++",
+      "count": 6
+    },
+    {
+      "skill": "django",
+      "count": 6
+    },
+    {
+      "skill": "sql",
+      "count": 6
+    }
+  ]
+}

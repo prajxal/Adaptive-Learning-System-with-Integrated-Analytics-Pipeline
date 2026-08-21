@@ -1,0 +1,47 @@
+{
+  "evaluation_mode": "ontology_constrained",
+  "ontology_size": 42,
+  "resumes_evaluated_total": 118,
+  "resumes_skipped": 0,
+  "resumes_with_github": 0,
+  "note_cohort": "resume_only metrics computed over all evaluated resumes. github_only and fusion metrics computed only over resumes with a detectable GitHub profile URL.",
+  "resume_only": {
+    "cohort": "all_resumes",
+    "cohort_size": 118,
+    "macro_precision": 0.2526,
+    "macro_recall": 0.3196,
+    "macro_f1": 0.271,
+    "micro_precision": 0.4286,
+    "micro_recall": 0.8,
+    "micro_f1": 0.5581,
+    "total_tp": 108,
+    "total_fp": 144,
+    "total_fn": 27
+  },
+  "github_only": {
+    "cohort": "resumes_with_github",
+    "cohort_size": 0,
+    "macro_precision": 0.0,
+    "macro_recall": 0.0,
+    "macro_f1": 0.0,
+    "micro_precision": 0.0,
+    "micro_recall": 0.0,
+    "micro_f1": 0.0,
+    "total_tp": 0,
+    "total_fp": 0,
+    "total_fn": 0
+  },
+  "fusion": {
+    "cohort": "resumes_with_github",
+    "cohort_size": 0,
+    "macro_precision": 0.0,
+    "macro_recall": 0.0,
+    "macro_f1": 0.0,
+    "micro_precision": 0.0,
+    "micro_recall": 0.0,
+    "micro_f1": 0.0,
+    "total_tp": 0,
+    "total_fp": 0,
+    "total_fn": 0
+  }
+}

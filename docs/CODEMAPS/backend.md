@@ -1,4 +1,4 @@
-<!-- Generated: 2026-04-01 | Sprint: 5 (AI Mentor) | /chat endpoint, MCP tools (get_user_profile, get_user_progress, get_next_course, get_roadmap_courses, get_skill_graph), function-calling loop -->
+<!-- Generated: 2026-04-01 | Sprint: 5 (AI Mentor context injection) | /chat endpoint, MCP tools (get_user_profile, get_user_progress, get_next_course, get_roadmap_courses, get_skill_graph, build_user_context), function-calling loop -->
 
 # Backend Codemap
 
@@ -64,11 +64,12 @@
 - `GET  /skill-profile/{skill_id}` — get or create profile with cold-start init
 
 ### Chat (AI Mentor) — `backend/routers/chat.py` (prefix: `/chat`) **NEW (Sprint 5)**
-- `POST /chat` — Gemini function-calling loop; accepts `{message: string}` (Clerk auth required); runs max 5 tool-call rounds (60s timeout); returns `ChatResponse{reply: string}`
-  - **Gemini Model:** `gemini-3-flash-preview` (configurable via `GEMINI_CHAT_MODEL` env var)
+- `POST /chat` — Gemini function-calling loop; accepts `{message: string}` (Clerk auth required); **pre-loads `build_user_context(user_id)` once** → injects into system prompt → runs max 5 tool-call rounds (60s timeout); returns `ChatResponse{reply: string}`
+  - **Context Pre-Loading:** Before loop, calls `build_user_context(user_id)` (single DB session); queries User, top 5 UserSkills, most recent Event (active roadmap), completed count, next recommendation; returns plain-text block injected into dynamic system prompt. Fail-open: if context fails, uses base system prompt
+  - **Gemini Model:** `gemini-3-flash-preview` (configurable via `GEMINI_CHAT_MODEL` env var); fallback chain: primary → fallback (2x retries on 503/timeout)
   - **Tools:** Declares 5 MCP tools in every request; model calls them, backend executes via `TOOL_REGISTRY`, feeds results back
   - **Security:** Router always overrides tool `user_id` args with authenticated user's ID (prevents LLM from querying other users)
-  - **System Prompt:** Instructs Gemini to use tools to fetch real data before answering
+  - **System Prompt:** Base prompt + live learner context; instructs Gemini to use tools to fetch real data before answering
 
 ### GitHub Auth — `backend/routers/github_auth.py` (prefix: `/github`)
 - `GET  /github/connect` — initiate OAuth flow
@@ -85,7 +86,7 @@
 
 | Service | File | Key Functions |
 |---------|------|---------------|
-| **MCP Tools** | **`mcp_server/tools.py`** | **`get_user_profile(user_id)`**, **`get_user_progress(user_id)`**, **`get_next_course(user_id, roadmap_id)`**, **`get_roadmap_courses(roadmap_id)`**, **`get_skill_graph(roadmap_id, user_id?)`** — Called by Gemini function-calling loop via `TOOL_REGISTRY` |
+| **MCP Tools** | **`mcp_server/tools.py`** | **`get_user_profile(user_id)`**, **`get_user_progress(user_id)`**, **`get_next_course(user_id, roadmap_id)`**, **`get_roadmap_courses(roadmap_id)`**, **`get_skill_graph(roadmap_id, user_id?)`**, **`build_user_context(user_id)` (NEW)** — 5 tools called by Gemini function-calling loop via `TOOL_REGISTRY`; `build_user_context()` queries User + top 5 UserSkills + most recent Event (active roadmap) + completed course count + next recommendation; returns plain-text `## Learner Context` block injected into system prompt before loop |
 | **MCP Registry** | **`mcp_server/registry.py`** | **`TOOL_DECLARATIONS`** (JSON schema), **`USER_ID_TOOLS`** (frozenset), **`TOOL_REGISTRY`** (dispatch table) |
 | **XP / Level** | **`services/xp_level_service.py`** | **`award_xp_for_completion(user_id, course_id, roadmap_id, db)`**, **`award_xp_for_quiz(user_id, score, course_id, roadmap_id, db)`** (now validates score 0–1, returns `(xp, level_up)`), `compute_level_from_xp()`, `compute_xp_for_course(depth)`, `get_user_global_xp()`, `get_user_level()` |
 | **Course Level** | **`services/course_level_service.py`** | **`compute_required_level(topological_depth)`** — maps depth 0–5 → level 1–6 |

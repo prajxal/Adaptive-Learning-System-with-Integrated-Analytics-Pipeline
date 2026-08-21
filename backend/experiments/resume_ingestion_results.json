@@ -1,0 +1,1153 @@
+{
+  "summary": {
+    "total_resumes": 118,
+    "resumes_with_skills": 96,
+    "resumes_without_skills": 22,
+    "extraction_success_rate_pct": 81.36,
+    "avg_skills_per_resume": 2.14,
+    "median_skills_per_resume": 2.0,
+    "avg_confidence": 0.5728,
+    "median_confidence": 0.5,
+    "top_20_skills": [
+      {
+        "skill": "qa",
+        "count": 61
+      },
+      {
+        "skill": "r",
+        "count": 24
+      },
+      {
+        "skill": "cyber-security",
+        "count": 23
+      },
+      {
+        "skill": "backend",
+        "count": 20
+      },
+      {
+        "skill": "java",
+        "count": 20
+      },
+      {
+        "skill": "linux",
+        "count": 14
+      },
+      {
+        "skill": "python",
+        "count": 11
+      },
+      {
+        "skill": "html-css",
+        "count": 10
+      },
+      {
+        "skill": "golang",
+        "count": 9
+      },
+      {
+        "skill": "javascript",
+        "count": 8
+      },
+      {
+        "skill": "ai",
+        "count": 8
+      },
+      {
+        "skill": "devops",
+        "count": 7
+      },
+      {
+        "skill": "php",
+        "count": 5
+      },
+      {
+        "skill": "android",
+        "count": 5
+      },
+      {
+        "skill": "ios",
+        "count": 5
+      },
+      {
+        "skill": "csharp",
+        "count": 4
+      },
+      {
+        "skill": "mysql",
+        "count": 4
+      },
+      {
+        "skill": "nodejs",
+        "count": 3
+      },
+      {
+        "skill": "aws",
+        "count": 2
+      },
+      {
+        "skill": "mongodb",
+        "count": 2
+      }
+    ],
+    "errors": []
+  },
+  "per_resume": [
+    {
+      "file": "10030015.pdf",
+      "skills_found": 1,
+      "skills": [
+        "qa"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "10219099.pdf",
+      "skills_found": 1,
+      "skills": [
+        "qa"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "10624813.pdf",
+      "skills_found": 10,
+      "skills": [
+        "backend",
+        "qa",
+        "java",
+        "html-css",
+        "php",
+        "aws",
+        "devops",
+        "python",
+        "javascript",
+        "mongodb"
+      ],
+      "avg_confidence": 0.8333
+    },
+    {
+      "file": "10712803.pdf",
+      "skills_found": 1,
+      "skills": [
+        "cyber-security"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "10985403.pdf",
+      "skills_found": 2,
+      "skills": [
+        "r",
+        "ai"
+      ],
+      "avg_confidence": 0.25
+    },
+    {
+      "file": "11890896.pdf",
+      "skills_found": 2,
+      "skills": [
+        "nodejs",
+        "qa"
+      ],
+      "avg_confidence": 0.25
+    },
+    {
+      "file": "11981094.pdf",
+      "skills_found": 5,
+      "skills": [
+        "backend",
+        "devops",
+        "javascript",
+        "golang",
+        "qa"
+      ],
+      "avg_confidence": 0.4334
+    },
+    {
+      "file": "12011623.pdf",
+      "skills_found": 6,
+      "skills": [
+        "qa",
+        "ai",
+        "python",
+        "r",
+        "csharp",
+        "html-css"
+      ],
+      "avg_confidence": 0.6389
+    },
+    {
+      "file": "12022566.pdf",
+      "skills_found": 1,
+      "skills": [
+        "r"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "12472574.pdf",
+      "skills_found": 8,
+      "skills": [
+        "qa",
+        "html-css",
+        "golang",
+        "backend",
+        "cyber-security",
+        "javascript",
+        "linux",
+        "java"
+      ],
+      "avg_confidence": 0.5417
+    },
+    {
+      "file": "12488356.pdf",
+      "skills_found": 2,
+      "skills": [
+        "backend",
+        "qa"
+      ],
+      "avg_confidence": 0.3333
+    },
+    {
+      "file": "12518008.pdf",
+      "skills_found": 1,
+      "skills": [
+        "qa"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "12748557.pdf",
+      "skills_found": 2,
+      "skills": [
+        "qa",
+        "react"
+      ],
+      "avg_confidence": 0.3333
+    },
+    {
+      "file": "13149176.pdf",
+      "skills_found": 2,
+      "skills": [
+        "r",
+        "qa"
+      ],
+      "avg_confidence": 0.5834
+    },
+    {
+      "file": "13264796.pdf",
+      "skills_found": 8,
+      "skills": [
+        "qa",
+        "backend",
+        "ruby",
+        "android",
+        "ios",
+        "cyber-security",
+        "ai",
+        "r"
+      ],
+      "avg_confidence": 0.5
+    },
+    {
+      "file": "14049846.pdf",
+      "skills_found": 2,
+      "skills": [
+        "qa",
+        "r"
+      ],
+      "avg_confidence": 0.3333
+    },
+    {
+      "file": "14206561.pdf",
+      "skills_found": 1,
+      "skills": [
+        "cyber-security"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "14554542.pdf",
+      "skills_found": 2,
+      "skills": [
+        "cyber-security",
+        "qa"
+      ],
+      "avg_confidence": 0.6666
+    },
+    {
+      "file": "15139979.pdf",
+      "skills_found": 1,
+      "skills": [
+        "cpp"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "15601399.pdf",
+      "skills_found": 1,
+      "skills": [
+        "qa"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "15858254.pdf",
+      "skills_found": 2,
+      "skills": [
+        "linux",
+        "qa"
+      ],
+      "avg_confidence": 0.75
+    },
+    {
+      "file": "15941675.pdf",
+      "skills_found": 2,
+      "skills": [
+        "r",
+        "qa"
+      ],
+      "avg_confidence": 0.25
+    },
+    {
+      "file": "16803215.pdf",
+      "skills_found": 2,
+      "skills": [
+        "java",
+        "golang"
+      ],
+      "avg_confidence": 0.4167
+    },
+    {
+      "file": "16911115.pdf",
+      "skills_found": 2,
+      "skills": [
+        "cyber-security",
+        "qa"
+      ],
+      "avg_confidence": 0.4167
+    },
+    {
+      "file": "17043822.pdf",
+      "skills_found": 3,
+      "skills": [
+        "linux",
+        "mysql",
+        "php"
+      ],
+      "avg_confidence": 0.5
+    },
+    {
+      "file": "17103000.pdf",
+      "skills_found": 1,
+      "skills": [
+        "cyber-security"
+      ],
+      "avg_confidence": 0.6667
+    },
+    {
+      "file": "17108676.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "17488801.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "17926546.pdf",
+      "skills_found": 2,
+      "skills": [
+        "qa",
+        "r"
+      ],
+      "avg_confidence": 0.75
+    },
+    {
+      "file": "18753367.pdf",
+      "skills_found": 2,
+      "skills": [
+        "qa",
+        "cyber-security"
+      ],
+      "avg_confidence": 0.9166
+    },
+    {
+      "file": "19124258.pdf",
+      "skills_found": 1,
+      "skills": [
+        "qa"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "19396040.pdf",
+      "skills_found": 3,
+      "skills": [
+        "python",
+        "java",
+        "r"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "19397727.pdf",
+      "skills_found": 1,
+      "skills": [
+        "qa"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "19553067.pdf",
+      "skills_found": 2,
+      "skills": [
+        "qa",
+        "nodejs"
+      ],
+      "avg_confidence": 0.5834
+    },
+    {
+      "file": "19612167.pdf",
+      "skills_found": 1,
+      "skills": [
+        "qa"
+      ],
+      "avg_confidence": 0.3333
+    },
+    {
+      "file": "20566550.pdf",
+      "skills_found": 5,
+      "skills": [
+        "python",
+        "r",
+        "backend",
+        "ai",
+        "qa"
+      ],
+      "avg_confidence": 0.2
+    },
+    {
+      "file": "20882041.pdf",
+      "skills_found": 2,
+      "skills": [
+        "qa",
+        "r"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "20981299.pdf",
+      "skills_found": 1,
+      "skills": [
+        "r"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "21038022.pdf",
+      "skills_found": 3,
+      "skills": [
+        "csharp",
+        "java",
+        "html-css"
+      ],
+      "avg_confidence": 0.8889
+    },
+    {
+      "file": "21298336.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "21629057.pdf",
+      "skills_found": 2,
+      "skills": [
+        "golang",
+        "r"
+      ],
+      "avg_confidence": 0.5
+    },
+    {
+      "file": "21807224.pdf",
+      "skills_found": 1,
+      "skills": [
+        "aws"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "21847415.pdf",
+      "skills_found": 3,
+      "skills": [
+        "qa",
+        "r",
+        "java"
+      ],
+      "avg_confidence": 0.3334
+    },
+    {
+      "file": "22605864.pdf",
+      "skills_found": 1,
+      "skills": [
+        "cyber-security"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "22890839.pdf",
+      "skills_found": 5,
+      "skills": [
+        "android",
+        "linux",
+        "ios",
+        "cyber-security",
+        "python"
+      ],
+      "avg_confidence": 0.9333
+    },
+    {
+      "file": "23234047.pdf",
+      "skills_found": 2,
+      "skills": [
+        "java",
+        "qa"
+      ],
+      "avg_confidence": 0.75
+    },
+    {
+      "file": "23438227.pdf",
+      "skills_found": 1,
+      "skills": [
+        "r"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "23497307.pdf",
+      "skills_found": 1,
+      "skills": [
+        "backend"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "24322804.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "24647794.pdf",
+      "skills_found": 2,
+      "skills": [
+        "qa",
+        "java"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "25425322.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "25608963.pdf",
+      "skills_found": 2,
+      "skills": [
+        "qa",
+        "r"
+      ],
+      "avg_confidence": 0.5834
+    },
+    {
+      "file": "25797445.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "25919149.pdf",
+      "skills_found": 2,
+      "skills": [
+        "qa",
+        "r"
+      ],
+      "avg_confidence": 0.3333
+    },
+    {
+      "file": "25930778.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "26456899.pdf",
+      "skills_found": 3,
+      "skills": [
+        "linux",
+        "java",
+        "qa"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "26834746.pdf",
+      "skills_found": 2,
+      "skills": [
+        "cyber-security",
+        "qa"
+      ],
+      "avg_confidence": 0.25
+    },
+    {
+      "file": "27040860.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "27152464.pdf",
+      "skills_found": 8,
+      "skills": [
+        "qa",
+        "python",
+        "golang",
+        "frontend",
+        "backend",
+        "linux",
+        "postgresql",
+        "mongodb"
+      ],
+      "avg_confidence": 0.75
+    },
+    {
+      "file": "27756469.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "28005884.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "28078163.pdf",
+      "skills_found": 5,
+      "skills": [
+        "backend",
+        "devops",
+        "javascript",
+        "golang",
+        "qa"
+      ],
+      "avg_confidence": 0.4334
+    },
+    {
+      "file": "28320387.pdf",
+      "skills_found": 1,
+      "skills": [
+        "cyber-security"
+      ],
+      "avg_confidence": 0.3333
+    },
+    {
+      "file": "28505854.pdf",
+      "skills_found": 5,
+      "skills": [
+        "ai",
+        "linux",
+        "cyber-security",
+        "java",
+        "backend"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "28628090.pdf",
+      "skills_found": 2,
+      "skills": [
+        "r",
+        "qa"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "28630325.pdf",
+      "skills_found": 4,
+      "skills": [
+        "backend",
+        "html-css",
+        "mysql",
+        "php"
+      ],
+      "avg_confidence": 0.625
+    },
+    {
+      "file": "28631840.pdf",
+      "skills_found": 2,
+      "skills": [
+        "cyber-security",
+        "qa"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "28762662.pdf",
+      "skills_found": 6,
+      "skills": [
+        "backend",
+        "javascript",
+        "html-css",
+        "devops",
+        "golang",
+        "qa"
+      ],
+      "avg_confidence": 0.5
+    },
+    {
+      "file": "28831378.pdf",
+      "skills_found": 1,
+      "skills": [
+        "qa"
+      ],
+      "avg_confidence": 0.6667
+    },
+    {
+      "file": "28923650.pdf",
+      "skills_found": 2,
+      "skills": [
+        "ai",
+        "qa"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "30097175.pdf",
+      "skills_found": 2,
+      "skills": [
+        "html-css",
+        "qa"
+      ],
+      "avg_confidence": 0.5834
+    },
+    {
+      "file": "30288581.pdf",
+      "skills_found": 1,
+      "skills": [
+        "mysql"
+      ],
+      "avg_confidence": 0.6667
+    },
+    {
+      "file": "30542184.pdf",
+      "skills_found": 1,
+      "skills": [
+        "cyber-security"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "31677347.pdf",
+      "skills_found": 5,
+      "skills": [
+        "backend",
+        "devops",
+        "javascript",
+        "golang",
+        "qa"
+      ],
+      "avg_confidence": 0.4334
+    },
+    {
+      "file": "31684925.pdf",
+      "skills_found": 2,
+      "skills": [
+        "nodejs",
+        "java"
+      ],
+      "avg_confidence": 0.4167
+    },
+    {
+      "file": "31694970.pdf",
+      "skills_found": 1,
+      "skills": [
+        "csharp"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "32081266.pdf",
+      "skills_found": 3,
+      "skills": [
+        "cyber-security",
+        "java",
+        "qa"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "32802563.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "32985311.pdf",
+      "skills_found": 3,
+      "skills": [
+        "python",
+        "r",
+        "qa"
+      ],
+      "avg_confidence": 0.6111
+    },
+    {
+      "file": "33685075.pdf",
+      "skills_found": 1,
+      "skills": [
+        "qa"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "35172961.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "35389360.pdf",
+      "skills_found": 9,
+      "skills": [
+        "qa",
+        "android",
+        "linux",
+        "ios",
+        "cyber-security",
+        "java",
+        "html-css",
+        "php",
+        "mysql"
+      ],
+      "avg_confidence": 0.7593
+    },
+    {
+      "file": "35651876.pdf",
+      "skills_found": 1,
+      "skills": [
+        "cyber-security"
+      ],
+      "avg_confidence": 0.6667
+    },
+    {
+      "file": "35737840.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "36149549.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "36517781.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "37335325.pdf",
+      "skills_found": 8,
+      "skills": [
+        "backend",
+        "qa",
+        "android",
+        "ios",
+        "linux",
+        "devops",
+        "java",
+        "cyber-security"
+      ],
+      "avg_confidence": 0.5625
+    },
+    {
+      "file": "38220146.pdf",
+      "skills_found": 1,
+      "skills": [
+        "cyber-security"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "38314236.pdf",
+      "skills_found": 1,
+      "skills": [
+        "qa"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "38535335.pdf",
+      "skills_found": 2,
+      "skills": [
+        "r",
+        "ios"
+      ],
+      "avg_confidence": 0.3333
+    },
+    {
+      "file": "39835894.pdf",
+      "skills_found": 3,
+      "skills": [
+        "qa",
+        "r",
+        "linux"
+      ],
+      "avg_confidence": 0.2778
+    },
+    {
+      "file": "39855211.pdf",
+      "skills_found": 1,
+      "skills": [
+        "qa"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "43752620.pdf",
+      "skills_found": 1,
+      "skills": [
+        "backend"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "44624796.pdf",
+      "skills_found": 2,
+      "skills": [
+        "qa",
+        "cyber-security"
+      ],
+      "avg_confidence": 0.4167
+    },
+    {
+      "file": "47276718.pdf",
+      "skills_found": 1,
+      "skills": [
+        "qa"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "47549345.pdf",
+      "skills_found": 2,
+      "skills": [
+        "java",
+        "qa"
+      ],
+      "avg_confidence": 0.25
+    },
+    {
+      "file": "47919212.pdf",
+      "skills_found": 2,
+      "skills": [
+        "azure",
+        "html-css"
+      ],
+      "avg_confidence": 0.5
+    },
+    {
+      "file": "49127329.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "50328713.pdf",
+      "skills_found": 5,
+      "skills": [
+        "python",
+        "linux",
+        "backend",
+        "r",
+        "ai"
+      ],
+      "avg_confidence": 0.9
+    },
+    {
+      "file": "51588273.pdf",
+      "skills_found": 5,
+      "skills": [
+        "javascript",
+        "csharp",
+        "backend",
+        "java",
+        "php"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "54227873.pdf",
+      "skills_found": 5,
+      "skills": [
+        "qa",
+        "python",
+        "java",
+        "html-css",
+        "linux"
+      ],
+      "avg_confidence": 0.3667
+    },
+    {
+      "file": "55595908.pdf",
+      "skills_found": 2,
+      "skills": [
+        "ai",
+        "qa"
+      ],
+      "avg_confidence": 0.5
+    },
+    {
+      "file": "55953734.pdf",
+      "skills_found": 2,
+      "skills": [
+        "python",
+        "qa"
+      ],
+      "avg_confidence": 0.6666
+    },
+    {
+      "file": "56691064.pdf",
+      "skills_found": 1,
+      "skills": [
+        "java"
+      ],
+      "avg_confidence": 1.0
+    },
+    {
+      "file": "60004873.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "61579998.pdf",
+      "skills_found": 3,
+      "skills": [
+        "backend",
+        "java",
+        "cyber-security"
+      ],
+      "avg_confidence": 0.5
+    },
+    {
+      "file": "62071407.pdf",
+      "skills_found": 1,
+      "skills": [
+        "qa"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "64468610.pdf",
+      "skills_found": 5,
+      "skills": [
+        "backend",
+        "devops",
+        "javascript",
+        "golang",
+        "qa"
+      ],
+      "avg_confidence": 0.4334
+    },
+    {
+      "file": "64755882.pdf",
+      "skills_found": 1,
+      "skills": [
+        "linux"
+      ],
+      "avg_confidence": 0.5
+    },
+    {
+      "file": "74236636.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "77828437.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "81125166.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "82125182.pdf",
+      "skills_found": 1,
+      "skills": [
+        "java"
+      ],
+      "avg_confidence": 0.5
+    },
+    {
+      "file": "82246962.pdf",
+      "skills_found": 8,
+      "skills": [
+        "python",
+        "linux",
+        "android",
+        "qa",
+        "backend",
+        "frontend",
+        "cyber-security",
+        "r"
+      ],
+      "avg_confidence": 0.4792
+    },
+    {
+      "file": "86209934.pdf",
+      "skills_found": 2,
+      "skills": [
+        "qa",
+        "r"
+      ],
+      "avg_confidence": 0.5834
+    },
+    {
+      "file": "86828820.pdf",
+      "skills_found": 1,
+      "skills": [
+        "qa"
+      ],
+      "avg_confidence": 0.1667
+    },
+    {
+      "file": "90280583.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    },
+    {
+      "file": "96029688.pdf",
+      "skills_found": 0,
+      "skills": [],
+      "avg_confidence": 0.0
+    }
+  ]
+}

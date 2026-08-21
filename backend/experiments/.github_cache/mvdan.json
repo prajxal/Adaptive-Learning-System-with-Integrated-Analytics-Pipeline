@@ -1,0 +1,1 @@
+{"language_bytes": {"Go": 1307958, "Shell": 20392, "Vim Script": 3058, "CMake": 138, "HTML": 32496, "TeX": 4565, "CUE": 4436, "Dockerfile": 393}, "language_commits": {"Go": 346, "Shell": 30, "HTML": 30, "CUE": 2}, "repos_analyzed": 18, "total_bytes": 1373436, "error": null}

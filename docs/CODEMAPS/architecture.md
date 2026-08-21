@@ -1,4 +1,4 @@
-<!-- Generated: 2026-04-01 | Sprint: 5 (AI Mentor feature) | Gemini function-calling chat loop, MCP tools, /chat router -->
+<!-- Generated: 2026-04-01 | Sprint: 5 (AI Mentor context injection) | Gemini function-calling chat loop, MCP tools, /chat router, build_user_context pre-loading -->
 
 # Architecture Overview
 
@@ -139,24 +139,25 @@ Each course includes `prerequisites: [{id, title, completed}]` built from in-mem
 
 **Migration (NEW):** `backend/migrations/versions/20260331_add_onboarding_completed.py` adds `users.onboarding_completed` column (BOOLEAN, default FALSE). Backfills existing users to FALSE.
 
-## Sprint 5 Updates: AI Mentor (Gemini Function-Calling)
+## Sprint 5 Updates: AI Mentor (Gemini Function-Calling + Context Injection)
 
 **AIMentorPage (NEW):** `/ai-mentor` route displays chat UI (message bubbles, typing indicator, textarea). Sends user messages to `POST /chat` via `sendChatMessage()`. Renders streaming replies with auto-scroll.
 
-**Chat Endpoint (NEW):** `backend/routers/chat.py` — `POST /chat` accepts `{message: string}` → runs Gemini function-calling loop (max 5 rounds, 60s timeout). Sends Gemini `TOOL_DECLARATIONS` (5 tools) in every request; model calls tools, backend executes via `TOOL_REGISTRY`, feeds results back; loop continues until no tool calls remain. Returns `ChatResponse{reply: string}`.
+**Chat Endpoint (UPDATED):** `backend/routers/chat.py` — `POST /chat` accepts `{message: string}` → **pre-loads user context via `build_user_context(user_id)` once** → injects plain-text snapshot into system prompt → runs Gemini function-calling loop (max 5 rounds, 60s timeout). Sends Gemini `TOOL_DECLARATIONS` (5 tools) in every request; model calls tools, backend executes via `TOOL_REGISTRY`, feeds results back; loop continues until no tool calls remain. Returns `ChatResponse{reply: string}`. Effect: model answers "What should I study?" without tool-call round-trips when active roadmap is in context.
 
-**MCP Tools (NEW):** `backend/mcp_server/tools.py` — 5 functions that fetch real data for Gemini:
+**MCP Tools (UPDATED):** `backend/mcp_server/tools.py` — 6 functions:
 - `get_user_profile()` → `{email, elo, xp, level, github_status, skills[]}`
 - `get_user_progress()` → `{total_completed, roadmaps[{id, total, completed, progress%}]}`
 - `get_next_course(user_id, roadmap_id)` → calls `get_recommended_start_courses_batched()`
 - `get_roadmap_courses(roadmap_id)` → list courses with `difficulty_level`, `required_level`
 - `get_skill_graph(roadmap_id, user_id?)` → skill edges ± user completion status
+- **`build_user_context(user_id)` → plain-text snapshot** (NEW): single DB session queries User, top 5 UserSkills by proficiency, most recent Event (to detect active roadmap), completed course count, next recommended course; outputs `## Learner Context` block injected into system prompt
 
 **Tool Registry (NEW):** `backend/mcp_server/registry.py` — `TOOL_DECLARATIONS` (Gemini JSON schema), `USER_ID_TOOLS` (set of tools that require auth override), `TOOL_REGISTRY` (dispatch table). Router always replaces tool `user_id` args with authenticated user's ID for security.
 
 **Sidebar Integration (UPDATED):** Added "AI Mentor" nav item (MessageSquare icon) between "Learning Paths" and "My Profile".
 
-**System Prompt:** Instructs Gemini to use tools to fetch real data before answering; discourages hallucinated stats.
+**System Prompt:** Instructs Gemini to use tools to fetch real data before answering; discourages hallucinated stats. Enhanced with live learner context injected at chat time.
 
 ## Sprint 4 Updates: Quiz Result Split & Learning Progress Dashboard
 

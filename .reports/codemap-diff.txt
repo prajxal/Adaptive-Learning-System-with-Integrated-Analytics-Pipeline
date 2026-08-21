@@ -750,3 +750,106 @@ TESTING CONSIDERATIONS:
 
 ================================================================================
 
+## SPRINT 5 UPDATE: AI MENTOR CONTEXT INJECTION (2026-04-01)
+================================================================================
+
+COMPLETION:
+  ✓ Added build_user_context(user_id) to mcp_server/tools.py
+  ✓ Pre-loads learner context once at start of /chat request
+  ✓ Injects plain-text snapshot into dynamic system prompt
+  ✓ Queries: User (level/XP), top 5 UserSkills (by proficiency), most recent Event (active roadmap), completed course count, next recommendation
+  ✓ Returns ## Learner Context block for system prompt injection
+  ✓ Fail-open: exception returns empty string, chat uses base prompt
+  ✓ Handles edge cases: no roadmap, no skills, roadmap complete
+
+FILES MODIFIED:
+  Backend:
+    ~ backend/mcp_server/tools.py (NEW function: build_user_context)
+      - Added _LEVEL_LABELS dict (Novice → Grandmaster)
+      - Added build_user_context(user_id) function
+      - Queries in single session: User, UserSkill (top 5), Event (active roadmap), completed count
+      - Calls get_recommended_start_courses_batched() for next course + alternatives
+      - Returns plain-text "## Learner Context" block with live data
+
+    ~ backend/routers/chat.py (Context pre-loading)
+      - Added import: from mcp_server.tools import build_user_context
+      - Before model-chain loop: calls build_user_context(user_id) once
+      - Fail-open on exception (logs warning, continues with base prompt)
+      - Constructs dynamic_prompt = SYSTEM_PROMPT + "\n\n" + user_context
+      - Passes dynamic_prompt as system_instruction in Gemini payload
+      - Effect: model answers "What should I study?" without tool-call round-trips
+
+ARCHITECTURE CHANGES:
+  • Chat endpoint now injects live learner context into system prompt at request start
+  • Single context query (4 simple queries) per chat message (not per tool-call round)
+  • Fail-open: missing context doesn't break chat, just uses base prompt
+  • Reduces tool-call overhead for common questions about learning status
+
+CODEMAP UPDATES (All <5% change magnitude):
+
+  docs/CODEMAPS/architecture.md (v3.1)
+    • Freshness: "Sprint: 5 (AI Mentor feature)" → "Sprint: 5 (AI Mentor context injection)"
+    • Updated: Chat Endpoint section
+      - Added note: "pre-loads user context via build_user_context(user_id) once"
+      - Added: "injects plain-text snapshot into system prompt"
+      - Added: "Effect: model answers 'What should I study?' without tool-call round-trips"
+    • Updated: MCP Tools section
+      - Added 6th function: build_user_context()
+      - Described: single DB session, queries User/top 5 skills/recent Event/completed count
+      - Described: outputs ## Learner Context block
+    • Updated: System Prompt section
+      - Added: "Enhanced with live learner context injected at chat time"
+    Change magnitude: ~3%
+
+  docs/CODEMAPS/backend.md (v3.1)
+    • Freshness: "Sprint: 5 (AI Mentor)" → "Sprint: 5 (AI Mentor context injection)"
+    • Updated: Services table
+      - MCP Tools row: added build_user_context() signature + description
+      - Described: "returns plain-text ## Learner Context block injected into system prompt"
+    • Updated: Chat (AI Mentor) router section
+      - Added: "pre-loads build_user_context(user_id) once before loop"
+      - Added: "injects into dynamic system prompt"
+      - Described: "fail-open on exception"
+      - Added: model fallback chain (primary → fallback 2x retries on 503/timeout)
+    Change magnitude: ~4%
+
+  docs/CODEMAPS/frontend.md (v3.1)
+    • Freshness: "Sprint: 5 (AI Mentor feature)" → "Sprint: 5 (AI Mentor context injection)"
+    • No content changes; context pre-loading is backend-only
+    Change magnitude: ~0%
+
+  docs/CODEMAPS/data.md (v3.1)
+    • Freshness: "Sprint: 5 (AI Mentor)" → "Sprint: 5 (AI Mentor context injection)"
+    • Updated comment: "No schema changes (feature is read-only query via MCP tools + context pre-loading)"
+    • No model or migration changes
+    Change magnitude: ~1%
+
+VALIDATION:
+  ✓ backend/mcp_server/tools.py contains build_user_context(user_id)
+  ✓ _LEVEL_LABELS dict present (Novice → Grandmaster)
+  ✓ build_user_context opens/closes own DB session
+  ✓ Queries User, UserSkill (top 5), Event (active roadmap), completed count
+  ✓ Calls get_recommended_start_courses_batched() for next course
+  ✓ backend/routers/chat.py imports build_user_context
+  ✓ Chat endpoint calls build_user_context(user_id) before model loop
+  ✓ dynamic_prompt constructed: SYSTEM_PROMPT + user_context
+  ✓ Passed to Gemini as system_instruction
+  ✓ Fail-open: exception → warning log → empty context → base prompt
+  ✓ All file paths verified
+
+TOKEN EFFICIENCY:
+  • Codemaps remain token-lean (no inflation)
+  • architecture.md: ~900 tokens (no significant change)
+  • backend.md: ~750 tokens (+50 for context explanation)
+  • frontend.md: ~950 tokens (no change)
+  • data.md: ~500 tokens (no change)
+
+BACKWARD COMPATIBILITY:
+  ✓ No schema changes
+  ✓ No migrations needed
+  ✓ Purely additive (new function in tools.py)
+  ✓ Context pre-loading fail-open (doesn't break chat if it fails)
+  ✓ No changes to existing API signatures
+
+================================================================================
+

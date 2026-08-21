@@ -147,14 +147,22 @@ async def get_or_generate_quiz(skill_id: str, db: Session) -> SkillQuiz:
     quiz = db.query(SkillQuiz).filter(SkillQuiz.skill_id == skill_id).first()
     
     # Ensure questions is a list for the length check (SQLite returns string for JSON)
-    if quiz and isinstance(quiz.questions, str):
-        try:
-            quiz.questions = json.loads(quiz.questions)
-        except json.JSONDecodeError:
-            pass
+    if quiz:
+        questions = quiz.questions
+        if isinstance(questions, str):
+            try:
+                questions = json.loads(questions)
+            except json.JSONDecodeError:
+                questions = []
 
-    if quiz and quiz.questions and len(quiz.questions) > 0:
-        return quiz
+        if isinstance(questions, list) and questions:
+            try:
+                quiz.questions = validate_quiz_json({"questions": questions})
+                return quiz
+            except ValueError:
+                questions = []
+
+        quiz.questions = []
 
     # Step 2: Fetch required context
     course = db.query(Course).filter(Course.id == skill_id).first()
@@ -170,6 +178,14 @@ async def get_or_generate_quiz(skill_id: str, db: Session) -> SkillQuiz:
     if not GEMINI_API_KEY:
         logger.warning(f"GEMINI_API_KEY not set — using fallback quiz for skill {skill_id}")
         fallback_questions = generate_fallback_quiz(skill_title, skill_description)
+        if quiz:
+            quiz.questions = json.dumps(fallback_questions)
+            quiz.passing_score = 75
+            db.commit()
+            db.refresh(quiz)
+            quiz.questions = fallback_questions
+            return quiz
+
         fallback_quiz = SkillQuiz(
             skill_id=skill_id,
             questions=json.dumps(fallback_questions),
@@ -182,8 +198,19 @@ async def get_or_generate_quiz(skill_id: str, db: Session) -> SkillQuiz:
         except IntegrityError:
             db.rollback()
             fallback_quiz = db.query(SkillQuiz).filter(SkillQuiz.skill_id == skill_id).first()
+        if not fallback_quiz:
+            raise HTTPException(status_code=503, detail="Quiz generation temporarily unavailable")
         if isinstance(fallback_quiz.questions, str):
-            fallback_quiz.questions = json.loads(fallback_quiz.questions)
+            try:
+                fallback_quiz.questions = json.loads(fallback_quiz.questions)
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=503, detail="Quiz generation temporarily unavailable")
+        if not isinstance(fallback_quiz.questions, list):
+            raise HTTPException(status_code=503, detail="Quiz generation temporarily unavailable")
+        try:
+            fallback_quiz.questions = validate_quiz_json({"questions": fallback_quiz.questions})
+        except ValueError:
+            raise HTTPException(status_code=503, detail="Quiz generation temporarily unavailable")
         return fallback_quiz
         
     prompt = f"""You are an expert technical instructor.
@@ -271,6 +298,18 @@ Required JSON format:
         questions = generate_fallback_quiz(skill_title, skill_description)
         
     # Step 5: Safely persist with race-condition handling
+    if quiz:
+        quiz.questions = json.dumps(questions)
+        quiz.passing_score = 75  # 4/5 correct needed to pass
+        try:
+            db.commit()
+            db.refresh(quiz)
+            quiz.questions = json.loads(quiz.questions)
+            return quiz
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(status_code=503, detail="Quiz generation temporarily unavailable")
+
     new_quiz = SkillQuiz(
         skill_id=skill_id,
         questions=json.dumps(questions),
@@ -297,10 +336,13 @@ Required JSON format:
             try:
                 quiz.questions = json.loads(quiz.questions)
             except json.JSONDecodeError:
+                quiz.questions = []
+
+        if quiz and isinstance(quiz.questions, list) and quiz.questions:
+            try:
+                quiz.questions = validate_quiz_json({"questions": quiz.questions})
+                return quiz
+            except ValueError:
                 pass
 
-        if quiz and quiz.questions and len(quiz.questions) > 0:
-            return quiz
-        else:
-            # Should theoretically never happen unless deleted immediately after insertion
-            raise HTTPException(status_code=503, detail="Quiz generation temporarily unavailable")
+        raise HTTPException(status_code=503, detail="Quiz generation temporarily unavailable")

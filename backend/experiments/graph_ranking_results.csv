@@ -1,0 +1,1191 @@
+rank,course_name,descendants_count,out_degree,graph_depth,importance_score
+1,JavaScript,23,2,0,83.0
+2,Introduction,22,1,0,78.0
+3,Hashicorp Config. Language (HCL),21,1,1,74.0
+4,Internet,20,1,0,72.0
+5,Version Control Systems,20,1,1,71.0
+6,Project Initialization,20,1,2,70.0
+7,Pick a Language,19,1,1,68.0
+8,VCS Hosting,19,1,2,67.0
+9,HTML,18,1,0,66.0
+10,Providers,19,1,3,66.0
+11,Version Control Systems,18,1,2,64.0
+12,Types of BI Operations,17,1,0,63.0
+13,Package Managers,18,1,3,63.0
+14,CSS,17,1,1,62.0
+15,Resources,18,1,4,62.0
+16,Repo Hosting Services,17,1,3,60.0
+17,R2 Storage,16,1,0,60.0
+18,Key Product Metrics,16,1,0,60.0
+19,Key Business Functions,16,1,1,59.0
+20,Pick a Framework,17,1,4,59.0
+21,Data Persistence,15,2,0,59.0
+22,JavaScript,16,1,2,58.0
+23,Variables,17,1,5,58.0
+24,Pick a Language,13,4,0,57.0
+25,Lists,15,1,0,57.0
+26,Relational Databases,16,1,4,56.0
+27,D1,15,1,1,56.0
+28,Data-Driven Decision Making,15,1,1,56.0
+29,Types of Data Analysis,15,1,2,55.0
+30,Writing CSS,16,1,5,55.0
+31,npm,15,1,3,54.0
+32,Macros & Metaprogramming,14,1,0,54.0
+33,Outputs,16,1,6,54.0
+34,Sets,14,1,1,53.0
+35,Learn about APIs,15,1,5,52.0
+36,Queues,14,1,2,52.0
+37,Feedback Loops,14,1,2,52.0
+38,Learn the Basics,13,1,0,51.0
+39,Variables and Data Types,14,1,3,51.0
+40,CSS Architecture,15,1,6,51.0
+41,Programming Techniques,13,1,0,51.0
+42,Git,14,1,4,50.0
+43,JSON / XML,13,1,1,50.0
+44,Web Development,13,1,1,50.0
+45,Format & Validate,15,1,7,50.0
+46,Hashes,13,1,2,49.0
+47,Caching,14,1,6,48.0
+48,Durable Objects,13,1,3,48.0
+49,Communication Skills,13,1,3,48.0
+50,Different API Styles,12,1,1,47.0
+51,Descriptive Statistics,13,1,4,47.0
+52,CSS Preprocessors,14,1,7,47.0
+53,Build Tools,13,3,8,47.0
+54,Databases,12,1,1,47.0
+55,GitHub,13,1,5,46.0
+56,Networking,12,1,2,46.0
+57,Asynchronous Programming,12,1,2,46.0
+58,Deployment,14,1,8,46.0
+59,Repo Hosting Services,11,1,0,45.0
+60,Writing Platform Specific Code,11,1,0,45.0
+61,Sorted Sets,12,1,3,45.0
+62,Web Security,13,1,7,44.0
+63,Workflows,12,1,4,44.0
+64,Managing Stakeholders,12,1,4,44.0
+65,Building JSON / RESTful APIs,11,1,2,43.0
+66,Central Tendency,12,1,5,43.0
+67,Cipher,11,1,2,43.0
+68,Video Production,10,1,0,42.0
+69,Tailwind CSS,12,1,6,42.0
+70,Collaboration on GitHub,10,1,0,42.0
+71,Concurrency and Multithreading,11,1,3,42.0
+72,Basic RDBMS Concepts,9,3,1,42.0
+73,Introduction,10,1,0,42.0
+74,Networking,11,1,3,42.0
+75,Tools,10,1,0,42.0
+76,Introduction,10,1,0,42.0
+77,Clean Up,13,1,9,42.0
+78,Design Principles,10,1,1,41.0
+79,Introduction,9,2,0,41.0
+80,Styling,10,1,1,41.0
+81,Atomicity in Redis,11,1,4,41.0
+82,Testing,12,1,8,40.0
+83,Workers AI,11,1,5,40.0
+84,Roadmapping Tools,11,1,5,40.0
+85,Introduction to Angular,9,1,0,39.0
+86,Authentication Methods,10,1,3,39.0
+87,Dispersion,11,1,6,39.0
+88,Basic Machine Learning,9,1,0,39.0
+89,Visualization Best Practices,9,1,0,39.0
+90,Programming Language,9,1,0,39.0
+91,Setting up Kubernetes,9,1,0,39.0
+92,MongoDB Basics,9,1,0,39.0
+93,RPC / REST,10,1,3,39.0
+94,Live Streaming,9,1,1,38.0
+95,React,11,1,7,38.0
+96,Documentation,9,1,1,38.0
+97,Dependency Manager,10,1,4,38.0
+98,Core Programming Concepts,9,1,1,38.0
+99,Serialization / Deserialization,10,1,4,38.0
+100,Architecture,9,1,1,38.0
+101,Required Skills,9,1,1,38.0
+102,State,12,1,10,38.0
+103,Git,7,3,0,37.0
+104,Package Managers,9,1,2,37.0
+105,Networking,9,1,2,37.0
+106,Pipelining,10,1,5,37.0
+107,CI / CD,11,1,9,36.0
+108,Vectorize,10,1,6,36.0
+109,Standard Library + STL,8,1,0,36.0
+110,HTML,8,1,0,36.0
+111,Introduction,8,1,0,36.0
+112,Version Control,8,2,2,36.0
+113,Programming Fundamentals,8,1,0,36.0
+114,Product Requirements,8,1,0,36.0
+115,Project Management Tools,10,1,6,36.0
+116,Load & Performance Testing,8,1,0,36.0
+117,Components,8,1,1,35.0
+118,Authorization Methods,9,1,4,35.0
+119,Distribution,10,1,7,35.0
+120,Excel,8,1,1,35.0
+121,Communication & Storytelling,8,1,1,35.0
+122,Operating System,8,1,1,35.0
+123,Running Applications,8,1,1,35.0
+124,Data Model & Data Types,8,1,1,35.0
+125,Multithreading,8,3,5,35.0
+126,Message Queues,9,1,4,35.0
+127,Social Media,8,1,2,34.0
+128,Node.js,10,1,8,34.0
+129,Working in a Team,8,1,2,34.0
+130,Frameworks & Library,9,1,5,34.0
+131,Database and ORM,9,1,5,34.0
+132,Security,8,1,2,34.0
+133,Tooling,8,1,2,34.0
+134,Best Practices for State,11,1,11,34.0
+135,RDS,7,1,0,33.0
+136,Data Collection,7,1,0,33.0
+137,What is DevRel?,5,4,0,33.0
+138,Working with APIs,8,1,3,33.0
+139,Testing,10,1,9,33.0
+140,Game Mathematics,6,3,1,33.0
+141,Client Side Development,7,1,0,33.0
+142,Service Management (systemd),7,1,0,33.0
+143,Collections & Methods,7,2,2,33.0
+144,Working with Databases,7,1,0,33.0
+145,Push Notifications,8,1,3,33.0
+146,Headless Component Libraries,7,1,0,33.0
+147,CLI Tools,7,1,0,33.0
+148,Batch Operations,9,1,6,33.0
+149,Lifecycle Hooks,7,1,0,33.0
+150,More about Databases,10,1,10,32.0
+151,Stream,9,1,7,32.0
+152,Templates,7,1,1,32.0
+153,CSS,7,1,1,32.0
+154,GitHub Projects,7,2,3,32.0
+155,GraphQL Queries,7,1,1,32.0
+156,Version Control Systems,7,1,1,32.0
+157,Market Analysis,7,1,1,32.0
+158,Product Roadmap,7,1,1,32.0
+159,Analytics Tools,9,1,7,32.0
+160,Security Testing,7,1,1,32.0
+161,Modules,7,1,2,31.0
+162,API Keys & Management,8,1,5,31.0
+163,Inferential Statistics,9,1,8,31.0
+164,BI Platforms,7,1,2,31.0
+165,Soft Skills,7,1,2,31.0
+166,Networking & Protocols,7,1,2,31.0
+167,Services and Networking,7,1,2,31.0
+168,Introduction,6,1,0,30.0
+169,Network,6,1,0,30.0
+170,Introduction,6,1,0,30.0
+171,Scaling Databases,9,2,11,30.0
+172,Balanced Search Trees,6,1,0,30.0
+173,Introduction to Language,6,1,0,30.0
+174,Documentation,7,1,3,30.0
+175,JavaScript,6,2,2,30.0
+176,PostgreSQL,9,1,9,30.0
+177,Accessibility,8,1,6,30.0
+178,Editing Files,6,1,0,30.0
+179,Cryptography,8,1,6,30.0
+180,Working with Data,7,1,3,30.0
+181,Best Practices,7,1,3,30.0
+182,Inspect / Modify State,10,1,12,30.0
+183,DynamoDB,6,1,1,29.0
+184,Data Cleanup,6,1,1,29.0
+185,Storage,7,1,4,29.0
+186,Authentication Strategies,9,1,10,29.0
+187,Package Management,6,1,1,29.0
+188,Testing,6,1,1,29.0
+189,Interactions,7,1,4,29.0
+190,Components,6,1,1,29.0
+191,API Calls,6,1,1,29.0
+192,Bitmaps,8,1,7,29.0
+193,Forms Handling,6,1,1,29.0
+194,Images,8,1,8,28.0
+195,Idioms,6,1,2,28.0
+196,Support,5,4,5,28.0
+197,Mutations,6,1,2,28.0
+198,Cloud Computing,6,1,2,28.0
+199,User Research,6,1,2,28.0
+200,Communication Tools,8,1,8,28.0
+201,Backlog Management,6,1,2,28.0
+202,Email Testing,6,1,2,28.0
+203,Pick a Language,5,1,0,27.0
+204,Templates,6,1,3,27.0
+205,API Documentation Tools,7,1,6,27.0
+206,Real-Time Communication,5,1,0,27.0
+207,Repo hosting services,5,1,0,27.0
+208,Correlation Analysis,8,1,9,27.0
+209,Programming Languages,6,1,3,27.0
+210,Data Quality,6,1,3,27.0
+211,Docker,6,1,3,27.0
+212,Container Orchestration,5,1,0,27.0
+213,VCS Hosting,5,1,0,27.0
+214,UIKit,6,1,3,27.0
+215,All about Variables,5,1,0,27.0
+216,Working with APIs,5,1,0,27.0
+217,Configuration Management,6,1,3,27.0
+218,Introduction,5,1,0,27.0
+219,Learn the Fundamentals,5,1,0,27.0
+220,UDP,5,1,0,27.0
+221,Embedded Server,5,1,0,27.0
+222,Indexes,5,1,0,27.0
+223,Pre-trained Models,5,1,1,26.0
+224,Asynchronism,5,1,1,26.0
+225,EC2,5,1,1,26.0
+226,System Design,5,1,1,26.0
+227,Setting up your Environment,5,1,1,26.0
+228,Data Warehousing Architectures,4,2,0,26.0
+229,Sample Projects,6,1,4,26.0
+230,RESTful APIs,8,1,10,26.0
+231,Code Quality Tools,7,1,7,26.0
+232,Web Frameworks,4,2,0,26.0
+233,Shell and Other Basics,5,1,1,26.0
+234,Object Oriented Programming,4,2,0,26.0
+235,CLI Utilities,7,1,7,26.0
+236,APIs & Integrations,6,1,4,26.0
+237,Content Research,6,1,4,26.0
+238,Modules,9,1,13,26.0
+239,Cloudfront,5,1,2,25.0
+240,Descriptive Analysis,5,1,2,25.0
+241,Advanced Dart,6,1,5,25.0
+242,Web Security Basics,8,1,11,25.0
+243,Disks and Filesystems,5,1,2,25.0
+244,Logging,5,1,2,25.0
+245,Installation and Setup,5,1,2,25.0
+246,DeepLinking,6,1,5,25.0
+247,Rendering,5,1,2,25.0
+248,Testing,5,1,2,25.0
+249,HyperLogLog,7,1,8,25.0
+250,Event Handling,5,1,2,25.0
+251,Developer Tools,4,1,0,24.0
+252,Learn the Basics of C#,4,1,0,24.0
+253,Calls,7,1,9,24.0
+254,Common UML Diagrams,4,1,0,24.0
+255,Standards,5,1,3,24.0
+256,Monitoring,4,1,0,24.0
+257,Building a Community,4,1,0,24.0
+258,Learn the Basics,4,1,0,24.0
+259,Learn the Basics,4,1,0,24.0
+260,Subscriptions,5,1,3,24.0
+261,Types of Machine Learning,4,1,0,24.0
+262,Applications of CNNs,4,1,0,24.0
+263,Containerization,5,1,3,24.0
+264,Performance Optimization,5,1,3,24.0
+265,UX / UI Design,5,1,3,24.0
+266,Positioning,5,1,3,24.0
+267,Identifying Risks,7,1,9,24.0
+268,Reporting,5,1,3,24.0
+269,Important Skills to Learn,4,1,0,24.0
+270,Load Balancers,4,1,0,24.0
+271,Consistency Patterns,4,1,0,24.0
+272,Decorators,4,1,0,24.0
+273,Type Compatibility,4,1,0,24.0
+274,Human Decision Making,4,1,0,24.0
+275,The Fundamentals,4,1,1,23.0
+276,Directives,5,1,4,23.0
+277,API Security,6,1,7,23.0
+278,Object Mapping,4,1,1,23.0
+279,Relational Databases,4,1,1,23.0
+280,Data Lineage,5,1,4,23.0
+281,Regression Analysis,7,1,10,23.0
+282,Finance,5,1,4,23.0
+283,GitHub,5,1,4,23.0
+284,Containers,4,1,1,23.0
+285,Application Monitoring,4,1,1,23.0
+286,Basic Programming Skills,3,2,0,23.0
+287,Game Physics,3,3,2,23.0
+288,History,5,1,4,23.0
+289,SwiftUI,5,1,4,23.0
+290,Data Types,4,1,1,23.0
+291,Classes,4,1,1,23.0
+292,Resource Management,5,1,4,23.0
+293,Linear Algebra,4,1,1,23.0
+294,SDLC Delivery Model,4,1,1,23.0
+295,Manual Testing,3,3,2,23.0
+296,TCP vs UDP,4,1,1,23.0
+297,Architectural Styles,3,2,0,23.0
+298,Hibernate,4,1,1,23.0
+299,Transactions,4,1,1,23.0
+300,OpenAI API,4,1,2,22.0
+301,Common Services,4,1,2,22.0
+302,VPC,4,1,2,22.0
+303,Databases,4,1,2,22.0
+304,Basic Operations,4,1,2,22.0
+305,JWT Auth,7,1,11,22.0
+306,Debugging Techniques,6,1,8,22.0
+307,Working with Files,4,1,2,22.0
+308,Game Development,6,1,8,22.0
+309,"Web, Mobile",5,1,5,22.0
+310,Types of Technical Content,5,1,5,22.0
+311,Provisioners,8,1,14,22.0
+312,Behavior Change Strategies,3,2,1,22.0
+313,ElastiCache,4,1,3,21.0
+314,Design and Development Principles,7,1,12,21.0
+315,Calculated Fields & Measures,3,1,0,21.0
+316,Basic Blockchain Knowledge,3,1,0,21.0
+317,String Search & Manipulations,3,1,0,21.0
+318,Pick a Language,3,1,0,21.0
+319,Structuring Codebase,3,1,0,21.0
+320,Data Visualisation,4,1,3,21.0
+321,Relational Databases,3,1,0,21.0
+322,Understand he Basics,3,1,0,21.0
+323,Learn a Programming Language,3,1,0,21.0
+324,Development Environment,3,1,0,21.0
+325,State Management,5,1,6,21.0
+326,Git,4,1,3,21.0
+327,GitHub,4,1,3,21.0
+328,Web Components,7,1,12,21.0
+329,Reactive Programming,3,1,0,21.0
+330,Booting Linux,4,1,3,21.0
+331,Introduction to Node.js,3,1,0,21.0
+332,Keep app Running,4,1,3,21.0
+333,Arrays,3,1,0,21.0
+334,Learn SQL,4,1,3,21.0
+335,Security,5,1,6,21.0
+336,Learn the Pre-requisites,3,1,0,21.0
+337,Hooks,4,1,3,21.0
+338,Frameworks,4,1,3,21.0
+339,Backup and Recovery,3,1,0,21.0
+340,Streams,6,1,9,21.0
+341,Introduction,3,1,0,21.0
+342,Cloud,5,1,6,21.0
+343,Aggregate Queries,3,1,0,21.0
+344,Components,3,1,0,21.0
+345,Computed Properties,4,1,3,21.0
+346,SSR,3,1,1,20.0
+347,General Development Skills,3,1,1,20.0
+348,Tunnels,6,1,10,20.0
+349,Design Patterns,3,1,1,20.0
+350,Debuggers,4,1,4,20.0
+351,Introduction,2,2,0,20.0
+352,Testing,3,1,1,20.0
+353,Reverse ETL,2,2,0,20.0
+354,Community Management,3,1,1,20.0
+355,Basic Git Usage,3,1,1,20.0
+356,What is a Repository,3,1,1,20.0
+357,Schema,4,1,4,20.0
+358,Recurrent Neural Networks,3,1,1,20.0
+359,Scikit-learn,3,1,1,20.0
+360,Machine Learning Fundamentals,4,1,4,20.0
+361,Aggregation,4,1,4,20.0
+362,Risk Assessment,6,1,10,20.0
+363,Vision & Mission,4,1,4,20.0
+364,Service Design,4,1,4,20.0
+365,Monitoring & Logs,4,1,4,20.0
+366,Technical Skills,3,1,1,20.0
+367,Cloud Design Patterns,2,2,0,20.0
+368,Application Layer,3,1,1,20.0
+369,Availability Patterns,3,1,1,20.0
+370,Utility Types,3,1,1,20.0
+371,Combining Types,3,1,1,20.0
+372,Version Control,3,1,2,19.0
+373,Routing,4,1,5,19.0
+374,API Performance,5,1,8,19.0
+375,Task Scheduling,3,1,2,19.0
+376,Learn about APIs,3,1,2,19.0
+377,Hypothesis Testing,6,1,11,19.0
+378,Retail & E-commerce,4,1,5,19.0
+379,Ethical Data Use,4,1,5,19.0
+380,NoSQL Databsases,2,2,1,19.0
+381,AWS,4,1,5,19.0
+382,What is and how to setup X ?,3,1,2,19.0
+383,Artifact Management,3,1,2,19.0
+384,Widgets,2,2,1,19.0
+385,Undoing Changes,4,1,5,19.0
+386,UI Design,4,1,5,19.0
+387,Iterators and Generators,3,1,2,19.0
+388,Type Casting,3,1,2,19.0
+389,Security,4,1,5,19.0
+390,Calculus,3,1,2,19.0
+391,IP,3,1,2,19.0
+392,Spring Data,3,1,2,19.0
+393,Data Integrity & Security,3,1,2,19.0
+394,AI Safety and Ethics,3,1,3,18.0
+395,Prompt Hacking,2,1,0,18.0
+396,Linting,3,1,3,18.0
+397,Signals,2,1,0,18.0
+398,IAM,3,1,3,18.0
+399,Popular Databases,2,1,0,18.0
+400,Networking,3,1,3,18.0
+401,Control Flow & Statements,3,1,3,18.0
+402,Big Data Tools,2,1,0,18.0
+403,Basic Data Structures,2,1,0,18.0
+404,Secret Management,2,1,0,18.0
+405,Event Management,2,2,2,18.0
+406,CI / CD,2,1,0,18.0
+407,Redis,6,1,12,18.0
+408,Game AI,2,1,0,18.0
+409,App Store Distribution,5,1,9,18.0
+410,Learn the Basics,2,1,0,18.0
+411,Logging Frameworks,2,2,2,18.0
+412,Text Processing,3,1,3,18.0
+413,Neural Network (NN) Basics,2,1,0,18.0
+414,Why is it important?,2,1,0,18.0
+415,Data Engineering Fundamentals,3,2,5,18.0
+416,Schema Design Patterns / Anti-patterns,2,1,0,18.0
+417,Regular Expressions,2,1,0,18.0
+418,Learn the Basics,2,1,0,18.0
+419,Testing,2,1,0,18.0
+420,GUI Development,5,1,9,18.0
+421,Frameworks,4,1,6,18.0
+422,Clean Code Principles,2,1,0,18.0
+423,Introduction,2,1,0,18.0
+424,Learn the Basics,2,1,0,18.0
+425,Content Optimization,2,1,0,18.0
+426,Technical Content Marketing,4,1,6,18.0
+427,Data Sources,7,1,15,18.0
+428,Introduction to TypeScript,2,1,0,18.0
+429,Prototyping,2,1,0,18.0
+430,State Management,2,1,0,18.0
+431,ECR,3,1,4,17.0
+432,Containerization vs Virtualization,6,1,13,17.0
+433,ETL basics,2,1,1,17.0
+434,General Blockchain Knowledge,2,1,1,17.0
+435,Floating Point Math,2,1,1,17.0
+436,Data Structures,2,1,1,17.0
+437,Structures and Classes,2,1,1,17.0
+438,Statistical Analysis,3,1,4,17.0
+439,Cloud Computing,2,1,1,17.0
+440,Terminology,2,1,1,17.0
+441,Operating System,2,1,1,17.0
+442,Reactive Programming,4,1,7,17.0
+443,npm,3,1,4,17.0
+444,Type Checkers,6,1,13,17.0
+445,Delegate Pattern,2,1,1,17.0
+446,Database Access,2,1,1,17.0
+447,Networking,3,1,4,17.0
+448,Essential libraries,2,1,1,17.0
+449,Threads,3,1,4,17.0
+450,Modules,2,1,1,17.0
+451,Conditionals,2,1,1,17.0
+452,Configuring,3,1,4,17.0
+453,Environment Setup,2,1,1,17.0
+454,Storage,4,1,7,17.0
+455,Forms,3,1,4,17.0
+456,Routers,3,1,4,17.0
+457,Upgrading Redis,2,1,1,17.0
+458,Geospatial Indexes,5,1,10,17.0
+459,Language Basics,2,1,1,17.0
+460,Data Clustering,4,1,7,17.0
+461,Data Constraints,2,1,1,17.0
+462,Templates,2,1,1,17.0
+463,Routing,3,1,4,17.0
+464,SSG,2,1,2,16.0
+465,Database Fundamentals,2,1,2,16.0
+466,Email Workers,5,1,11,16.0
+467,Basic Math Skills,2,1,2,16.0
+468,Compilers,3,1,5,16.0
+469,Messaging Systems,2,1,2,16.0
+470,Collaboration,2,1,2,16.0
+471,Branching Basics,2,1,2,16.0
+472,Validation,3,1,5,16.0
+473,Attention Mechanisms,2,1,2,16.0
+474,What is Supervised Learning?,2,1,2,16.0
+475,Transactions,3,1,5,16.0
+476,Risk Mitigation,5,1,11,16.0
+477,Interaction Design,3,1,5,16.0
+478,Defining Goals,3,1,5,16.0
+479,Version Control System,3,1,5,16.0
+480,Programming Languages,2,1,2,16.0
+481,Databases,2,1,2,16.0
+482,Background Jobs,2,1,2,16.0
+483,Advanced Types,2,1,2,16.0
+484,Type Guards / Narrowing,2,1,2,16.0
+485,REST API Knowledge,1,1,0,15.0
+486,Vector Databases,1,1,0,15.0
+487,App Components,2,1,3,15.0
+488,Services  & Remote Data,3,1,6,15.0
+489,Testing,1,1,0,15.0
+490,API Integration Patterns,4,1,9,15.0
+491,Dependency Injection,1,1,0,15.0
+492,Databases,1,1,0,15.0
+493,Testing,2,1,3,15.0
+494,Pick a Language,1,1,0,15.0
+495,Caching,2,1,3,15.0
+496,Bias Recognition,3,1,6,15.0
+497,Introduction,1,1,0,15.0
+498,Healthcare,3,1,6,15.0
+499,What is Data?,5,1,12,15.0
+500,Data Transformation Techniques,1,1,0,15.0
+501,Version Control Systems,1,1,0,15.0
+502,dApps - Decentralized Applications,1,1,0,15.0
+503,Cloud Skills and Knowledge,1,1,0,15.0
+504,Programming Fundamentals,1,1,0,15.0
+505,Complex Data Structures,1,1,0,15.0
+506,Tree Data Structures,1,1,0,15.0
+507,Creating Design Language,1,1,0,15.0
+508,Terraform,3,1,6,15.0
+509,GitOps,2,1,3,15.0
+510,Provisioning,1,1,0,15.0
+511,Networking & Protocols,2,1,3,15.0
+512,Internet,1,1,0,15.0
+513,Viewing Diffs,3,1,6,15.0
+514,GitHub API,1,1,0,15.0
+515,GitHub CLI,1,1,0,15.0
+516,UIKit,3,1,6,15.0
+517,Dependency Injection,1,1,0,15.0
+518,Control Flow,1,1,0,15.0
+519,Data Structures,2,1,3,15.0
+520,Using (this) keyword,1,1,0,15.0
+521,Modules in JavaScript,2,1,3,15.0
+522,Monitoring and Logging,3,1,6,15.0
+523,Clustering,1,1,0,15.0
+524,What is Reinforcement Learning?,1,1,0,15.0
+525,Natural Language Processing,1,1,0,15.0
+526,Discrete Mathematics,2,1,3,15.0
+527,Working with Files,1,1,0,15.0
+528,Style Tools,1,1,0,15.0
+529,File Uploads,1,1,0,15.0
+530,Introduction to PHP,1,1,0,15.0
+531,Learn a Framework,1,1,0,15.0
+532,Portals,1,1,0,15.0
+533,Clustering,1,1,0,15.0
+534,Redis Modules,1,1,0,15.0
+535,Programming Languages,2,1,3,15.0
+536,Understand the Basics,1,1,0,15.0
+537,Design Principles,1,1,0,15.0
+538,Microservices,2,1,3,15.0
+539,Stored Procedures & Functions,2,1,3,15.0
+540,Idempotent Operations,1,1,0,15.0
+541,Performance Antipatterns,1,1,0,15.0
+542,OpenSource AI,2,1,4,14.0
+543,Model Vulnerabilities,1,1,1,14.0
+544,Testing,2,1,4,14.0
+545,State Management,1,1,1,14.0
+546,Auto-Scaling,2,1,4,14.0
+547,Data Cleaning,1,1,1,14.0
+548,Security,2,1,4,14.0
+549,Functions,2,1,4,14.0
+550,Programming Skills,1,1,1,14.0
+551,Containers & Orchestration,1,1,1,14.0
+552,Algorithmic Complexity,1,1,1,14.0
+553,Infrastructure Monitoring,1,1,1,14.0
+554,APIs & SDKs,1,1,1,14.0
+555,Analytics,1,1,1,14.0
+556,CSS,1,1,1,14.0
+557,Linux Basics,5,1,13,14.0
+558,Game AI,1,1,1,14.0
+559,TestFlight,4,1,10,14.0
+560,Exception Handling,1,1,1,14.0
+561,Server Review,2,1,4,14.0
+562,Metrics to Evaluate,1,1,1,14.0
+563,Deep Learning Libraries,1,1,1,14.0
+564,Indexes and their Usecases,1,1,1,14.0
+565,Object Oriented Programming,1,1,1,14.0
+566,Data Structures & Algorithms,1,1,1,14.0
+567,Embedded and Systems,4,1,10,14.0
+568,Concurrency & Parallelism,1,1,1,14.0
+569,Management,3,1,7,14.0
+570,Programming Paradigms,1,1,1,14.0
+571,Architectural Patterns,1,1,1,14.0
+572,Spring Security,1,1,1,14.0
+573,Basic SQL Syntax,1,1,1,14.0
+574,Content SEO,3,1,7,14.0
+575,Content Analysis,1,1,1,14.0
+576,Template Files,6,1,16,14.0
+577,TypeScript Types,1,1,1,14.0
+578,UX Best Practices,1,1,1,14.0
+579,API Calls,1,1,1,14.0
+580,ECS,2,1,5,13.0
+581,Message Brokers,5,1,14,13.0
+582,Building Your Portfolio,1,1,2,13.0
+583,Oracles,1,1,2,13.0
+584,Asymptotic Notation,1,1,2,13.0
+585,Endianess,1,1,2,13.0
+586,Exception Handling,1,1,2,13.0
+587,Machine Learning,2,1,5,13.0
+588,Types of Data Ingestion,1,1,2,13.0
+589,Making a Design System,1,1,2,13.0
+590,Terminal Knowledge,1,1,2,13.0
+591,Animations,3,1,8,13.0
+592,React,2,1,5,13.0
+593,SSR,5,1,14,13.0
+594,Callbacks,1,1,2,13.0
+595,Shell Programming,2,1,5,13.0
+596,Data Sources,1,1,2,13.0
+597,Streams,2,1,5,13.0
+598,npm,1,1,2,13.0
+599,Loops,1,1,2,13.0
+600,Security,2,1,5,13.0
+601,Object Model,1,1,2,13.0
+602,Testing,3,1,8,13.0
+603,Development Workflow,1,1,2,13.0
+604,State Management,2,1,5,13.0
+605,Types & Validation,2,1,5,13.0
+606,Pub/Sub,4,1,11,13.0
+607,Disaster Recovery,1,1,2,13.0
+608,Error Handling,1,1,2,13.0
+609,Containerization,3,1,8,13.0
+610,JOIN Queries,1,1,2,13.0
+611,Understanding the Product,1,1,2,13.0
+612,Directives,1,1,2,13.0
+613,Forms,2,1,5,13.0
+614,Security,1,1,3,12.0
+615,ASP.NET Core Basics,1,1,3,12.0
+616,AI Gateway,4,1,12,12.0
+617,Complexity Classes,1,1,3,12.0
+618,Build Systems,2,1,6,12.0
+619,Infrastructure as Code - IaC,1,1,3,12.0
+620,More Git,1,1,3,12.0
+621,GitHub Essentials,1,1,3,12.0
+622,Execution,2,1,6,12.0
+623,FastLane,3,2,11,12.0
+624,Classification,1,1,3,12.0
+625,Autoencoders,1,1,3,12.0
+626,Developer Tools,2,1,6,12.0
+627,Value Proposition,2,1,6,12.0
+628,User Testing,2,1,6,12.0
+629,Monitoring and Controlling Risks,4,1,12,12.0
+630,Repo Hosting Services,2,1,6,12.0
+631,Patterns & Design Principles,1,1,3,12.0
+632,Caching,1,1,3,12.0
+633,Domain Name System,1,1,3,12.0
+634,TypeScript Functions,1,1,3,12.0
+635,TypeScript Modules,1,1,3,12.0
+636,Interface & Navigation,1,1,4,11.0
+637,Forms,2,1,7,11.0
+638,API Testing,3,1,10,11.0
+639,Microservices,1,1,4,11.0
+640,More about Databases,1,1,4,11.0
+641,Privacy,2,1,7,11.0
+642,Analog vs Digital Data,4,1,13,11.0
+643,Manufacturing,2,1,7,11.0
+644,Ansible,2,1,7,11.0
+645,Cloud Providers,1,1,4,11.0
+646,Service Mesh,1,1,4,11.0
+647,Rewriting History,2,1,7,11.0
+648,SwiftUI,2,1,7,11.0
+649,Equality Comparisons,1,1,4,11.0
+650,Memory Management,1,1,4,11.0
+651,Autoscaling,2,1,7,11.0
+652,Statistics,1,1,4,11.0
+653,Socket Programming,1,1,4,11.0
+654,AI,2,2,9,11.0
+655,Spring MVC,1,1,4,11.0
+656,Performance Optimization,1,1,4,11.0
+657,Model Context Protocol (MCP),0,0,0,10.0
+658,Creating MCP Servers,0,0,0,10.0
+659,ReAct (Reason + Act),0,0,0,10.0
+660,Fine-tuning vs Prompt Engineering,0,0,0,10.0
+661,Safety + Red Team Testing,0,0,0,10.0
+662,Planner Executor,0,0,0,10.0
+663,Pricing of Common Models,0,0,0,10.0
+664,Open Weight Models,0,0,0,10.0
+665,Episodic vs Semantic Memory,0,0,0,10.0
+666,Agent Loop,0,0,0,10.0
+667,DAG Agents,0,0,0,10.0
+668,Bias & Toxicity Guardrails,0,0,0,10.0
+669,Short Term  Memory,0,0,0,10.0
+670,Git and Terminal Usage,0,0,0,10.0
+671,Reasoning vs Standard Models,0,0,0,10.0
+672,Tree-of-Thought,0,0,0,10.0
+673,Prompt Injection / Jailbreaks,0,0,0,10.0
+674,What is Agent Memory?,0,0,0,10.0
+675,Embeddings and Vector Search,0,0,0,10.0
+676,Manual (from scratch),0,0,0,10.0
+677,Tool sandboxing / Permissioning,0,0,0,10.0
+678,Long Term Memory,0,0,0,10.0
+679,Basic Backend Development,0,0,0,10.0
+680,What is Prompt Engineering,0,0,0,10.0
+681,"LLM Native ""Function Calling""",0,0,0,10.0
+682,RAG Agent,0,0,0,10.0
+683,Streamed vs Unstreamed Responses,0,0,0,10.0
+684,Tool Definition,0,0,0,10.0
+685,Understand the Basics of RAG,0,0,0,10.0
+686,Chain of Thought (CoT),0,0,0,10.0
+687,Data Privacy + PII Redaction,0,0,0,10.0
+688,Closed Weight Models,0,0,0,10.0
+689,Statistics,0,0,0,10.0
+690,Econometrics,0,0,0,10.0
+691,MLOps,0,0,0,10.0
+692,Coding,0,0,0,10.0
+693,Mathematics,0,0,0,10.0
+694,Deep Learning,0,0,0,10.0
+695,Machine Learning,0,0,0,10.0
+696,Exploratory Data Analysis,0,0,0,10.0
+697,What are Embeddings,1,1,5,10.0
+698,AI Agents,0,0,0,10.0
+699,Development Tools,0,0,0,10.0
+700,Multimodal AI,0,0,0,10.0
+701,Open-Source Embeddings,0,0,0,10.0
+702,Open AI Assistant API,0,0,0,10.0
+703,Ollama,0,0,0,10.0
+704,Hugging Face,0,0,0,10.0
+705,Introduction,0,0,0,10.0
+706,Infrastructure Security,0,0,0,10.0
+707,Storage,0,0,0,10.0
+708,Debugging,1,1,5,10.0
+709,Communication,0,0,0,10.0
+710,Performance,0,0,0,10.0
+711,Template Syntax,0,0,0,10.0
+712,Understand Binding,0,0,0,10.0
+713,Pipes,0,0,0,10.0
+714,Animation,0,0,0,10.0
+715,Frameworks,0,0,0,10.0
+716,Search Engines,0,0,0,10.0
+717,Caching,0,0,0,10.0
+718,GraphQL,0,0,0,10.0
+719,Template Engines,0,0,0,10.0
+720,Relational,0,0,0,10.0
+721,API Clients and Communication,0,0,0,10.0
+722,REST,0,0,0,10.0
+723,Cloud,0,0,0,10.0
+724,NoSQL,0,0,0,10.0
+725,DI Containers,0,0,0,10.0
+726,Storage Types,0,0,0,10.0
+727,S3,1,1,5,10.0
+728,Cloudwatch,0,0,0,10.0
+729,Route53,0,0,0,10.0
+730,Chart Categories,0,0,0,10.0
+731,Normalization vs Denormalization,0,0,0,10.0
+732,Networking,0,0,0,10.0
+733,Cohort Analysis,0,0,0,10.0
+734,Job Preparation,0,0,0,10.0
+735,Stakeholder Identification,0,0,0,10.0
+736,Fact vs Dimension Tables,0,0,0,10.0
+737,Certifications,0,0,0,10.0
+738,Star vs Snowflake Schema,0,0,0,10.0
+739,ETL Tools,0,0,0,10.0
+740,Client Nodes,0,0,0,10.0
+741,Blockchains,0,0,0,10.0
+742,Smart Contract Frameworks,0,0,0,10.0
+743,Supporting Languages,0,0,0,10.0
+744,Frontend Frameworks,0,0,0,10.0
+745,Applicability,0,0,0,10.0
+746,Node as a Service,0,0,0,10.0
+747,Management Platforms,0,0,0,10.0
+748,Security,0,0,0,10.0
+749,Client Libraries,0,0,0,10.0
+750,Workers KV,0,0,0,10.0
+751,How Computers Work,1,1,5,10.0
+752,K-D Trees,0,0,0,10.0
+753,Skip Lists,0,0,0,10.0
+754,NP Complete,0,0,0,10.0
+755,Bitwise Operators,0,0,0,10.0
+756,Data Types,1,1,5,10.0
+757,Operating Systems,0,0,0,10.0
+758,Security Skills and Knowledge,0,0,0,10.0
+759,Networking Knowledge,0,0,0,10.0
+760,Fundamental IT Skills,0,0,0,10.0
+761,Data Manipulation Libraries,0,0,0,10.0
+762,Learn a Programming Lang.,0,0,0,10.0
+763,Data Visualisation Libraries,0,0,0,10.0
+764,Git and GitHub,0,0,0,10.0
+765,Encryption,0,0,0,10.0
+766,Data Masking,0,0,0,10.0
+767,Data Mesh,0,0,0,10.0
+768,Linux Basics,0,0,0,10.0
+769,Authentication vs Authorization,0,0,0,10.0
+770,MLOps,0,0,0,10.0
+771,Introduction,0,0,0,10.0
+772,Tokenization,0,0,0,10.0
+773,Programming Skills,0,0,0,10.0
+774,Distributed Systems Basics,0,0,0,10.0
+775,Networking Fundamentals,0,0,0,10.0
+776,What is Data Warehouse?,0,0,0,10.0
+777,Key-Value,0,0,0,10.0
+778,Data Structures and Algorithms,0,0,0,10.0
+779,Database Fundamentals,0,0,0,10.0
+780,Cluster Computing Basics,0,0,0,10.0
+781,Document,0,0,0,10.0
+782,Data Engineering Lifecycle,0,0,0,10.0
+783,Data Collection Considerations,0,0,0,10.0
+784,Data Lake,0,0,0,10.0
+785,Business Intelligence,0,0,0,10.0
+786,Sources of Data,0,0,0,10.0
+787,Why are Data Structures Important?,0,0,0,10.0
+788,Advanced Data Structures,0,0,0,10.0
+789,Platforms to Practice,0,0,0,10.0
+790,Problem Solving Techniques,0,0,0,10.0
+791,Pick a Language,0,0,0,10.0
+792,Search Algorithms,0,0,0,10.0
+793,Creating Core Components,0,0,0,10.0
+794,Project Management,0,0,0,10.0
+795,Creating Core Components,0,0,0,10.0
+796,CI / CD Tools,0,0,0,10.0
+797,Networking Strategies,0,0,0,10.0
+798,Presentation Techniques,0,0,0,10.0
+799,Handling Q&A,0,0,0,10.0
+800,Continuous Learning,0,0,0,10.0
+801,Engaging Audience,0,0,0,10.0
+802,Community Engagement,0,0,0,10.0
+803,What is Engineering Management?,0,0,0,10.0
+804,Basics of Dart,0,0,0,10.0
+805,Basic AWS Services,4,1,14,10.0
+806,Programming Languages,0,0,0,10.0
+807,Projection,0,0,0,10.0
+808,Graphics API,0,0,0,10.0
+809,Computer Graphics,0,0,0,10.0
+810,Merge Strategies,0,0,0,10.0
+811,GitHub Models,0,0,0,10.0
+812,GitHub Gists,0,0,0,10.0
+813,Webhooks,0,0,0,10.0
+814,GitHub Codespaces,0,0,0,10.0
+815,GitHub Marketplace,0,0,0,10.0
+816,GitHub Pages,0,0,0,10.0
+817,GitHub Security,0,0,0,10.0
+818,Submodules,0,0,0,10.0
+819,GitHub Copilot,0,0,0,10.0
+820,GitHub Education,0,0,0,10.0
+821,GitHub Packages,0,0,0,10.0
+822,Git Patch,0,0,0,10.0
+823,GitHub Sponsors,0,0,0,10.0
+824,Date and Time,0,0,0,10.0
+825,Regular Expressions,0,0,0,10.0
+826,Networking,0,0,0,10.0
+827,Testing,0,0,0,10.0
+828,File Operations,0,0,0,10.0
+829,Cryptography,0,0,0,10.0
+830,Annotations,0,0,0,10.0
+831,Modules,0,0,0,10.0
+832,Optionals,0,0,0,10.0
+833,Concurrency,0,0,0,10.0
+834,Introduction to JavaScript,0,0,0,10.0
+835,Strict Mode,0,0,0,10.0
+836,DOM APIs,0,0,0,10.0
+837,Functions,0,0,0,10.0
+838,Deployment Patterns,0,0,0,10.0
+839,Containers,0,0,0,10.0
+840,Advanced Topics,0,0,0,10.0
+841,Introduction,0,0,0,10.0
+842,Process Management,1,1,5,10.0
+843,Navigation Basics,0,0,0,10.0
+844,What is Unsupervised Learning?,0,0,0,10.0
+845,Convolutional Neural Network,0,0,0,10.0
+846,Preprocessing Techniques,0,0,0,10.0
+847,Python,0,0,0,10.0
+848,What is Machine Learning?,0,0,0,10.0
+849,Creating Indexes,0,0,0,10.0
+850,Template Engines,0,0,0,10.0
+851,Building & Consuming APIs,0,0,0,10.0
+852,Monitor Changes (Dev),0,0,0,10.0
+853,Async Programming,0,0,0,10.0
+854,PHP-FIG,0,0,0,10.0
+855,Form Processing,0,0,0,10.0
+856,HTTP Methods,0,0,0,10.0
+857,OOP Fundamentals,0,0,0,10.0
+858,SQL Query Patterns / Anti-patterns,0,0,0,10.0
+859,Go-to-Market Strategy,0,0,0,10.0
+860,Release Strategies,0,0,0,10.0
+861,Code Formatting,0,0,0,10.0
+862,Static Typing,0,0,0,10.0
+863,Paradigms,0,0,0,10.0
+864,List Comprehensions,0,0,0,10.0
+865,Learn the Basics,0,0,0,10.0
+866,Context Manager,0,0,0,10.0
+867,Testing,0,0,0,10.0
+868,Common Packages,0,0,0,10.0
+869,Iterators,0,0,0,10.0
+870,Lambdas,0,0,0,10.0
+871,Generator Expressions,0,0,0,10.0
+872,Decorators,0,0,0,10.0
+873,Mobile Automation,0,0,0,10.0
+874,Repo Hosting Services,0,0,0,10.0
+875,Introduction,0,0,0,10.0
+876,Server APIs,0,0,0,10.0
+877,Suspense,0,0,0,10.0
+878,What is Redis?,0,0,0,10.0
+879,Authentication,0,0,0,10.0
+880,Strings,0,0,0,10.0
+881,Redis Sentinel,0,0,0,10.0
+882,Network Security,0,0,0,10.0
+883,Lifetimes & Borrow Checker,0,0,0,10.0
+884,WebAssembly (WASM),3,1,11,10.0
+885,Multithreading,0,0,0,10.0
+886,Reactor,0,0,0,10.0
+887,Actor Model,0,0,0,10.0
+888,Task-Based,0,0,0,10.0
+889,Category,0,0,0,10.0
+890,Proactor,0,0,0,10.0
+891,Reactive Approach,0,0,0,10.0
+892,Function,0,0,0,10.0
+893,Synchronization,0,0,0,10.0
+894,TCP,0,0,0,10.0
+895,Reactive Model,0,0,0,10.0
+896,Security,0,0,0,10.0
+897,Transactions,0,0,0,10.0
+898,Server-Side Development,0,0,0,10.0
+899,Networks,2,1,8,10.0
+900,Model-Driven Design,0,0,0,10.0
+901,Distributed,0,0,0,10.0
+902,Structural,0,0,0,10.0
+903,Messaging,0,0,0,10.0
+904,Autoconfiguration,0,0,0,10.0
+905,Actuators,0,0,0,10.0
+906,Views,0,0,0,10.0
+907,Data Manipulation Language (DML),0,0,0,10.0
+908,Advanced Functions,0,0,0,10.0
+909,Latency vs Throughput,0,0,0,10.0
+910,Data Management,0,0,0,10.0
+911,Availability,0,0,0,10.0
+912,Security,0,0,0,10.0
+913,Introduction,0,0,0,10.0
+914,Messaging,0,0,0,10.0
+915,Performance vs Scalability,0,0,0,10.0
+916,Availability vs Consistency,0,0,0,10.0
+917,High Availability,0,0,0,10.0
+918,Resiliency,0,0,0,10.0
+919,Release Notes / Product Announcements,0,0,0,10.0
+920,Top-funnel Content,2,1,8,10.0
+921,Customer Case-Studies,0,0,0,10.0
+922,Developer Docs,0,0,0,10.0
+923,Help Content,0,0,0,10.0
+924,Frequently Asked Questions,0,0,0,10.0
+925,Technical Website Copy,0,0,0,10.0
+926,API Reference,0,0,0,10.0
+927,Workspaces,5,1,17,10.0
+928,Generics,0,0,0,10.0
+929,Classes,0,0,0,10.0
+930,Support Conscious Action,0,0,0,10.0
+931,Make or Change Habits,0,0,0,10.0
+932,API Styles,0,0,0,10.0
+933,Transformer Models and LLMs,0,0,1,9.0
+934,RAG & Implementation,0,0,1,9.0
+935,Internationalization,0,0,1,9.0
+936,Life Cycles,0,0,1,9.0
+937,Log Frameworks,0,0,1,9.0
+938,EKS,1,1,6,9.0
+939,Version Control Systems,0,0,1,9.0
+940,Search Engines,4,1,15,9.0
+941,Metrics and KPIs,0,0,1,9.0
+942,Visualization Fundamentals,0,0,1,9.0
+943,Building for Scale,0,0,1,9.0
+944,Repo Hosting Services,0,0,1,9.0
+945,Types of Data Analytics,0,0,1,9.0
+946,Big Data Technologies,1,1,6,9.0
+947,Analysis / Reporting with Excel,0,0,1,9.0
+948,Data Warehouse,0,0,1,9.0
+949,Machine Learning,0,0,1,9.0
+950,Data Obfuscation,0,0,1,9.0
+951,Indexing,0,0,1,9.0
+952,Graph Data Structures,0,0,1,9.0
+953,What are Data Structures?,0,0,1,9.0
+954,Defining Design Tokens,0,0,1,9.0
+955,Configuration Management,0,0,1,9.0
+956,Writing Skills,0,0,1,9.0
+957,Key Metrics,1,1,6,9.0
+958,IDEs,0,0,1,9.0
+959,Public Speaking,0,0,1,9.0
+960,Testing,2,1,9,9.0
+961,Tailwind,1,1,6,9.0
+962,GraphQL,4,1,15,9.0
+963,Creating Apps,0,0,1,9.0
+964,GitHub Actions,0,0,1,9.0
+965,iOS Architecture,0,0,1,9.0
+966,Swift (Recommended),0,0,1,9.0
+967,Objective-C,0,0,1,9.0
+968,Build Tools,0,0,1,9.0
+969,I/O Operations,0,0,1,9.0
+970,Expressions & Operators,0,0,1,9.0
+971,Asynchronous JavaScript,0,0,1,9.0
+972,Troubleshooting,1,1,6,9.0
+973,What is Model Evaluation?,0,0,1,9.0
+974,Explainable AI,0,0,1,9.0
+975,Basic Syntax,0,0,1,9.0
+976,Dimensionality Reduction,0,0,1,9.0
+977,MLOps Principles,1,1,6,9.0
+978,MLOps Components,1,1,6,9.0
+979,Command Line Apps,0,0,1,9.0
+980,Debugging,1,1,6,9.0
+981,Installing PHP,0,0,1,9.0
+982,State Management,0,0,1,9.0
+983,Static Analysis,0,0,1,9.0
+984,Infrastructure Skills,1,1,6,9.0
+985,Product Identification,0,0,1,9.0
+986,Concurrency,0,0,1,9.0
+987,Performance,2,1,9,9.0
+988,Writing CSS,1,1,6,9.0
+989,Animation,1,1,6,9.0
+990,Mobile Applications,0,0,1,9.0
+991,Transactions,3,1,12,9.0
+992,SSL/TLS Encryption,0,0,1,9.0
+993,redis.conf,0,0,1,9.0
+994,Responsibilities,0,0,1,9.0
+995,Design Patterns,0,0,1,9.0
+996,Architectural Principles,0,0,1,9.0
+997,Reliability Patterns,0,0,1,9.0
+998,Design & Implementation,0,0,1,9.0
+999,Monitoring,0,0,1,9.0
+1000,Communication,0,0,1,9.0
+1001,SSR,1,1,6,9.0
+1002,Code Injection,0,0,2,8.0
+1003,Zones,0,0,2,8.0
+1004,Exploratory Data Analysis (EDA),0,0,2,8.0
+1005,Browser Rendering,3,1,13,8.0
+1006,Package Managers,1,1,7,8.0
+1007,Graph,0,0,2,8.0
+1008,Column,0,0,2,8.0
+1009,CI/CD,0,0,2,8.0
+1010,Sorting Algorithms,0,0,2,8.0
+1011,Logs Management,0,0,2,8.0
+1012,Version Control,0,0,2,8.0
+1013,Version Control Systems,0,0,2,8.0
+1014,Deployment,0,0,2,8.0
+1015,Working with Assets,0,0,2,8.0
+1016,HTML,0,0,2,8.0
+1017,Advanced Rendering,0,0,2,8.0
+1018,Curve,0,0,2,8.0
+1019,Orientation,0,0,2,8.0
+1020,Serving over Internet,1,1,7,8.0
+1021,Lambda Expressions,0,0,2,8.0
+1022,Validation Techniques,0,0,2,8.0
+1023,Deep Learning Architectures,0,0,2,8.0
+1024,Scaling MongoDB,1,1,7,8.0
+1025,Get Involved in Development,0,0,2,8.0
+1026,High Level Database Concepts,0,0,2,8.0
+1027,Value vs Features,1,1,7,8.0
+1028,Scaling Products,3,1,13,8.0
+1029,Agile Methodology,1,1,7,8.0
+1030,Modules,0,0,2,8.0
+1031,Package Managers,0,0,2,8.0
+1032,CI / CD,1,1,7,8.0
+1033,Traits & Generics,0,0,2,8.0
+1034,Object Oriented Programming,0,0,2,8.0
+1035,Enterprise Patterns,0,0,2,8.0
+1036,Spring Boot Starters,0,0,2,8.0
+1037,Data Definition Language (DDL),0,0,2,8.0
+1038,Content Distribution,0,0,2,8.0
+1039,Type Inference,0,0,2,8.0
+1040,Measuring the Impact,0,0,2,8.0
+1041,Cheating,0,0,2,8.0
+1042,Mobile Apps,0,0,2,8.0
+1043,HTTP Client,1,1,8,7.0
+1044,Real-time APIs,2,1,11,7.0
+1045,Types of data,3,1,14,7.0
+1046,Data Architectures,1,1,8,7.0
+1047,Professional Development,0,0,3,7.0
+1048,Time Series Analysis,1,1,8,7.0
+1049,Smart Contracts,0,0,3,7.0
+1050,Common Algorithms,0,0,3,7.0
+1051,Character Encodings,0,0,3,7.0
+1052,Language Concepts,0,0,3,7.0
+1053,Data Pipelines,0,0,3,7.0
+1054,Existing Design Analysis,0,0,3,7.0
+1055,GitHub Actions,1,1,8,7.0
+1056,Version Control Systems,0,0,3,7.0
+1057,Blogging,0,0,3,7.0
+1058,Video Production,0,0,3,7.0
+1059,Dynamics,0,0,3,7.0
+1060,Collision Detection,0,0,3,7.0
+1061,Game Engine,0,0,3,7.0
+1062,Tagging,1,1,8,7.0
+1063,Core Animation,1,1,8,7.0
+1064,Xcode,0,0,3,7.0
+1065,Async / Await,0,0,3,7.0
+1066,Scheduling,1,1,8,7.0
+1067,Data Formats,0,0,3,7.0
+1068,Query Operators,0,0,3,7.0
+1069,Error Handling,0,0,3,7.0
+1070,Functions,0,0,3,7.0
+1071,Relational Model,0,0,3,7.0
+1072,Frontend Automation,0,0,3,7.0
+1073,Backend Automation,0,0,3,7.0
+1074,Accessibility Tests,0,0,3,7.0
+1075,Core Components,0,0,3,7.0
+1076,Redis Enterprise,0,0,3,7.0
+1077,Modules & Crates,0,0,3,7.0
+1078,Subqueries,0,0,3,7.0
+1079,Conceptual Design,0,0,3,7.0
+1080,App Configurations,0,0,3,7.0
+1081,Accessibility,0,0,4,6.0
+1082,Object Relational Mapping,0,0,4,6.0
+1083,Tries,0,0,4,6.0
+1084,Data Analytics,0,0,4,6.0
+1085,Monit,3,1,15,6.0
+1086,More GitHub,0,0,4,6.0
+1087,Git Stash Basics,0,0,4,6.0
+1088,Git Remotes,0,0,4,6.0
+1089,Generative Adversarial Networks,0,0,4,6.0
+1090,Regression,0,0,4,6.0
+1091,Debugging,2,1,12,6.0
+1092,Operations Knowledge,1,1,9,6.0
+1093,Tools,0,0,4,6.0
+1094,Asynchronism,0,0,4,6.0
+1095,Content Delivery Networks,0,0,4,6.0
+1096,Mid-funnel Content,1,1,9,6.0
+1097,CI / CD Integration,4,1,18,6.0
+1098,Ecosystem,0,0,4,6.0
+1099,TypeScript Interfaces,0,0,4,6.0
+1100,Design & Architecture,0,0,5,5.0
+1101,CI / CD,0,0,5,5.0
+1102,Testing,0,0,5,5.0
+1103,Web Servers,3,1,16,5.0
+1104,Serverless,0,0,5,5.0
+1105,Cloud Design Patterns,0,0,5,5.0
+1106,Dev Tools,1,1,10,5.0
+1107,PWAs,3,1,16,5.0
+1108,Loops and Iterations,0,0,5,5.0
+1109,Using Browser DevTools,0,0,5,5.0
+1110,Linear Algebra,0,0,5,5.0
+1111,Using Native Modules,1,1,10,5.0
+1112,Lua Scripting,2,1,13,5.0
+1113,Serialization,0,0,5,5.0
+1114,Testing,0,0,5,5.0
+1115,Advanced SQL,0,0,5,5.0
+1116,Open AI Embeddings API,0,0,6,4.0
+1117,Distribution,0,0,6,4.0
+1118,SES,0,0,6,4.0
+1119,Security & Performance,2,1,14,4.0
+1120,Processes and Threads,0,0,6,4.0
+1121,Pointers and References,0,0,6,4.0
+1122,Building a Personal Brand,0,0,6,4.0
+1123,Reporting,0,0,6,4.0
+1124,Thought Leadership,0,0,6,4.0
+1125,User Management,0,0,6,4.0
+1126,Portfolio Management,2,1,14,4.0
+1127,Reactive Approach,0,0,6,4.0
+1128,Asynchronous,0,0,6,4.0
+1129,API Lifecycle Management,1,1,12,3.0
+1130,Lambda,0,0,7,3.0
+1131,Data Sources,2,1,15,3.0
+1132,Deep Learning (Optional),0,0,7,3.0
+1133,Tools,0,0,7,3.0
+1134,Vitest,0,0,7,3.0
+1135,App Store Optimization (ASO),1,1,12,3.0
+1136,Containerization,0,0,7,3.0
+1137,Infrastructure as Code,0,0,7,3.0
+1138,Common Built-in Modules,0,0,7,3.0
+1139,Learn to Automate,0,0,7,3.0
+1140,Error Boundaries,0,0,7,3.0
+1141,Component / Libraries,0,0,7,3.0
+1142,SSG,0,0,7,3.0
+1143,Working with Libraries,0,0,8,2.0
+1144,GitHub Actions,2,1,16,2.0
+1145,Pagination,0,0,8,2.0
+1146,MongoDB Security,0,0,8,2.0
+1147,Working with Engineering Teams,0,0,8,2.0
+1148,Strategic Thinking,0,0,8,2.0
+1149,Headless Testing,0,0,8,2.0
+1150,Documenting with `rustdoc`,1,1,13,2.0
+1151,Testing,3,1,19,2.0
+1152,RxJS Basics,0,0,9,1.0
+1153,Real-Time Data,2,1,17,1.0
+1154,Data Modeling for BI,0,0,9,1.0
+1155,A/B Testing,0,0,9,1.0
+1156,Nginx,0,0,9,1.0
+1157,Linters and Formatters,0,0,9,1.0
+1158,Module Bundlers,0,0,9,1.0
+1159,Static Site Generators,2,1,17,1.0
+1160,Git hooks,0,0,9,1.0
+1161,Architectural Patterns,0,0,9,1.0
+1162,Storage and Volumes,0,0,9,1.0
+1163,Persistence Options,1,1,14,1.0
+1164,Integration & Workflows,1,1,15,0.0
+1165,Advanced Analysis,1,1,15,0.0
+1166,Cloud ML,0,0,10,0.0
+1167,Deep Learning,0,0,10,0.0
+1168,Enterprise Software,0,0,10,0.0
+1169,Bottom-funnel Content,0,0,10,0.0
+1170,Data Formats,1,1,16,-1.0
+1171,Flutter Internals,0,0,11,-1.0
+1172,Publishing Apps,0,0,11,-1.0
+1173,Architectural Patterns,0,0,12,-2.0
+1174,Ansible,1,1,17,-2.0
+1175,CI / CD,0,0,12,-2.0
+1176,Scaling Terraform,2,1,20,-2.0
+1177,Standards and Compliance,0,0,13,-3.0
+1178,NoSQL Databases,1,1,18,-3.0
+1179,Mobile Apps,1,1,18,-3.0
+1180,Keeping Updated with WWDC,0,0,13,-3.0
+1181,Performance and Profiling,0,0,14,-4.0
+1182,Replication Basics,0,0,15,-5.0
+1183,Development Tools,0,0,16,-6.0
+1184,Leadership and Influence,0,0,16,-6.0
+1185,Security,1,1,21,-6.0
+1186,SQL Fundamentals,0,0,17,-7.0
+1187,Terraform,0,0,18,-8.0
+1188,Building For Scale,0,0,19,-9.0
+1189,Desktop Apps,0,0,19,-9.0
+1190,HCP,0,0,22,-12.0

@@ -1,0 +1,16 @@
+{
+  "evaluation_mode": "ontology_constrained",
+  "ontology_size": 42,
+  "precision": 0.2526,
+  "recall": 0.3196,
+  "f1_score": 0.271,
+  "micro_precision": 0.4286,
+  "micro_recall": 0.8,
+  "micro_f1": 0.5581,
+  "true_positives": 108,
+  "false_positives": 144,
+  "false_negatives": 27,
+  "ground_truth_skills_excluded": 156,
+  "resumes_evaluated": 118,
+  "resumes_skipped": 0
+}

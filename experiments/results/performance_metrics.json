@@ -1,0 +1,299 @@
+{
+  "metadata": {
+    "base_url": "http://localhost:8000",
+    "timestamp": "2026-04-13T05:46:35.325140Z",
+    "n_requests": 5,
+    "warmup_requests": 1,
+    "git_commit": "f587d22"
+  },
+  "results": [
+    {
+      "endpoint": "Health Check",
+      "method": "GET",
+      "path": "/",
+      "description": "Root health-check \u2014 baseline / cold-start probe",
+      "n_requested": 5,
+      "n_successful": 5,
+      "n_errors": 0,
+      "status_counts": {
+        "200": 5
+      },
+      "stats_ms": {
+        "mean": 1.25,
+        "median": 1.27,
+        "min": 0.86,
+        "max": 1.56,
+        "std": 0.25,
+        "p50": 1.27,
+        "p95": 1.51,
+        "p99": 1.55
+      },
+      "samples_ms": [
+        0.86,
+        1.21,
+        1.33,
+        1.27,
+        1.56
+      ]
+    },
+    {
+      "endpoint": "GET /roadmaps",
+      "method": "GET",
+      "path": "/roadmaps",
+      "description": "List all available roadmaps",
+      "n_requested": 5,
+      "n_successful": 5,
+      "n_errors": 0,
+      "status_counts": {
+        "200": 5
+      },
+      "stats_ms": {
+        "mean": 92.23,
+        "median": 91.35,
+        "min": 89.43,
+        "max": 96.39,
+        "std": 3.01,
+        "p50": 91.35,
+        "p95": 95.96,
+        "p99": 96.31
+      },
+      "samples_ms": [
+        96.39,
+        89.73,
+        91.35,
+        94.24,
+        89.43
+      ]
+    },
+    {
+      "endpoint": "GET /users/me",
+      "method": "GET",
+      "path": "/users/me",
+      "description": "Lightweight authenticated user identity",
+      "n_requested": 5,
+      "n_successful": 0,
+      "n_errors": 5,
+      "status_counts": {
+        "401": 5
+      },
+      "stats_ms": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0
+      },
+      "samples_ms": []
+    },
+    {
+      "endpoint": "GET /users/me/profile",
+      "method": "GET",
+      "path": "/users/me/profile",
+      "description": "Completed courses + top skill summary",
+      "n_requested": 5,
+      "n_successful": 0,
+      "n_errors": 5,
+      "status_counts": {
+        "401": 5
+      },
+      "stats_ms": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0
+      },
+      "samples_ms": []
+    },
+    {
+      "endpoint": "GET /users/me/skills",
+      "method": "GET",
+      "path": "/users/me/skills",
+      "description": "Per-skill Elo ratings and proficiency levels",
+      "n_requested": 5,
+      "n_successful": 0,
+      "n_errors": 5,
+      "status_counts": {
+        "401": 5
+      },
+      "stats_ms": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0
+      },
+      "samples_ms": []
+    },
+    {
+      "endpoint": "GET /courses",
+      "method": "GET",
+      "path": "/courses",
+      "description": "All courses across all roadmaps",
+      "n_requested": 5,
+      "n_successful": 0,
+      "n_errors": 5,
+      "status_counts": {
+        "401": 5
+      },
+      "stats_ms": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0
+      },
+      "samples_ms": []
+    },
+    {
+      "endpoint": "GET /progress/all",
+      "method": "GET",
+      "path": "/progress/all",
+      "description": "Full progress snapshot for the current user",
+      "n_requested": 5,
+      "n_successful": 0,
+      "n_errors": 5,
+      "status_counts": {
+        "401": 5
+      },
+      "stats_ms": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0
+      },
+      "samples_ms": []
+    },
+    {
+      "endpoint": "GET /github/status",
+      "method": "GET",
+      "path": "/github/status",
+      "description": "GitHub OAuth connection status",
+      "n_requested": 5,
+      "n_successful": 0,
+      "n_errors": 5,
+      "status_counts": {
+        "401": 5
+      },
+      "stats_ms": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0
+      },
+      "samples_ms": []
+    },
+    {
+      "endpoint": "GET /recommend",
+      "method": "GET",
+      "path": "/recommend/recommend?current_roadmap_id=frontend",
+      "description": "Core recommendation engine \u2014 next courses + roadmap suggestions",
+      "n_requested": 5,
+      "n_successful": 0,
+      "n_errors": 5,
+      "status_counts": {
+        "401": 5
+      },
+      "stats_ms": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0
+      },
+      "samples_ms": []
+    },
+    {
+      "endpoint": "GET /skill-graph",
+      "method": "GET",
+      "path": "/skill-graph/frontend/dynamic-status",
+      "description": "Graph-based dynamic skill status for a roadmap",
+      "n_requested": 5,
+      "n_successful": 0,
+      "n_errors": 5,
+      "status_counts": {
+        "401": 5
+      },
+      "stats_ms": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0
+      },
+      "samples_ms": []
+    },
+    {
+      "endpoint": "GET /learning-path",
+      "method": "GET",
+      "path": "/learning-path/frontend:internet",
+      "description": "Prerequisite chain walk for a specific course",
+      "n_requested": 5,
+      "n_successful": 0,
+      "n_errors": 5,
+      "status_counts": {
+        "401": 5
+      },
+      "stats_ms": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0
+      },
+      "samples_ms": []
+    },
+    {
+      "endpoint": "GET /skill-profile",
+      "method": "GET",
+      "path": "/skill-profile/",
+      "description": "Synthesized skill profile (GitHub + Resume fusion)",
+      "n_requested": 5,
+      "n_successful": 0,
+      "n_errors": 5,
+      "status_counts": {
+        "404": 5
+      },
+      "stats_ms": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std": 0.0,
+        "p50": 0.0,
+        "p95": 0.0,
+        "p99": 0.0
+      },
+      "samples_ms": []
+    }
+  ]
+}

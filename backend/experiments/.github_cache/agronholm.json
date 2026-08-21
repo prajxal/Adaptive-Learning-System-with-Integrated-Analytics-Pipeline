@@ -1,0 +1,1 @@
+{"language_bytes": {"Python": 2788265, "Rust": 143521, "Shell": 1779, "Scala": 6865, "Makefile": 1038, "Dockerfile": 233, "Batchfile": 833, "CSS": 21744, "HTML": 5035, "JavaScript": 48}, "language_commits": {"Python": 349, "Rust": 30, "CSS": 2}, "repos_analyzed": 25, "total_bytes": 2969361, "error": null}

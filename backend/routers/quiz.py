@@ -42,17 +42,21 @@ class QuizSubmission(BaseModel):
     answers: dict
 
 @router.post("/{skill_id}/submit")
-def submit_quiz_attempt(
+async def submit_quiz_attempt(
     skill_id: str, 
     submission: QuizSubmission,
     current_user: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
     try:
+        # Ensure first-time submissions and incomplete persisted rows have a valid quiz.
+        await get_or_generate_quiz(skill_id, db)
+
         user_id = str(current_user.id)
         xp_before = get_user_global_xp(user_id, db)
         level_before = get_user_level(user_id, db)
         attempt = evaluate_quiz_attempt(user_id, skill_id, submission.answers, db)
+
         xp_after = get_user_global_xp(user_id, db)
         level_after = get_user_level(user_id, db)
         return {
